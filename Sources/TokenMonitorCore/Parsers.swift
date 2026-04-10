@@ -1,0 +1,428 @@
+import Foundation
+
+public protocol UsageParsing: Sendable {
+    func parse(extract: ServicePageExtract, now: Date) throws -> ServiceSnapshot
+}
+
+public struct ClaudeUsageParser: UsageParsing {
+    public init() {}
+
+    public func parse(extract: ServicePageExtract, now: Date) throws -> ServiceSnapshot {
+        if extractLooksLikeLogin(extract, keywords: [
+            "log in to claude",
+            "continue with google",
+            "continue with email",
+            "verify you're human",
+            "verify you are human"
+        ]) {
+            throw UsageParseError.authRequired(ServiceKind.claude.loginRequiredMessage)
+        }
+
+        let lines = normalizedLines(from: extract.bodyText)
+        guard
+            let currentSessionIndex = firstIndex(in: lines, containing: "Current session"),
+            let allModelsIndex = firstIndex(in: lines, containing: "All models"),
+            let sonnetIndex = firstIndex(in: lines, containing: "Sonnet only"),
+            let extraUsageIndex = firstIndex(in: lines, containing: "Extra usage"),
+            let monthlyLimitIndex = firstIndex(in: lines, containing: "Monthly spend limit"),
+            let balanceIndex = firstIndex(in: lines, containing: "Current balance"),
+            let currentSessionValue = firstLine(after: currentSessionIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("% used") }),
+            let allModelsValue = firstLine(after: allModelsIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("% used") }),
+            let allModelsReset = firstLine(after: allModelsIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("Resets") }),
+            let sonnetValue = firstLine(after: sonnetIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("% used") }),
+            let sonnetReset = firstLine(after: sonnetIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("Resets") }),
+            let extraUsageSpent = firstLine(after: extraUsageIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("spent") }),
+            let extraUsageReset = firstLine(after: extraUsageIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("Resets") }),
+            let extraUsagePercent = firstLine(after: extraUsageIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("% used") }),
+            let monthlyLimitValue = previousLine(before: monthlyLimitIndex, in: lines),
+            let currentBalanceValue = previousLine(before: balanceIndex, in: lines)
+        else {
+            throw UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")
+        }
+
+        let metrics = [
+            UsageMetric(
+                key: "current-session",
+                title: "Current session",
+                valueText: currentSessionValue,
+                subtitle: firstLine(after: currentSessionIndex, in: lines, matching: { $0 != currentSessionValue }),
+                progress: percentage(from: currentSessionValue),
+                style: .progress
+            ),
+            UsageMetric(
+                key: "weekly-all-models",
+                title: "All models",
+                valueText: allModelsValue,
+                subtitle: allModelsReset,
+                progress: percentage(from: allModelsValue),
+                style: .progress
+            ),
+            UsageMetric(
+                key: "weekly-sonnet",
+                title: "Sonnet only",
+                valueText: sonnetValue,
+                subtitle: sonnetReset,
+                progress: percentage(from: sonnetValue),
+                style: .progress
+            ),
+            UsageMetric(
+                key: "extra-usage-spend",
+                title: "Extra usage",
+                valueText: extraUsageSpent,
+                subtitle: extraUsageReset,
+                progress: percentage(from: extraUsagePercent),
+                style: .progress
+            ),
+            UsageMetric(
+                key: "monthly-spend-limit",
+                title: "Monthly spend limit",
+                valueText: monthlyLimitValue,
+                subtitle: nil,
+                progress: nil,
+                style: .stat
+            ),
+            UsageMetric(
+                key: "current-balance",
+                title: "Current balance",
+                valueText: currentBalanceValue,
+                subtitle: nil,
+                progress: nil,
+                style: .stat
+            )
+        ]
+
+        return ServiceSnapshot(
+            service: .claude,
+            capturedAt: now,
+            pageTitle: extract.pageTitle,
+            url: extract.url,
+            metrics: metrics
+        )
+    }
+}
+
+public struct ChatGPTUsageParser: UsageParsing {
+    public init() {}
+
+    public func parse(extract: ServicePageExtract, now: Date) throws -> ServiceSnapshot {
+        if extractLooksLikeLogin(extract, keywords: [
+            "log in",
+            "continue with google",
+            "continue with apple",
+            "verify you are human",
+            "verify you're human"
+        ]) {
+            throw UsageParseError.authRequired(ServiceKind.chatGPT.loginRequiredMessage)
+        }
+
+        let specs: [ChatGPTMetricSpec] = [
+            .init(key: "five-hour-limit", kind: .progress, match: { line in
+                isUsageLimitTitle(line, duration: .fiveHour, requiresModelName: false)
+            }),
+            .init(key: "weekly-limit", kind: .progress, match: { line in
+                isUsageLimitTitle(line, duration: .weekly, requiresModelName: false)
+            }),
+            .init(key: "spark-five-hour-limit", kind: .progress, match: { line in
+                isUsageLimitTitle(line, duration: .fiveHour, requiresModelName: true)
+            }),
+            .init(key: "spark-weekly-limit", kind: .progress, match: { line in
+                isUsageLimitTitle(line, duration: .weekly, requiresModelName: true)
+            }),
+            .init(key: "credits-remaining", kind: .stat, match: { line in
+                line.localizedCaseInsensitiveContains("credits remaining")
+            })
+        ]
+
+        var metricsByKey: [String: UsageMetric] = [:]
+
+        for cardLines in extract.segments.map({ normalizedLines(from: $0) }).filter({ !$0.isEmpty }) {
+            guard let metric = parseChatGPTMetricCard(from: cardLines, specs: specs) else {
+                continue
+            }
+            metricsByKey[metric.key] = metric
+        }
+
+        let lines = chatGPTCandidateLines(from: extract)
+        for spec in specs where metricsByKey[spec.key] == nil {
+            guard let titleIndex = lines.firstIndex(where: spec.match) else {
+                continue
+            }
+
+            let title = lines[titleIndex]
+            guard let valueText = try? extractChatGPTValue(after: titleIndex, lines: lines, kind: spec.kind) else {
+                continue
+            }
+            let subtitle = extractChatGPTSubtitle(after: titleIndex, lines: lines, valueText: valueText, kind: spec.kind)
+
+            metricsByKey[spec.key] = UsageMetric(
+                key: spec.key,
+                title: title,
+                valueText: valueText,
+                subtitle: subtitle,
+                progress: spec.kind == .progress ? percentage(from: valueText) : nil,
+                style: spec.kind
+            )
+        }
+
+        let metrics = specs.compactMap { metricsByKey[$0.key] }
+        let progressMetricCount = metrics.filter { $0.style == .progress }.count
+        guard progressMetricCount >= 2 else {
+            throw UsageParseError.unsupportedLayout("ChatGPT usage layout could not be parsed")
+        }
+
+        guard !metrics.isEmpty else {
+            throw UsageParseError.unsupportedLayout("ChatGPT usage layout could not be parsed")
+        }
+
+        return ServiceSnapshot(
+            service: .chatGPT,
+            capturedAt: now,
+            pageTitle: extract.pageTitle,
+            url: extract.url,
+            metrics: metrics
+        )
+    }
+}
+
+private struct ChatGPTMetricSpec {
+    let key: String
+    let kind: UsageMetricStyle
+    let match: (String) -> Bool
+}
+
+private func parseChatGPTMetricCard(from lines: [String], specs: [ChatGPTMetricSpec]) -> UsageMetric? {
+    guard let titleIndex = lines.indices.first(where: { index in
+        specs.contains(where: { $0.match(lines[index]) })
+    }) else {
+        return nil
+    }
+
+    let title = lines[titleIndex]
+    guard let spec = specs.first(where: { $0.match(title) }) else {
+        return nil
+    }
+    guard let valueText = try? extractChatGPTValue(after: titleIndex, lines: lines, kind: spec.kind) else {
+        return nil
+    }
+
+    return UsageMetric(
+        key: spec.key,
+        title: title,
+        valueText: valueText,
+        subtitle: extractChatGPTSubtitle(after: titleIndex, lines: lines, valueText: valueText, kind: spec.kind),
+        progress: spec.kind == .progress ? percentage(from: valueText) : nil,
+        style: spec.kind
+    )
+}
+
+private enum ChatGPTDuration {
+    case fiveHour
+    case weekly
+}
+
+private func isUsageLimitTitle(_ line: String, duration: ChatGPTDuration, requiresModelName: Bool) -> Bool {
+    let normalized = line
+        .lowercased()
+        .replacingOccurrences(of: "-", with: " ")
+        .replacingOccurrences(of: "  ", with: " ")
+
+    guard normalized.contains("usage limit") else {
+        return false
+    }
+
+    let hasDuration: Bool
+    switch duration {
+    case .fiveHour:
+        hasDuration = normalized.contains("5 hour")
+    case .weekly:
+        hasDuration = normalized.contains("weekly")
+    }
+
+    guard hasDuration else {
+        return false
+    }
+
+    let hasModelName = normalized.contains("gpt") || normalized.contains("codex") || normalized.contains("spark")
+
+    return requiresModelName ? hasModelName : !hasModelName
+}
+
+private func extractChatGPTValue(after index: Int, lines: [String], kind: UsageMetricStyle) throws -> String {
+    let upperBound = min(lines.count - 1, index + 8)
+    guard index + 1 <= upperBound else {
+        throw UsageParseError.unsupportedLayout("ChatGPT usage layout could not be parsed")
+    }
+
+    for candidateIndex in (index + 1)...upperBound {
+        let candidate = lines[candidateIndex]
+
+        switch kind {
+        case .progress:
+            if let progressValue = normalizedProgressValue(candidate) {
+                return progressValue
+            }
+
+            if candidateIndex < upperBound {
+                let combined = "\(candidate) \(lines[candidateIndex + 1])"
+                if let progressValue = normalizedProgressValue(combined) {
+                    return progressValue
+                }
+            }
+
+        case .stat:
+            if let statValue = normalizedStatValue(candidate) {
+                return statValue
+            }
+        }
+    }
+
+    throw UsageParseError.unsupportedLayout("ChatGPT usage layout could not be parsed")
+}
+
+private func extractChatGPTSubtitle(after index: Int, lines: [String], valueText: String, kind: UsageMetricStyle) -> String? {
+    let upperBound = min(lines.count - 1, index + 8)
+    guard index + 1 <= upperBound else {
+        return nil
+    }
+
+    for candidateIndex in (index + 1)...upperBound {
+        let candidate = lines[candidateIndex]
+
+        if candidate == valueText {
+            continue
+        }
+
+        switch kind {
+        case .progress:
+            if candidate.localizedCaseInsensitiveContains("Resets") {
+                return candidate
+            }
+            if candidate.localizedCaseInsensitiveContains("reset"), candidateIndex < upperBound {
+                return "\(candidate) \(lines[candidateIndex + 1])"
+            }
+
+        case .stat:
+            if normalizedStatValue(candidate) == nil {
+                return candidate
+            }
+        }
+    }
+
+    return nil
+}
+
+private func extractLooksLikeLogin(_ extract: ServicePageExtract, keywords: [String]) -> Bool {
+    let haystack = [extract.pageTitle, extract.bodyText, extract.url]
+        .joined(separator: "\n")
+        .lowercased()
+
+    return keywords.contains(where: { haystack.contains($0) })
+}
+
+private func normalizedLines(from bodyText: String) -> [String] {
+    bodyText
+        .replacingOccurrences(of: "\r\n", with: "\n")
+        .split(separator: "\n")
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        .filter { !$0.isEmpty }
+}
+
+private func chatGPTCandidateLines(from extract: ServicePageExtract) -> [String] {
+    let bodyLines = normalizedLines(from: extract.bodyText)
+    var result = bodyLines
+    var seen = Set(bodyLines)
+
+    for segment in extract.segments {
+        for line in normalizedLines(from: segment) {
+            if seen.insert(line).inserted {
+                result.append(line)
+            }
+        }
+    }
+
+    return result
+}
+
+private func normalizedProgressValue(_ text: String) -> String? {
+    let normalized = text
+        .replacingOccurrences(of: "\n", with: " ")
+        .replacingOccurrences(of: "  ", with: " ")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    let patterns = [
+        #"(\d+(?:[.,]\d+)?)\s*%\s*(remaining|used)"#,
+        #"(\d+(?:[.,]\d+)?)\s*(remaining|used)"#
+    ]
+
+    for pattern in patterns {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+            continue
+        }
+        let range = NSRange(normalized.startIndex..<normalized.endIndex, in: normalized)
+        guard let match = regex.firstMatch(in: normalized, options: [], range: range),
+              let valueRange = Range(match.range(at: 1), in: normalized),
+              let statusRange = Range(match.range(at: 2), in: normalized) else {
+            continue
+        }
+
+        let value = normalized[valueRange]
+        let status = normalized[statusRange].lowercased()
+        return "\(value)% \(status)"
+    }
+
+    return nil
+}
+
+private func normalizedStatValue(_ text: String) -> String? {
+    let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard normalized.range(of: #"^\$?\d+(?:[.,]\d+)?$"#, options: .regularExpression) != nil else {
+        return nil
+    }
+
+    return normalized.replacingOccurrences(of: "$", with: "")
+}
+
+private func firstIndex(in lines: [String], containing needle: String) -> Int? {
+    lines.firstIndex { $0.localizedCaseInsensitiveContains(needle) }
+}
+
+private func firstLine(after index: Int, in lines: [String], matching predicate: (String) -> Bool = { _ in true }) -> String? {
+    guard index < lines.endIndex else {
+        return nil
+    }
+
+    for line in lines[(index + 1)...] where predicate(line) {
+        return line
+    }
+
+    return nil
+}
+
+private func previousLine(before index: Int, in lines: [String]) -> String? {
+    guard index > lines.startIndex else {
+        return nil
+    }
+
+    for candidateIndex in stride(from: index - 1, through: lines.startIndex, by: -1) {
+        let line = lines[candidateIndex]
+        if !line.isEmpty {
+            return line
+        }
+    }
+
+    return nil
+}
+
+private func percentage(from valueText: String) -> Double? {
+    guard let range = valueText.range(of: #"(\d+)%"#, options: .regularExpression) else {
+        return nil
+    }
+
+    let numberText = String(valueText[range]).replacingOccurrences(of: "%", with: "")
+    guard let value = Double(numberText) else {
+        return nil
+    }
+
+    return value / 100.0
+}

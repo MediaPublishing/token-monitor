@@ -1,0 +1,30 @@
+Plan usage limits
+Max (20x)
+
+Current session
+Starts when a message is sent
+0% used
+
+Weekly limits
+All models
+Resets in 10 hr 14 min
+100% used
+
+Sonnet only
+Resets in 14 hr 14 min
+17% used
+
+Last updated: less than a minute ago
+
+Extra usage
+Turn on extra usage to keep using Claude if you hit a limit.
+$158.05 spent
+Resets May 1
+79% used
+
+$200
+Monthly spend limit
+
+$41.94
+Current balance
+Auto-reload off

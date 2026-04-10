@@ -1,0 +1,19 @@
+Usage dashboard
+Balance
+
+5 hour usage limit
+99% remaining
+Resets 5:55 PM
+
+Weekly usage limit
+100% remaining
+
+GPT-5.3-Codex-Spark 5 hour usage limit
+100% remaining
+
+GPT-5.3-Codex-Spark Weekly usage limit
+100% remaining
+
+Credits remaining
+0
+Use credits to send messages beyond your plan limit
