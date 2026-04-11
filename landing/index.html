@@ -1,0 +1,1121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Token Monitor - Claude and ChatGPT usage in your macOS menu bar</title>
+  <meta name="description" content="Token Monitor is a native macOS menu bar app for watching Claude and ChatGPT usage side by side with isolated local WebKit sessions." />
+  <link rel="icon" type="image/png" href="../assets/branding/token-monitor-logo.png" />
+  <link rel="apple-touch-icon" href="../assets/branding/token-monitor-logo.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #0d0f1a;
+      --bg-soft: #13172a;
+      --surface: #171c31;
+      --surface-2: #1f2641;
+      --stroke: rgba(177, 163, 255, 0.27);
+      --text: #f4f1ff;
+      --muted: #bcb3df;
+      --accent: #7c3aed;
+      --accent-2: #a78bfa;
+      --ok: #66e6ad;
+      --warn: #ff5c74;
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --shadow: 0 26px 56px rgba(7, 8, 14, 0.58);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(840px 520px at 6% -8%, rgba(124, 58, 237, 0.34), transparent 66%),
+        radial-gradient(920px 560px at 100% 0%, rgba(52, 211, 153, 0.17), transparent 67%),
+        linear-gradient(174deg, #0c0f1b 0%, #0a0c16 100%);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      width: min(1180px, 92vw);
+      margin: 0 auto;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(to bottom, rgba(13, 15, 26, 0.95), rgba(13, 15, 26, 0.76));
+    }
+
+    .nav {
+      min-height: 74px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      font-family: "Outfit", system-ui, sans-serif;
+      font-weight: 700;
+      letter-spacing: .01em;
+      font-size: 1.08rem;
+    }
+
+    .brand span { white-space: nowrap; }
+
+    .brand img {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22);
+    }
+
+    .pill {
+      border: 1px solid var(--stroke);
+      color: var(--muted);
+      border-radius: 999px;
+      text-decoration: none;
+      padding: 7px 12px;
+      font-size: .83rem;
+      background: rgba(255, 255, 255, .03);
+      transition: border-color .18s ease, transform .18s ease;
+    }
+
+    .pill:hover {
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .nav-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .language-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--stroke);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .language-switch button {
+      border: 0;
+      border-radius: 6px;
+      padding: 5px 8px;
+      background: transparent;
+      color: var(--muted);
+      font: 700 .75rem "Outfit", system-ui, sans-serif;
+      cursor: pointer;
+    }
+
+    .language-switch button[aria-pressed="true"] {
+      color: #fff;
+      background: var(--accent);
+      box-shadow: 0 8px 18px rgba(124, 58, 237, .24);
+    }
+
+    main { padding: 34px 0 82px; }
+
+    .hero {
+      background: linear-gradient(180deg, rgba(35, 30, 61, 0.9), rgba(20, 25, 44, 0.88));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+      padding: clamp(22px, 3vw, 40px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 460px;
+      height: 460px;
+      right: -170px;
+      top: -220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(167, 139, 250, .34), transparent 70%);
+      pointer-events: none;
+      filter: blur(10px);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 24px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      line-height: 1.08;
+      font-family: "Outfit", system-ui, sans-serif;
+      letter-spacing: .01em;
+    }
+
+    h1 {
+      font-size: clamp(2rem, 4.4vw, 3.4rem);
+      margin: 10px 0 14px;
+      max-width: 12ch;
+    }
+
+    .eyebrow {
+      color: var(--accent-2);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: .76rem;
+    }
+
+    .sub {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 1.06rem;
+      max-width: 56ch;
+    }
+
+    .cta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .btn {
+      text-decoration: none;
+      border-radius: 12px;
+      padding: 12px 17px;
+      font-weight: 700;
+      font-family: "Outfit", system-ui, sans-serif;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+    }
+
+    .btn-download {
+      background: linear-gradient(135deg, var(--accent), #6a49e7);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, .18);
+      box-shadow: 0 10px 22px rgba(124, 58, 237, .37);
+    }
+
+    .btn-download:hover { transform: translateY(-2px); box-shadow: 0 16px 28px rgba(124, 58, 237, .45); }
+
+    .btn-source {
+      color: var(--text);
+      border: 1px solid var(--stroke);
+      background: rgba(255, 255, 255, .04);
+    }
+
+    .btn-source:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.35); }
+
+    .microcopy {
+      margin: 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .hero-surface {
+      background: linear-gradient(180deg, rgba(14, 17, 31, 0.96), rgba(10, 12, 23, 0.96));
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.16), 0 16px 40px rgba(0, 0, 0, .45);
+    }
+
+    .hero-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font-size: .8rem;
+      margin-bottom: 10px;
+    }
+
+    .hero-grid-shots {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 10px;
+    }
+
+    .shot-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .screen {
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: #0f1222;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .screen img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      background: #0f1222;
+    }
+
+    .screen-main { aspect-ratio: 1200 / 780; }
+    .screen-mini { aspect-ratio: 1143 / 308; }
+
+    .screen-label {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(10, 13, 24, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      font-family: "Outfit", system-ui, sans-serif;
+      font-size: .7rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: #d8cbff;
+    }
+
+    .section { margin-top: 58px; }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 48ch;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+    }
+
+    .step {
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius-md);
+      padding: 15px;
+    }
+
+    .step .num {
+      font-size: .72rem;
+      color: var(--accent-2);
+      font-family: "Outfit", system-ui, sans-serif;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .step h3 { margin: 8px 0 8px; font-size: 1.08rem; }
+    .step p { margin: 0; color: var(--muted); }
+
+    .workflow-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .workflow-card {
+      background: linear-gradient(180deg, #171c31, #141a2c);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto auto;
+      min-height: 100%;
+    }
+
+    .workflow-head {
+      padding: 12px 12px 8px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+
+    .workflow-head h3 {
+      font-size: 1.04rem;
+      margin-bottom: 4px;
+    }
+
+    .workflow-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    .workflow-image-wrap { padding: 12px; }
+
+    .workflow-shot {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: #0f1222;
+      display: block;
+      cursor: zoom-in;
+      transition: transform .16s ease, border-color .16s ease;
+    }
+
+    .workflow-shot:hover {
+      transform: translateY(-2px);
+      border-color: rgba(167, 139, 250, .5);
+    }
+
+    .workflow-caption {
+      margin-top: 7px;
+      color: #9f95c6;
+      font-size: .84rem;
+      text-align: center;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--surface-2);
+      border: 1px solid rgba(255,255,255,.11);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+
+    .native-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 100%;
+      background:
+        linear-gradient(135deg, rgba(32, 40, 68, .98), rgba(24, 29, 52, .96)),
+        radial-gradient(circle at 100% 0%, rgba(124, 58, 237, .26), transparent 42%);
+    }
+
+    .native-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -44px -68px auto;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 1px solid rgba(167, 139, 250, .22);
+      background: rgba(255, 255, 255, .025);
+      pointer-events: none;
+    }
+
+    .native-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 12px;
+      padding: 5px 9px;
+      border-radius: 8px;
+      border: 1px solid rgba(102, 230, 173, .24);
+      color: var(--ok);
+      background: rgba(102, 230, 173, .08);
+      font: 700 .76rem "Outfit", system-ui, sans-serif;
+    }
+
+    .native-card h2 { margin-bottom: 10px; }
+
+    .native-card .lede {
+      margin: 0 0 16px;
+      color: #ddd8f6;
+      max-width: 62ch;
+    }
+
+    .native-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .native-stat {
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(7, 10, 20, .22);
+    }
+
+    .native-stat strong {
+      display: block;
+      color: #fff;
+      font-family: "Outfit", system-ui, sans-serif;
+      font-size: .98rem;
+    }
+
+    .native-stat span {
+      color: var(--muted);
+      font-size: .86rem;
+    }
+
+    .check {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .check li {
+      color: var(--muted);
+      margin-bottom: 9px;
+      padding-left: 21px;
+      position: relative;
+    }
+
+    .check li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--ok);
+      font-weight: 700;
+    }
+
+    .faq { display: grid; gap: 8px; }
+
+    details {
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      padding: 11px 13px;
+    }
+
+    summary {
+      list-style: none;
+      cursor: pointer;
+      font-family: "Outfit", system-ui, sans-serif;
+      font-weight: 600;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+    details p { margin: 8px 0 0; color: var(--muted); }
+
+    .thumbs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 11px;
+    }
+
+    .thumbs img {
+      width: 100%;
+      display: block;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      cursor: zoom-in;
+      background: #0f1222;
+    }
+
+    .repo-box {
+      margin-top: 17px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    code {
+      background: rgba(255,255,255,.07);
+      border-radius: 8px;
+      padding: 4px 7px;
+      color: #e4dcff;
+      font-size: .84rem;
+      word-break: break-all;
+    }
+
+    footer {
+      margin-top: 62px;
+      border-top: 1px solid rgba(255,255,255,.09);
+      padding-top: 20px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      font-size: .92rem;
+    }
+
+    a.inline { color: var(--accent-2); }
+
+    .zoom-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 8, 14, 0.88);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 24px;
+    }
+
+    .zoom-modal.open { display: flex; }
+
+    .zoom-inner {
+      width: min(1100px, 100%);
+      max-height: calc(100vh - 32px);
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: #0f1222;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,.58);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .zoom-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      color: var(--muted);
+      font-size: .9rem;
+      flex: 0 0 auto;
+    }
+
+    .zoom-close {
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.05);
+      color: #fff;
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-family: "Outfit", system-ui, sans-serif;
+    }
+
+    .zoom-media {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow: auto;
+      background: #0f1222;
+    }
+
+    #zoom-image {
+      max-width: 100%;
+      max-height: calc(100vh - 130px);
+      width: auto;
+      height: auto;
+      display: block;
+      object-fit: contain;
+      background: #0f1222;
+      margin: auto;
+    }
+
+    @media (max-width: 1020px) {
+      .hero-grid,
+      .split { grid-template-columns: 1fr; }
+      .workflow-grid,
+      .native-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .hero-grid-shots { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 640px) {
+      .thumbs { grid-template-columns: 1fr; }
+      .section-head {
+        display: block;
+      }
+      .section-head h2 {
+        margin-bottom: 8px;
+      }
+      .nav {
+        min-height: 68px;
+        align-items: flex-start;
+        padding: 12px 0;
+        flex-wrap: wrap;
+      }
+      .nav-actions { width: 100%; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <div class="brand">
+        <img src="../assets/branding/token-monitor-logo.png" alt="Token Monitor logo" data-i18n-attr="alt:alt.logo" />
+        <span>Token Monitor</span>
+      </div>
+      <div class="nav-actions">
+        <div class="language-switch" data-language-switcher aria-label="Language">
+          <button type="button" data-lang-choice="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang-choice="de" aria-pressed="false">DE</button>
+        </div>
+        <a class="pill" href="https://github.com/MediaPublishing/token-monitor/releases/latest" target="_blank" rel="noopener noreferrer" data-i18n="nav.preview">GitHub Release</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="hero-grid">
+        <div>
+          <div class="eyebrow" data-i18n="hero.eyebrow">Track. Refresh. Stay ahead.</div>
+          <h1 data-i18n="hero.title">Know your AI usage before it stops you.</h1>
+          <p class="sub" data-i18n="hero.sub">Token Monitor keeps Claude and ChatGPT usage visible in your macOS menu bar, with separate local sessions and source-native limits for each provider.</p>
+
+          <div class="cta">
+            <a class="btn btn-download" href="https://github.com/MediaPublishing/token-monitor/releases/latest/download/TokenMonitor-macOS.dmg" target="_blank" rel="noopener noreferrer" data-i18n="hero.ctaPrimary">Download macOS DMG</a>
+            <a class="btn btn-source" href="https://github.com/MediaPublishing/token-monitor" target="_blank" rel="noopener noreferrer" data-i18n="hero.ctaSecondary">Explore Source Code</a>
+          </div>
+
+          <p class="microcopy" data-i18n="hero.microcopy">Install once from the DMG. Future builds can be offered through Sparkle update checks.</p>
+        </div>
+
+        <div class="hero-surface">
+          <div class="hero-topline">
+            <span data-i18n="shots.realViews">Real App Views</span>
+            <span data-i18n="shots.zoomHint">Click any screenshot to zoom</span>
+          </div>
+          <div class="hero-grid-shots">
+            <figure class="screen screen-main">
+              <span class="screen-label" data-i18n="label.dashboard">Dashboard</span>
+              <img class="zoomable" src="../assets/screenshots/app/dashboard.png" alt="Token Monitor dashboard screenshot" data-label="Dashboard" data-i18n-attr="alt:alt.dashboard;data-label:label.dashboardView" />
+            </figure>
+            <div class="shot-stack">
+              <figure class="screen screen-mini">
+                <span class="screen-label" data-i18n="label.claude">Claude</span>
+                <img class="zoomable" src="../assets/screenshots/app/claude.png" alt="Token Monitor Claude usage screenshot" data-label="Claude usage" data-i18n-attr="alt:alt.claude;data-label:label.claudeView" />
+              </figure>
+              <figure class="screen screen-mini">
+                <span class="screen-label" data-i18n="label.chatgpt">ChatGPT</span>
+                <img class="zoomable" src="../assets/screenshots/app/chatgpt.png" alt="Token Monitor ChatGPT usage screenshot" data-label="ChatGPT usage" data-i18n-attr="alt:alt.chatgpt;data-label:label.chatgptView" />
+              </figure>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2 data-i18n="steps.title">Start in 3 minutes</h2>
+        <p data-i18n="steps.sub">No build tools, no shared browser cookies.</p>
+      </div>
+      <div class="steps">
+        <article class="step">
+          <div class="num" data-i18n="steps.one.num">Step 01</div>
+          <h3 data-i18n="steps.one.title">Install the app</h3>
+          <p data-i18n="steps.one.body">Download the DMG, open it, and drag Token Monitor onto Applications.</p>
+        </article>
+        <article class="step">
+          <div class="num" data-i18n="steps.two.num">Step 02</div>
+          <h3 data-i18n="steps.two.title">Connect providers</h3>
+          <p data-i18n="steps.two.body">Log in once for Claude and ChatGPT inside their isolated WebKit sessions.</p>
+        </article>
+        <article class="step">
+          <div class="num" data-i18n="steps.three.num">Step 03</div>
+          <h3 data-i18n="steps.three.title">Watch limits</h3>
+          <p data-i18n="steps.three.body">Open the menu bar popover when you need the current provider-specific capacity.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2 data-i18n="workflow.title">See usage clearly</h2>
+        <p data-i18n="workflow.sub">Each provider keeps its own numbers and reset windows. Click images to inspect details.</p>
+      </div>
+
+      <div class="workflow-grid">
+        <article class="workflow-card">
+          <div class="workflow-head">
+            <h3 data-i18n="workflow.dashboard.title">One menu bar view</h3>
+            <p data-i18n="workflow.dashboard.body">A compact status board keeps Claude and ChatGPT side by side.</p>
+          </div>
+          <div class="workflow-image-wrap">
+            <img class="workflow-shot zoomable" src="../assets/screenshots/app/dashboard.png" alt="Token Monitor full dashboard screenshot" data-label="Dashboard" data-i18n-attr="alt:alt.dashboardFull;data-label:label.dashboardView" />
+            <div class="workflow-caption" data-i18n="workflow.dashboard.caption">Dashboard - provider overview</div>
+          </div>
+        </article>
+
+        <article class="workflow-card">
+          <div class="workflow-head">
+            <h3 data-i18n="workflow.claude.title">Claude usage as Claude reports it</h3>
+            <p data-i18n="workflow.claude.body">Session, model, Sonnet, extra usage, balance, and reset timing stay source-native.</p>
+          </div>
+          <div class="workflow-image-wrap">
+            <img class="workflow-shot zoomable" src="../assets/screenshots/app/claude.png" alt="Token Monitor Claude usage full screenshot" data-label="Claude usage" data-i18n-attr="alt:alt.claudeFull;data-label:label.claudeView" />
+            <div class="workflow-caption" data-i18n="workflow.claude.caption">Claude - session and model limits</div>
+          </div>
+        </article>
+
+        <article class="workflow-card">
+          <div class="workflow-head">
+            <h3 data-i18n="workflow.chatgpt.title">ChatGPT and Codex limits together</h3>
+            <p data-i18n="workflow.chatgpt.body">Daily, weekly, Codex, and credits values stay visible without a browser tab hunt.</p>
+          </div>
+          <div class="workflow-image-wrap">
+            <img class="workflow-shot zoomable" src="../assets/screenshots/app/chatgpt.png" alt="Token Monitor ChatGPT usage full screenshot" data-label="ChatGPT usage" data-i18n-attr="alt:alt.chatgptFull;data-label:label.chatgptView" />
+            <div class="workflow-caption" data-i18n="workflow.chatgpt.caption">ChatGPT - daily, weekly, Codex, credits</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section split">
+      <article class="card native-card">
+        <div class="native-kicker" data-i18n="native.kicker">Local sessions by design</div>
+        <h2 data-i18n="native.title">Why this belongs in the menu bar</h2>
+        <p class="lede" data-i18n="native.lede">Token Monitor keeps the usage check close to your work without merging provider rules into a fake universal score.</p>
+        <ul class="check">
+          <li data-i18n="native.point.one">Separate WebKit storage for each provider</li>
+          <li data-i18n="native.point.two">Source-native metrics instead of invented scoring</li>
+          <li data-i18n="native.point.three">Refresh on launch, on demand, and in the background</li>
+          <li data-i18n="native.point.four">Only the latest successful snapshots are stored locally</li>
+        </ul>
+        <div class="native-grid">
+          <div class="native-stat">
+            <strong data-i18n="native.stat.one.title">Provider rules stay intact</strong>
+            <span data-i18n="native.stat.one.body">Claude remains Claude. ChatGPT remains ChatGPT.</span>
+          </div>
+          <div class="native-stat">
+            <strong data-i18n="native.stat.two.title">Updates are ready</strong>
+            <span data-i18n="native.stat.two.body">Sparkle checks the signed appcast.</span>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2 style="margin-bottom:10px;" data-i18n="faq.title">FAQ + screenshot gallery</h2>
+        <div class="faq">
+          <details>
+            <summary data-i18n="faq.one.q">Do I need to compile anything to use Token Monitor?</summary>
+            <p data-i18n="faq.one.a">No. Download the DMG, open it, and drag the app onto Applications.</p>
+          </details>
+          <details>
+            <summary data-i18n="faq.two.q">Does it reuse my browser cookies?</summary>
+            <p data-i18n="faq.two.a">No. Claude and ChatGPT use separate persistent WebKit sessions inside the app.</p>
+          </details>
+          <details>
+            <summary data-i18n="faq.three.q">Where can I inspect the UI before installing?</summary>
+            <p data-i18n="faq.three.a">All screenshots are real Token Monitor views. Click any of them to open an enlarged preview.</p>
+          </details>
+          <details>
+            <summary data-i18n="faq.four.q">How do updates work?</summary>
+            <p data-i18n="faq.four.a">The app can check a signed Sparkle appcast. New GitHub releases can publish the update assets automatically.</p>
+          </details>
+          <details>
+            <summary data-i18n="faq.five.q">Why can macOS show a Gatekeeper warning?</summary>
+            <p data-i18n="faq.five.a">Preview builds may show Apple's verification warning until Token Monitor is Developer ID signed and notarized. Only bypass Gatekeeper for a build you downloaded from this repository and trust.</p>
+          </details>
+        </div>
+        <div class="thumbs">
+          <img class="zoomable" src="../assets/screenshots/app/dashboard.png" alt="App screenshot dashboard" data-label="Dashboard" data-i18n-attr="alt:alt.thumbDashboard;data-label:label.dashboardView" />
+          <img class="zoomable" src="../assets/screenshots/app/claude.png" alt="App screenshot Claude usage" data-label="Claude usage" data-i18n-attr="alt:alt.thumbClaude;data-label:label.claudeView" />
+          <img class="zoomable" src="../assets/screenshots/app/chatgpt.png" alt="App screenshot ChatGPT usage" data-label="ChatGPT usage" data-i18n-attr="alt:alt.thumbChatgpt;data-label:label.chatgptView" />
+        </div>
+      </article>
+    </section>
+
+    <div class="repo-box">
+      <div>
+        <strong data-i18n="repo.title">Repository</strong><br />
+        <code>https://github.com/MediaPublishing/token-monitor</code>
+      </div>
+      <a class="btn btn-source" href="https://github.com/MediaPublishing/token-monitor" target="_blank" rel="noopener noreferrer" data-i18n="repo.cta">Open GitHub Repo</a>
+    </div>
+
+    <footer>
+      <span data-i18n="footer.tagline">Token Monitor - Claude and ChatGPT usage for macOS</span>
+      <span>Docs: <a class="inline" href="https://github.com/MediaPublishing/token-monitor/blob/main/README.md" target="_blank" rel="noopener noreferrer">README</a></span>
+    </footer>
+  </main>
+
+  <div id="zoom-modal" class="zoom-modal" aria-hidden="true">
+    <div class="zoom-inner">
+      <div class="zoom-head">
+        <span id="zoom-label">Screenshot</span>
+        <button class="zoom-close" id="zoom-close" type="button" data-i18n="modal.close">Close</button>
+      </div>
+      <div class="zoom-media">
+        <img id="zoom-image" src="" alt="Enlarged screenshot preview" data-i18n-attr="alt:alt.zoom" />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const translations = {
+        en: {
+          'meta.title': 'Token Monitor - Claude and ChatGPT usage in your macOS menu bar',
+          'meta.description': 'Token Monitor is a native macOS menu bar app for watching Claude and ChatGPT usage side by side with isolated local WebKit sessions.',
+          'alt.logo': 'Token Monitor logo',
+          'alt.dashboard': 'Token Monitor dashboard screenshot',
+          'alt.claude': 'Token Monitor Claude usage screenshot',
+          'alt.chatgpt': 'Token Monitor ChatGPT usage screenshot',
+          'alt.dashboardFull': 'Token Monitor full dashboard screenshot',
+          'alt.claudeFull': 'Token Monitor Claude usage full screenshot',
+          'alt.chatgptFull': 'Token Monitor ChatGPT usage full screenshot',
+          'alt.thumbDashboard': 'App screenshot dashboard',
+          'alt.thumbClaude': 'App screenshot Claude usage',
+          'alt.thumbChatgpt': 'App screenshot ChatGPT usage',
+          'alt.zoom': 'Enlarged screenshot preview',
+          'nav.preview': 'GitHub Release',
+          'hero.eyebrow': 'Track. Refresh. Stay ahead.',
+          'hero.title': 'Know your AI usage before it stops you.',
+          'hero.sub': 'Token Monitor keeps Claude and ChatGPT usage visible in your macOS menu bar, with separate local sessions and source-native limits for each provider.',
+          'hero.ctaPrimary': 'Download macOS DMG',
+          'hero.ctaSecondary': 'Explore Source Code',
+          'hero.microcopy': 'Install once from the DMG. Future builds can be offered through Sparkle update checks.',
+          'shots.realViews': 'Real App Views',
+          'shots.zoomHint': 'Click any screenshot to zoom',
+          'label.dashboard': 'Dashboard',
+          'label.claude': 'Claude',
+          'label.chatgpt': 'ChatGPT',
+          'label.dashboardView': 'Dashboard',
+          'label.claudeView': 'Claude usage',
+          'label.chatgptView': 'ChatGPT usage',
+          'steps.title': 'Start in 3 minutes',
+          'steps.sub': 'No build tools, no shared browser cookies.',
+          'steps.one.num': 'Step 01',
+          'steps.one.title': 'Install the app',
+          'steps.one.body': 'Download the DMG, open it, and drag Token Monitor onto Applications.',
+          'steps.two.num': 'Step 02',
+          'steps.two.title': 'Connect providers',
+          'steps.two.body': 'Log in once for Claude and ChatGPT inside their isolated WebKit sessions.',
+          'steps.three.num': 'Step 03',
+          'steps.three.title': 'Watch limits',
+          'steps.three.body': 'Open the menu bar popover when you need the current provider-specific capacity.',
+          'workflow.title': 'See usage clearly',
+          'workflow.sub': 'Each provider keeps its own numbers and reset windows. Click images to inspect details.',
+          'workflow.dashboard.title': 'One menu bar view',
+          'workflow.dashboard.body': 'A compact status board keeps Claude and ChatGPT side by side.',
+          'workflow.dashboard.caption': 'Dashboard - provider overview',
+          'workflow.claude.title': 'Claude usage as Claude reports it',
+          'workflow.claude.body': 'Session, model, Sonnet, extra usage, balance, and reset timing stay source-native.',
+          'workflow.claude.caption': 'Claude - session and model limits',
+          'workflow.chatgpt.title': 'ChatGPT and Codex limits together',
+          'workflow.chatgpt.body': 'Daily, weekly, Codex, and credits values stay visible without a browser tab hunt.',
+          'workflow.chatgpt.caption': 'ChatGPT - daily, weekly, Codex, credits',
+          'native.kicker': 'Local sessions by design',
+          'native.title': 'Why this belongs in the menu bar',
+          'native.lede': 'Token Monitor keeps the usage check close to your work without merging provider rules into a fake universal score.',
+          'native.point.one': 'Separate WebKit storage for each provider',
+          'native.point.two': 'Source-native metrics instead of invented scoring',
+          'native.point.three': 'Refresh on launch, on demand, and in the background',
+          'native.point.four': 'Only the latest successful snapshots are stored locally',
+          'native.stat.one.title': 'Provider rules stay intact',
+          'native.stat.one.body': 'Claude remains Claude. ChatGPT remains ChatGPT.',
+          'native.stat.two.title': 'Updates are ready',
+          'native.stat.two.body': 'Sparkle checks the signed appcast.',
+          'faq.title': 'FAQ + screenshot gallery',
+          'faq.one.q': 'Do I need to compile anything to use Token Monitor?',
+          'faq.one.a': 'No. Download the DMG, open it, and drag the app onto Applications.',
+          'faq.two.q': 'Does it reuse my browser cookies?',
+          'faq.two.a': 'No. Claude and ChatGPT use separate persistent WebKit sessions inside the app.',
+          'faq.three.q': 'Where can I inspect the UI before installing?',
+          'faq.three.a': 'All screenshots are real Token Monitor views. Click any of them to open an enlarged preview.',
+          'faq.four.q': 'How do updates work?',
+          'faq.four.a': 'The app can check a signed Sparkle appcast. New GitHub releases can publish the update assets automatically.',
+          'faq.five.q': 'Why can macOS show a Gatekeeper warning?',
+          'faq.five.a': 'Preview builds may show Apple\\'s verification warning until Token Monitor is Developer ID signed and notarized. Only bypass Gatekeeper for a build you downloaded from this repository and trust.',
+          'repo.title': 'Repository',
+          'repo.cta': 'Open GitHub Repo',
+          'footer.tagline': 'Token Monitor - Claude and ChatGPT usage for macOS',
+          'modal.close': 'Close'
+        },
+        de: {
+          'meta.title': 'Token Monitor - Claude- und ChatGPT-Nutzung in der macOS-Menueleiste',
+          'meta.description': 'Token Monitor ist eine native macOS-Menueleisten-App fuer Claude- und ChatGPT-Nutzung mit getrennten lokalen WebKit-Sessions.',
+          'alt.logo': 'Token Monitor Logo',
+          'alt.dashboard': 'Token Monitor Dashboard-Screenshot',
+          'alt.claude': 'Token Monitor Screenshot der Claude-Nutzung',
+          'alt.chatgpt': 'Token Monitor Screenshot der ChatGPT-Nutzung',
+          'alt.dashboardFull': 'Token Monitor vollstaendiger Dashboard-Screenshot',
+          'alt.claudeFull': 'Token Monitor vollstaendiger Screenshot der Claude-Nutzung',
+          'alt.chatgptFull': 'Token Monitor vollstaendiger Screenshot der ChatGPT-Nutzung',
+          'alt.thumbDashboard': 'App-Screenshot Dashboard',
+          'alt.thumbClaude': 'App-Screenshot Claude-Nutzung',
+          'alt.thumbChatgpt': 'App-Screenshot ChatGPT-Nutzung',
+          'alt.zoom': 'Vergroesserte Screenshot-Vorschau',
+          'nav.preview': 'GitHub Release',
+          'hero.eyebrow': 'Tracken. Aktualisieren. Vorne bleiben.',
+          'hero.title': 'Kenne deine AI-Nutzung, bevor sie dich stoppt.',
+          'hero.sub': 'Token Monitor haelt Claude- und ChatGPT-Nutzung in deiner macOS-Menueleiste sichtbar, mit getrennten lokalen Sessions und originalen Limits je Provider.',
+          'hero.ctaPrimary': 'macOS DMG herunterladen',
+          'hero.ctaSecondary': 'Source Code ansehen',
+          'hero.microcopy': 'Einmal aus dem DMG installieren. Kuenftige Builds koennen per Sparkle-Update angeboten werden.',
+          'shots.realViews': 'Echte App-Ansichten',
+          'shots.zoomHint': 'Klicke auf Screenshots zum Zoomen',
+          'label.dashboard': 'Dashboard',
+          'label.claude': 'Claude',
+          'label.chatgpt': 'ChatGPT',
+          'label.dashboardView': 'Dashboard',
+          'label.claudeView': 'Claude-Nutzung',
+          'label.chatgptView': 'ChatGPT-Nutzung',
+          'steps.title': 'Start in 3 Minuten',
+          'steps.sub': 'Keine Build-Tools, keine geteilten Browser-Cookies.',
+          'steps.one.num': 'Schritt 01',
+          'steps.one.title': 'App installieren',
+          'steps.one.body': 'DMG laden, oeffnen und Token Monitor auf Applications ziehen.',
+          'steps.two.num': 'Schritt 02',
+          'steps.two.title': 'Provider verbinden',
+          'steps.two.body': 'Einmal fuer Claude und ChatGPT in den getrennten WebKit-Sessions anmelden.',
+          'steps.three.num': 'Schritt 03',
+          'steps.three.title': 'Limits im Blick behalten',
+          'steps.three.body': 'Oeffne das Menueleisten-Popover, wenn du die aktuelle provider-spezifische Kapazitaet brauchst.',
+          'workflow.title': 'Nutzung klar sehen',
+          'workflow.sub': 'Jeder Provider behaelt eigene Werte und Reset-Fenster. Klicke Bilder an, um Details zu pruefen.',
+          'workflow.dashboard.title': 'Eine Menueleisten-Ansicht',
+          'workflow.dashboard.body': 'Ein kompaktes Status-Board haelt Claude und ChatGPT nebeneinander sichtbar.',
+          'workflow.dashboard.caption': 'Dashboard - Provider-Uebersicht',
+          'workflow.claude.title': 'Claude-Nutzung wie Claude sie meldet',
+          'workflow.claude.body': 'Session, Modelle, Sonnet, Extra Usage, Balance und Reset-Zeit bleiben quellnah.',
+          'workflow.claude.caption': 'Claude - Session- und Modell-Limits',
+          'workflow.chatgpt.title': 'ChatGPT- und Codex-Limits zusammen',
+          'workflow.chatgpt.body': 'Daily, Weekly, Codex und Credits bleiben sichtbar, ohne Browser-Tab-Suche.',
+          'workflow.chatgpt.caption': 'ChatGPT - Daily, Weekly, Codex, Credits',
+          'native.kicker': 'Lokale Sessions by design',
+          'native.title': 'Warum das in die Menueleiste gehoert',
+          'native.lede': 'Token Monitor haelt den Usage-Check nah an deiner Arbeit, ohne Provider-Regeln in einen kuenstlichen Gesamtscore zu pressen.',
+          'native.point.one': 'Getrennter WebKit-Speicher je Provider',
+          'native.point.two': 'Quellnahe Metriken statt erfundener Scores',
+          'native.point.three': 'Refresh beim Start, manuell und im Hintergrund',
+          'native.point.four': 'Nur die letzten erfolgreichen Snapshots werden lokal gespeichert',
+          'native.stat.one.title': 'Provider-Regeln bleiben intakt',
+          'native.stat.one.body': 'Claude bleibt Claude. ChatGPT bleibt ChatGPT.',
+          'native.stat.two.title': 'Updates sind vorbereitet',
+          'native.stat.two.body': 'Sparkle prueft den signierten Appcast.',
+          'faq.title': 'FAQ + Screenshot-Galerie',
+          'faq.one.q': 'Muss ich etwas kompilieren, um Token Monitor zu nutzen?',
+          'faq.one.a': 'Nein. DMG laden, oeffnen und die App auf Applications ziehen.',
+          'faq.two.q': 'Nutzt die App meine Browser-Cookies?',
+          'faq.two.a': 'Nein. Claude und ChatGPT nutzen getrennte persistente WebKit-Sessions in der App.',
+          'faq.three.q': 'Wo kann ich die UI vor der Installation ansehen?',
+          'faq.three.a': 'Alle Screenshots sind echte Token-Monitor-Ansichten. Klicke sie an, um eine vergroesserte Vorschau zu oeffnen.',
+          'faq.four.q': 'Wie funktionieren Updates?',
+          'faq.four.a': 'Die App kann einen signierten Sparkle-Appcast pruefen. Neue GitHub Releases koennen die Update-Artefakte automatisch veroeffentlichen.',
+          'faq.five.q': 'Warum kann macOS eine Gatekeeper-Warnung zeigen?',
+          'faq.five.a': 'Preview-Builds koennen Apples Pruefwarnung zeigen, bis Token Monitor mit Developer ID signiert und notarized ist. Umgehe Gatekeeper nur bei einem Build, den du aus diesem Repository geladen hast und dem du vertraust.',
+          'repo.title': 'Repository',
+          'repo.cta': 'GitHub Repo oeffnen',
+          'footer.tagline': 'Token Monitor - Claude- und ChatGPT-Nutzung fuer macOS',
+          'modal.close': 'Schliessen'
+        }
+      };
+
+      const metaDescription = document.querySelector('meta[name="description"]');
+      const languageButtons = document.querySelectorAll('[data-lang-choice]');
+      const modal = document.getElementById('zoom-modal');
+      const zoomImage = document.getElementById('zoom-image');
+      const zoomLabel = document.getElementById('zoom-label');
+      const closeBtn = document.getElementById('zoom-close');
+      const zoomables = document.querySelectorAll('.zoomable');
+
+      function t(lang, key) {
+        return translations[lang][key] || translations.en[key] || '';
+      }
+
+      function getInitialLanguage() {
+        const saved = window.localStorage.getItem('tokenmonitor-language');
+        if (saved === 'en' || saved === 'de') return saved;
+
+        const languages = navigator.languages || [navigator.language || 'en'];
+        return languages.some(language => language.toLowerCase().startsWith('de')) ? 'de' : 'en';
+      }
+
+      function applyLanguage(lang) {
+        document.documentElement.lang = lang;
+        document.title = t(lang, 'meta.title');
+        if (metaDescription) metaDescription.setAttribute('content', t(lang, 'meta.description'));
+
+        document.querySelectorAll('[data-i18n]').forEach(element => {
+          element.textContent = t(lang, element.dataset.i18n);
+        });
+
+        document.querySelectorAll('[data-i18n-html]').forEach(element => {
+          element.innerHTML = t(lang, element.dataset.i18nHtml);
+        });
+
+        document.querySelectorAll('[data-i18n-attr]').forEach(element => {
+          element.dataset.i18nAttr.split(';').forEach(pair => {
+            const parts = pair.split(':');
+            if (parts.length !== 2) return;
+            element.setAttribute(parts[0], t(lang, parts[1]));
+          });
+        });
+
+        languageButtons.forEach(button => {
+          button.setAttribute('aria-pressed', String(button.dataset.langChoice === lang));
+        });
+
+        window.localStorage.setItem('tokenmonitor-language', lang);
+      }
+
+      function openModal(src, label) {
+        zoomImage.src = src;
+        zoomLabel.textContent = label || 'Screenshot';
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeModal() {
+        modal.classList.remove('open');
+        modal.setAttribute('aria-hidden', 'true');
+        zoomImage.src = '';
+      }
+
+      zoomables.forEach(img => {
+        img.addEventListener('click', () => {
+          openModal(img.src, img.dataset.label || img.alt);
+        });
+      });
+
+      languageButtons.forEach(button => {
+        button.addEventListener('click', () => applyLanguage(button.dataset.langChoice));
+      });
+
+      closeBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeModal();
+      });
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.classList.contains('open')) closeModal();
+      });
+
+      applyLanguage(getInitialLanguage());
+    })();
+  </script>
+</body>
+</html>

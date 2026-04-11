@@ -6,7 +6,7 @@ struct DashboardPopoverView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            header
+            PopoverHeaderView()
 
             ForEach(model.dashboardState.services, id: \.service) { status in
                 ServiceSectionView(status: status)
@@ -18,46 +18,6 @@ struct DashboardPopoverView: View {
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    private var header: some View {
-        HStack(alignment: .center, spacing: 6) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Token Monitor")
-                    .font(.headline.weight(.semibold))
-                Text(model.lastRefreshText)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            Button {
-                model.refreshAll(trigger: .manual)
-            } label: {
-                Image(systemName: "arrow.clockwise")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .help("Refresh both services")
-
-            Button {
-                model.showSettingsInPopover()
-            } label: {
-                Image(systemName: "gearshape")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .help("Open settings")
-
-            Button {
-                model.quitApplication()
-            } label: {
-                Text("Quit")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-            .help("Quit")
-        }
-    }
 }
 
 private struct ServiceSectionView: View {

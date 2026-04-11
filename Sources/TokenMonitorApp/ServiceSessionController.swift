@@ -117,7 +117,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
     }
 
     private func extractSnapshot(loadToken: UUID) async {
-        let delays: [UInt64] = [350_000_000, 900_000_000, 1_700_000_000]
+        let delays: [UInt64] = [500_000_000, 1_500_000_000, 3_000_000_000, 6_000_000_000, 10_000_000_000]
         var latestExtract: ServicePageExtract?
 
         for (index, delay) in delays.enumerated() {
@@ -289,7 +289,13 @@ private func extractionScript(for service: ServiceKind) -> String {
     case .claude:
         return """
         (() => {
-          const bodyText = document.body ? document.body.innerText : "";
+          const readableText = (root) => {
+            if (!root) return "";
+            const clone = root.cloneNode(true);
+            clone.querySelectorAll('script, style, noscript, template').forEach(node => node.remove());
+            return clone.innerText || clone.textContent || "";
+          };
+          const bodyText = readableText(document.body);
           const interesting = Array.from(document.querySelectorAll('main, main *, section, article, div'))
             .map(node => (node.innerText || '').trim())
             .filter(text => text.length > 0 && text.length < 320)
@@ -307,7 +313,13 @@ private func extractionScript(for service: ServiceKind) -> String {
     case .chatGPT:
         return """
         (() => {
-          const bodyText = document.body ? (document.body.innerText || document.body.textContent || '') : "";
+          const readableText = (root) => {
+            if (!root) return "";
+            const clone = root.cloneNode(true);
+            clone.querySelectorAll('script, style, noscript, template').forEach(node => node.remove());
+            return clone.innerText || clone.textContent || "";
+          };
+          const bodyText = readableText(document.body);
           const cardTexts = Array.from(document.querySelectorAll('main section, main article, main div'))
             .map(node => (node.innerText || node.textContent || '').trim())
             .filter(text => /usage limit|credits remaining|remaining|resets/i.test(text))

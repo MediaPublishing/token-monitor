@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var dashboardSubscription: AnyCancellable?
     private var popoverScreenSubscription: AnyCancellable?
     private var dashboardHostingController: NSHostingController<AnyView>?
+    private var outsideClickMonitor: Any?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Self.shared = self
@@ -32,6 +33,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         model.showSettingsInPopover()
     }
 
+    func closePopover() {
+        popover.performClose(nil)
+    }
+
+    private func installOutsideClickMonitor() {
+        removeOutsideClickMonitor()
+
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.closePopover()
+            }
+        }
+    }
+
+    private func removeOutsideClickMonitor() {
+        guard let monitor = outsideClickMonitor else {
+            return
+        }
+
+        NSEvent.removeMonitor(monitor)
+        outsideClickMonitor = nil
+    }
+
     @objc private func togglePopover(_ sender: Any?) {
         guard let button = statusItem?.button else {
             return
@@ -45,6 +71,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         model.didOpenPopover()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.becomeKey()
+        installOutsideClickMonitor()
     }
 
     private func configurePopover() {
@@ -182,6 +209,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     func popoverDidClose(_ notification: Notification) {
+        removeOutsideClickMonitor()
         model.didClosePopover()
     }
 }

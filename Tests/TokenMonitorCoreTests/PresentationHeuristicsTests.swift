@@ -34,9 +34,9 @@ struct PresentationHeuristicsTests {
             pageTitle: "Claude",
             url: "https://claude.ai/settings/usage",
             metrics: [
-                UsageMetric(key: "current-session", title: "Current session", valueText: "0% used", subtitle: nil, progress: 0, style: .progress),
-                UsageMetric(key: "weekly-all-models", title: "All models", valueText: "100% used", subtitle: nil, progress: 1, style: .progress),
-                UsageMetric(key: "weekly-sonnet", title: "Sonnet only", valueText: "17% used", subtitle: nil, progress: 0.17, style: .progress)
+                UsageMetric(key: "current-session", title: "Current session", valueText: "100% remaining", subtitle: nil, progress: 1, style: .progress),
+                UsageMetric(key: "weekly-all-models", title: "All models", valueText: "0% remaining", subtitle: nil, progress: 0, style: .progress),
+                UsageMetric(key: "weekly-sonnet", title: "Sonnet only", valueText: "83% remaining", subtitle: nil, progress: 0.83, style: .progress)
             ]
         )
 

@@ -17,6 +17,39 @@ struct RefreshDebugRecord: Codable, Sendable {
     let bodyPreview: String
     let segments: [String]
     let message: String?
+
+    var redacted: RefreshDebugRecord {
+        RefreshDebugRecord(
+            timestamp: timestamp,
+            service: service,
+            outcome: outcome,
+            pageTitle: pageTitle,
+            url: url,
+            bodyPreview: Self.redact(bodyPreview),
+            segments: segments.map(Self.redact),
+            message: message.map(Self.redact)
+        )
+    }
+
+    private static func redact(_ text: String) -> String {
+        var sanitized = text
+        let patterns = [
+            #""accessToken"\s*:\s*"[^"]+""#,
+            #""sessionToken"\s*:\s*"[^"]+""#,
+            #""email"\s*:\s*"[^"]+""#,
+            #"eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+(?:\.[A-Za-z0-9_\-]+)?"#
+        ]
+
+        for pattern in patterns {
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+                continue
+            }
+            let range = NSRange(sanitized.startIndex..<sanitized.endIndex, in: sanitized)
+            sanitized = regex.stringByReplacingMatches(in: sanitized, options: [], range: range, withTemplate: "[redacted]")
+        }
+
+        return sanitized
+    }
 }
 
 @MainActor
@@ -41,7 +74,7 @@ final class DiagnosticsStore {
             let fileURL = directoryURL
                 .appendingPathComponent("\(debugRecord.service.rawValue)-latest")
                 .appendingPathExtension("json")
-            let data = try encoder.encode(debugRecord)
+            let data = try encoder.encode(debugRecord.redacted)
             try data.write(to: fileURL, options: .atomic)
         } catch {
             NSLog("Failed to write debug record: \(error.localizedDescription)")

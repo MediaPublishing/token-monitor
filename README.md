@@ -1,139 +1,247 @@
 # Token Monitor
 
-Token Monitor is a native macOS menu bar app for watching usage dashboards from Claude and ChatGPT/Codex side by side.
+**Token Monitor** is a native macOS menu bar companion for Claude and ChatGPT/Codex usage: provider-specific limits, isolated sessions, background refresh, and Sparkle-ready update checks in one lightweight desktop app.
 
-It keeps separate persistent WebKit sessions for each service, reads the live usage pages directly, and stores only the latest successful snapshots locally.
+**Token Monitor** ist ein nativer macOS-Menueleisten-Begleiter fuer Claude- und ChatGPT/Codex-Nutzung: provider-spezifische Limits, getrennte Sessions, Hintergrund-Refresh und vorbereitete Sparkle-Updates in einer schlanken Desktop-App.
 
-![Token Monitor screenshot](docs/token-monitor-screenshot.png)
+> **Repository status / Repository-Status:** Public preview.
+
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
+![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
+![Updates](https://img.shields.io/badge/updates-Sparkle-green)
+
+## Screenshots
+
+### Dashboard
+![Token Monitor dashboard screenshot](assets/screenshots/app/dashboard.png)
+
+Watch Claude and ChatGPT/Codex side by side from the macOS menu bar.
+
+Claude und ChatGPT/Codex bleiben direkt in der macOS-Menueleiste nebeneinander sichtbar.
+
+### Claude Usage
+![Token Monitor Claude usage screenshot](assets/screenshots/app/claude.png)
+
+Keep Claude usage source-native: session, model, Sonnet, balance, extra usage, and reset timing stay separate.
+
+Claude bleibt quellnah: Session, Modell, Sonnet, Balance, Extra Usage und Reset-Zeit werden getrennt angezeigt.
+
+### ChatGPT + Codex Usage
+![Token Monitor ChatGPT usage screenshot](assets/screenshots/app/chatgpt.png)
+
+Track ChatGPT daily, weekly, Codex, and credit limits without digging through browser tabs.
+
+ChatGPT Daily, Weekly, Codex und Credits bleiben sichtbar, ohne Browser-Tab-Suche.
+
+---
 
 ## English
 
-### What it does
+### Why Token Monitor
 
-- Shows Claude above ChatGPT in a compact menu bar popover.
-- Keeps the two accounts isolated with separate persistent WebKit storage.
-- Refreshes on launch, on demand, and in the background.
-- Renders the source-native usage metrics from each provider instead of inventing a combined score.
-- Uses the menu bar icon to show remaining capacity at a glance.
+If your work depends on Claude and ChatGPT, the limiting factor is often not the model quality but whether you still have room left in the current window. Token Monitor closes that gap from the menu bar.
 
-### Download
+- View Claude and ChatGPT/Codex in one compact popover
+- Keep each provider in its own persistent WebKit session
+- Refresh on launch, on demand, and in the background
+- Preserve source-native metrics instead of inventing a combined score
+- Use the menu bar icon as a quick remaining-capacity signal
+- Check for updates through Sparkle and the project appcast
 
-The recommended way to install the app is through the GitHub Releases page.
+### Requirements
 
-Each release includes a single downloadable archive:
+- macOS 14.0 or newer
+- Swift 6 toolchain / Command Line Tools for source builds
+- Claude and/or ChatGPT account access
 
-- `TokenMonitor-macOS.zip`
+### Installation
 
-Unzip it and move `TokenMonitor.app` to `Applications`.
+Normal users should install from the GitHub Release DMG:
 
-### Build from source
+1. Download `TokenMonitor-macOS.dmg` from the latest release.
+2. Open the disk image.
+3. Drag `TokenMonitor.app` onto the Applications shortcut.
+4. Open Token Monitor and connect Claude and ChatGPT from Settings.
 
-Requirements:
+Latest release download:
 
-- macOS 14+
-- Swift 6 toolchain / Command Line Tools
+```text
+https://github.com/MediaPublishing/token-monitor/releases/latest/download/TokenMonitor-macOS.dmg
+```
 
-Run the app directly from SwiftPM:
+Gatekeeper note: preview builds may show Apple's "could not verify" warning until the app is Developer ID signed and notarized. Only bypass Gatekeeper for a build you downloaded from this repository and trust; public releases should move to notarized builds before broader distribution.
+
+### Updates
+
+Token Monitor is wired for Sparkle update checks. The appcast URL baked into the app is:
+
+```text
+https://mediapublishing.github.io/token-monitor/appcast.xml
+```
+
+When a GitHub Release is published, `.github/workflows/release.yml` can rebuild the app, upload `TokenMonitor-macOS.dmg` and `TokenMonitor-macOS.zip` to the release, and deploy `appcast.xml` plus the versioned update ZIP to GitHub Pages.
+
+The GitHub workflow uses repository secret `SPARKLE_PRIVATE_KEY`. Maintainers can create a local release build with the Keychain entry instead:
+
+```bash
+TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 ./scripts/package-release.sh
+```
+
+For public distribution at scale, sign and notarize the app before publishing.
+
+### Build From Source
+
+```bash
+git clone https://github.com/MediaPublishing/token-monitor.git
+cd token-monitor
+swift build
+swift run TokenMonitorApp
+```
+
+Run the app directly through the project script:
 
 ```bash
 ./scripts/run-app.sh
 ```
 
-Build a signed local `.app` bundle:
+Create a local app bundle:
 
 ```bash
 ./scripts/build-app.sh
+open dist/TokenMonitor.app
 ```
 
-Create a release zip for distribution:
+Create a release ZIP and signed appcast:
 
 ```bash
-./scripts/package-release.sh
+TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 ./scripts/package-release.sh
 ```
 
-### Project layout
+Create only the local DMG installer:
 
-- `TokenMonitorCore` contains shared models, parsers, persistence, and dashboard state.
-- `TokenMonitorApp` contains the AppKit/SwiftUI menu bar app and the WebKit session controllers.
-- Each provider uses its own persistent `WKWebsiteDataStore`, so cookies and login state stay isolated.
-- Local snapshots live at `~/Library/Application Support/TokenMonitor/snapshots.json`.
+```bash
+./scripts/package-dmg.sh
+```
 
-### Current scope
+### Privacy
 
-- Live mini-dashboard only
-- Separate source-native metrics for Claude and ChatGPT/Codex
-- Manual reconnect per provider
-- Refresh on launch, popover open, manual refresh, and every 5 minutes
+Token Monitor stores only the latest successful usage snapshots locally at `~/Library/Application Support/TokenMonitor/snapshots.json`. Each provider uses its own persistent WebKit session, so Claude and ChatGPT login state stay isolated from each other and from your normal browser cookies.
 
-Not included yet:
-
-- Historical charts
-- Alerts / notifications
-- Login item / auto-start
-- Cross-provider normalized scoring
+---
 
 ## Deutsch
 
-### Was die App macht
+### Warum Token Monitor
 
-- Zeigt Claude oberhalb von ChatGPT in einem kompakten Popover in der Menüleiste.
-- Hält beide Konten mit getrenntem persistentem WebKit-Speicher sauber isoliert.
-- Aktualisiert beim Start, auf Knopfdruck und im Hintergrund.
-- Liest die originalen Usage-Werte jeder Plattform aus, statt einen künstlichen Gesamtwert zu bilden.
-- Nutzt das Menüleisten-Icon für eine schnelle Restkapazitäts-Anzeige.
+Wenn deine Arbeit von Claude und ChatGPT abhaengt, ist oft nicht die Modellqualitaet der Engpass, sondern ob im aktuellen Fenster noch Kapazitaet uebrig ist. Token Monitor schliesst genau diese Luecke in der Menueleiste.
 
-### Download
+- Claude und ChatGPT/Codex in einem kompakten Popover sehen
+- Jeden Provider in einer eigenen persistenten WebKit-Session halten
+- Beim Start, manuell und im Hintergrund aktualisieren
+- Quellnahe Metriken behalten statt einen kuenstlichen Gesamtscore zu bauen
+- Das Menueleisten-Icon als schnelles Restkapazitaets-Signal nutzen
+- Updates ueber Sparkle und den Projekt-Appcast pruefen
 
-Die empfohlene Installation läuft über die GitHub-Releases-Seite.
+### Voraussetzungen
 
-Jedes Release enthält ein einzelnes Download-Archiv:
+- macOS 14.0 oder neuer
+- Swift 6 Toolchain / Command Line Tools fuer Source-Builds
+- Claude- und/oder ChatGPT-Account-Zugriff
 
-- `TokenMonitor-macOS.zip`
+### Installation
 
-Archiv entpacken und `TokenMonitor.app` nach `Applications` verschieben.
+Normale Nutzer sollten ueber das GitHub-Release-DMG installieren:
 
-### Build aus dem Quellcode
+1. `TokenMonitor-macOS.dmg` aus dem neuesten Release herunterladen.
+2. Disk Image oeffnen.
+3. `TokenMonitor.app` auf die Applications-Verknuepfung ziehen.
+4. Token Monitor oeffnen und Claude sowie ChatGPT in den Settings verbinden.
 
-Voraussetzungen:
+Aktueller Release-Download:
 
-- macOS 14+
-- Swift 6 Toolchain / Command Line Tools
+```text
+https://github.com/MediaPublishing/token-monitor/releases/latest/download/TokenMonitor-macOS.dmg
+```
 
-App direkt aus SwiftPM starten:
+Gatekeeper-Hinweis: Preview-Builds koennen Apples "konnte nicht ueberpruefen"-Warnung zeigen, bis die App mit Developer ID signiert und notarized ist. Umgehe Gatekeeper nur bei einem Build, den du aus diesem Repository geladen hast und dem du vertraust; oeffentliche Releases sollten vor breiterer Verteilung notarized Builds nutzen.
+
+### Updates
+
+Token Monitor ist fuer Sparkle-Update-Checks vorbereitet. Die in der App hinterlegte Appcast-URL ist:
+
+```text
+https://mediapublishing.github.io/token-monitor/appcast.xml
+```
+
+Wenn ein GitHub Release veroeffentlicht wird, kann `.github/workflows/release.yml` die App neu bauen, `TokenMonitor-macOS.dmg` und `TokenMonitor-macOS.zip` in das Release hochladen und `appcast.xml` plus versioniertes Update-ZIP auf GitHub Pages deployen.
+
+Der GitHub Workflow nutzt das Repository-Secret `SPARKLE_PRIVATE_KEY`. Maintainer koennen einen lokalen Release-Build mit dem Keychain-Eintrag erstellen:
+
+```bash
+TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 ./scripts/package-release.sh
+```
+
+Fuer oeffentliche Verteilung in groesserem Umfang sollte die App vor dem Release signiert und notarisiert werden.
+
+### Aus dem Source Code bauen
+
+```bash
+git clone https://github.com/MediaPublishing/token-monitor.git
+cd token-monitor
+swift build
+swift run TokenMonitorApp
+```
+
+App direkt ueber das Projektskript starten:
 
 ```bash
 ./scripts/run-app.sh
 ```
 
-Signiertes lokales `.app`-Bundle erzeugen:
+Lokales App-Bundle erstellen:
 
 ```bash
 ./scripts/build-app.sh
+open dist/TokenMonitor.app
 ```
 
-Release-ZIP für die Verteilung bauen:
+Release-ZIP und signierten Appcast erstellen:
 
 ```bash
-./scripts/package-release.sh
+TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 ./scripts/package-release.sh
 ```
 
-### Projektstruktur
+Nur den lokalen DMG-Installer erstellen:
 
-- `TokenMonitorCore` enthält gemeinsame Modelle, Parser, Persistenz und den Dashboard-State.
-- `TokenMonitorApp` enthält die AppKit/SwiftUI-Menüleisten-App und die WebKit-Session-Controller.
-- Für jeden Provider gibt es einen eigenen persistenten `WKWebsiteDataStore`, damit Cookies und Login getrennt bleiben.
-- Lokale Snapshots liegen unter `~/Library/Application Support/TokenMonitor/snapshots.json`.
+```bash
+./scripts/package-dmg.sh
+```
 
-### Aktueller Umfang
+### Datenschutz
 
-- Nur Live-Mini-Dashboard
-- Getrennte originalgetreue Metriken für Claude und ChatGPT/Codex
-- Manuelles Reconnect pro Provider
-- Refresh beim Start, beim Öffnen des Popovers, manuell und alle 5 Minuten
+Token Monitor speichert nur die letzten erfolgreichen Usage-Snapshots lokal unter `~/Library/Application Support/TokenMonitor/snapshots.json`. Jeder Provider nutzt eine eigene persistente WebKit-Session, damit Claude- und ChatGPT-Login getrennt bleiben und keine normalen Browser-Cookies verwendet werden.
 
-Noch nicht enthalten:
+---
 
-- Verlauf / Historie
-- Alerts / Benachrichtigungen
-- Login-Item / Auto-Start
-- Vereinheitlichte Cross-Provider-Bewertung
+## Project Structure
+
+```text
+token-monitor/
+├── Package.swift
+├── Sources/TokenMonitorApp/
+├── Sources/TokenMonitorCore/
+├── Tests/TokenMonitorCoreTests/
+├── assets/
+├── docs/
+├── landing/
+└── scripts/
+```
+
+## Documentation
+
+- [Landing page](landing/index.html)
+- [Current screenshot](docs/token-monitor-screenshot.png)
+
+## License
+
+License information is not published in this repository yet.

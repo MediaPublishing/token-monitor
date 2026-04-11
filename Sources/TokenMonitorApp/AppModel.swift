@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import Foundation
+import ServiceManagement
 import TokenMonitorCore
 
 enum PopoverScreen {
@@ -11,10 +12,15 @@ enum PopoverScreen {
 @MainActor
 final class AppModel: ObservableObject {
     static let shared = AppModel()
+    private enum Keys {
+        static let launchAtLoginEnabled = "launchAtLoginEnabled"
+    }
 
     @Published private(set) var dashboardState: DashboardState
     @Published private(set) var popoverScreen: PopoverScreen = .dashboard
     @Published private(set) var isPopoverVisible = false
+    @Published private(set) var launchAtLoginEnabled: Bool
+    @Published private(set) var automaticallyChecksForUpdates: Bool
 
     let snapshotDirectoryURL: URL
     let diagnosticsDirectoryURL: URL
@@ -22,11 +28,19 @@ final class AppModel: ObservableObject {
     private let snapshotStore: SnapshotPersisting
     private let diagnosticsStore: DiagnosticsStore
     private let sessionCoordinator: SessionCoordinator
+    private let updateController: AppUpdateController
     private var refreshTasks: [ServiceKind: Task<Void, Never>] = [:]
     private var backgroundRefreshTimer: Timer?
 
-    private init(snapshotStore: SnapshotPersisting = FileSnapshotStore()) {
+    private init(
+        snapshotStore: SnapshotPersisting = FileSnapshotStore(),
+        updateController: AppUpdateController = .shared
+    ) {
         self.snapshotStore = snapshotStore
+        self.updateController = updateController
+        UserDefaults.standard.register(defaults: [Keys.launchAtLoginEnabled: true])
+        launchAtLoginEnabled = UserDefaults.standard.bool(forKey: Keys.launchAtLoginEnabled)
+        automaticallyChecksForUpdates = updateController.automaticallyChecksForUpdates
         let snapshots = (try? snapshotStore.loadSnapshots()) ?? [:]
         dashboardState = DashboardState.initial(lastSnapshots: snapshots)
 
@@ -45,6 +59,8 @@ final class AppModel: ObservableObject {
         guard backgroundRefreshTimer == nil else {
             return
         }
+
+        syncLaunchAtLoginRegistration()
 
         backgroundRefreshTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -80,6 +96,10 @@ final class AppModel: ObservableObject {
         for service in ServiceKind.allCases {
             refresh(service, trigger: trigger, force: trigger == .manual)
         }
+    }
+
+    var isRefreshing: Bool {
+        !refreshTasks.isEmpty
     }
 
     func refresh(_ service: ServiceKind, trigger: RefreshTrigger, force: Bool = false) {
@@ -141,12 +161,35 @@ final class AppModel: ObservableObject {
         case .dashboard:
             return 540
         case .settings:
-            return 456
+            return 500
         }
     }
 
     func quitApplication() {
         NSApp.terminate(nil)
+    }
+
+    func setLaunchAtLoginEnabled(_ enabled: Bool) {
+        guard launchAtLoginEnabled != enabled else {
+            return
+        }
+
+        launchAtLoginEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: Keys.launchAtLoginEnabled)
+        syncLaunchAtLoginRegistration()
+    }
+
+    func setAutomaticallyChecksForUpdates(_ enabled: Bool) {
+        guard automaticallyChecksForUpdates != enabled else {
+            return
+        }
+
+        automaticallyChecksForUpdates = enabled
+        updateController.automaticallyChecksForUpdates = enabled
+    }
+
+    func checkForUpdates() {
+        updateController.checkForUpdates()
     }
 
     func stateDescription(for status: ServiceStatus) -> String {
@@ -245,5 +288,19 @@ final class AppModel: ObservableObject {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full
         return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
+    private func syncLaunchAtLoginRegistration() {
+        do {
+            if launchAtLoginEnabled {
+                if SMAppService.mainApp.status != .enabled {
+                    try SMAppService.mainApp.register()
+                }
+            } else if SMAppService.mainApp.status == .enabled {
+                try SMAppService.mainApp.unregister()
+            }
+        } catch {
+            NSLog("Failed to update launch-at-login state: \(error.localizedDescription)")
+        }
     }
 }

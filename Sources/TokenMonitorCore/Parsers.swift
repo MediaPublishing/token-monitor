@@ -18,7 +18,7 @@ public struct ClaudeUsageParser: UsageParsing {
             throw UsageParseError.authRequired(ServiceKind.claude.loginRequiredMessage)
         }
 
-        let lines = normalizedLines(from: extract.bodyText)
+        let lines = claudeCandidateLines(from: extract)
         guard
             let currentSessionIndex = firstIndex(in: lines, containing: "Current session"),
             let allModelsIndex = firstIndex(in: lines, containing: "All models"),
@@ -35,7 +35,9 @@ public struct ClaudeUsageParser: UsageParsing {
             let extraUsageReset = firstLine(after: extraUsageIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("Resets") }),
             let extraUsagePercent = firstLine(after: extraUsageIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("% used") }),
             let monthlyLimitValue = previousLine(before: monthlyLimitIndex, in: lines),
-            let currentBalanceValue = previousLine(before: balanceIndex, in: lines)
+            let currentBalanceValue = previousLine(before: balanceIndex, in: lines),
+            isClaudeMoneyValue(monthlyLimitValue),
+            isClaudeMoneyValue(currentBalanceValue)
         else {
             throw UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")
         }
@@ -44,25 +46,25 @@ public struct ClaudeUsageParser: UsageParsing {
             UsageMetric(
                 key: "current-session",
                 title: "Current session",
-                valueText: currentSessionValue,
+                valueText: remainingProgressText(fromUsedText: currentSessionValue),
                 subtitle: firstLine(after: currentSessionIndex, in: lines, matching: { $0 != currentSessionValue }),
-                progress: percentage(from: currentSessionValue),
+                progress: remainingProgress(fromUsedText: currentSessionValue),
                 style: .progress
             ),
             UsageMetric(
                 key: "weekly-all-models",
                 title: "All models",
-                valueText: allModelsValue,
+                valueText: remainingProgressText(fromUsedText: allModelsValue),
                 subtitle: allModelsReset,
-                progress: percentage(from: allModelsValue),
+                progress: remainingProgress(fromUsedText: allModelsValue),
                 style: .progress
             ),
             UsageMetric(
                 key: "weekly-sonnet",
                 title: "Sonnet only",
-                valueText: sonnetValue,
+                valueText: remainingProgressText(fromUsedText: sonnetValue),
                 subtitle: sonnetReset,
-                progress: percentage(from: sonnetValue),
+                progress: remainingProgress(fromUsedText: sonnetValue),
                 style: .progress
             ),
             UsageMetric(
@@ -343,6 +345,55 @@ private func chatGPTCandidateLines(from extract: ServicePageExtract) -> [String]
     return result
 }
 
+private func claudeCandidateLines(from extract: ServicePageExtract) -> [String] {
+    let bodyLines = normalizedLines(from: extract.bodyText)
+    var result: [String] = []
+    var seen: Set<String> = []
+
+    func appendLine(_ line: String, preservingDuplicates: Bool = false) {
+        if preservingDuplicates {
+            result.append(line)
+            return
+        }
+
+        guard seen.insert(line).inserted else {
+            return
+        }
+        result.append(line)
+    }
+
+    for segment in extract.segments {
+        for line in normalizedLines(from: segment) {
+            appendLine(line, preservingDuplicates: true)
+        }
+    }
+
+    for line in bodyLines where !looksLikeCollapsedClaudeBodyLine(line) {
+        appendLine(line)
+    }
+
+    return result.isEmpty ? bodyLines : result
+}
+
+private func looksLikeCollapsedClaudeBodyLine(_ line: String) -> Bool {
+    let markers = [
+        "Current session",
+        "All models",
+        "Sonnet only",
+        "Extra usage",
+        "Monthly spend limit",
+        "Current balance"
+    ]
+
+    let markerCount = markers.filter { line.localizedCaseInsensitiveContains($0) }.count
+    return line.count > 240 && markerCount >= 3
+}
+
+private func isClaudeMoneyValue(_ text: String) -> Bool {
+    let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    return normalized.range(of: #"^\$\d+(?:[.,]\d+)?$"#, options: .regularExpression) != nil
+}
+
 private func normalizedProgressValue(_ text: String) -> String? {
     let normalized = text
         .replacingOccurrences(of: "\n", with: " ")
@@ -412,6 +463,23 @@ private func previousLine(before index: Int, in lines: [String]) -> String? {
     }
 
     return nil
+}
+
+private func remainingProgressText(fromUsedText valueText: String) -> String {
+    guard let usedProgress = percentage(from: valueText) else {
+        return valueText
+    }
+
+    let remaining = max(0, min(1, 1 - usedProgress))
+    return "\(Int((remaining * 100).rounded()))% remaining"
+}
+
+private func remainingProgress(fromUsedText valueText: String) -> Double? {
+    guard let usedProgress = percentage(from: valueText) else {
+        return nil
+    }
+
+    return max(0, min(1, 1 - usedProgress))
 }
 
 private func percentage(from valueText: String) -> Double? {

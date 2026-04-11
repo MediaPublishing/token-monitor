@@ -17,6 +17,7 @@ let package = Package(
         )
     ],
     dependencies: [
+        .package(url: "https://github.com/sparkle-project/Sparkle.git", from: "2.9.1"),
         .package(url: "https://github.com/swiftlang/swift-testing.git", exact: "6.2.3")
     ],
     targets: [
@@ -26,7 +27,10 @@ let package = Package(
         ),
         .executableTarget(
             name: "TokenMonitorApp",
-            dependencies: ["TokenMonitorCore"],
+            dependencies: [
+                "TokenMonitorCore",
+                .product(name: "Sparkle", package: "Sparkle")
+            ],
             path: "Sources/TokenMonitorApp",
             resources: [
                 .copy("Resources")

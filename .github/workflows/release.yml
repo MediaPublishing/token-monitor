@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: token-monitor-release
+  cancel-in-progress: false
+
+jobs:
+  build-release:
+    runs-on: macos-15
+
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Package app and appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          TOKEN_MONITOR_DOWNLOAD_URL_PREFIX: https://mediapublishing.github.io/token-monitor/updates/
+        run: ./scripts/package-release.sh
+
+      - name: Upload release archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/TokenMonitor-macOS.zip dist/TokenMonitor-macOS.dmg --clobber
+
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p public/updates
+          sed 's#../assets/#assets/#g' landing/index.html > public/index.html
+          cp -R assets public/assets
+          cp dist/appcast.xml public/appcast.xml
+          cp dist/updates/*.zip public/updates/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy Pages
+        uses: actions/deploy-pages@v4

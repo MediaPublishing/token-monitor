@@ -11,8 +11,18 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: compact ? 14 : 20) {
+            PopoverHeaderView()
+
             if compact {
-                compactHeader
+                HStack {
+                    Spacer()
+
+                    Button("Quit App") {
+                        model.quitApplication()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
             }
 
             VStack(alignment: .leading, spacing: 6) {
@@ -27,6 +37,38 @@ struct SettingsView: View {
                     .font(compact ? .caption : .subheadline)
                     .foregroundStyle(.secondary)
             }
+
+            Toggle(isOn: launchAtLoginBinding) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Launch at login")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Open Token Monitor automatically after each restart.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(compact ? .small : .regular)
+            .padding(.vertical, compact ? 2 : 4)
+
+            Toggle(isOn: automaticUpdateChecksBinding) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Automatically check for updates")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Use Sparkle to watch the GitHub release feed and offer new versions.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(compact ? .small : .regular)
+            .padding(.vertical, compact ? 2 : 4)
+
+            Button("Check for Updates...") {
+                model.checkForUpdates()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(compact ? .small : .regular)
 
             ForEach(model.dashboardState.services, id: \.service) { status in
                 VStack(alignment: .leading, spacing: 10) {
@@ -123,30 +165,21 @@ struct SettingsView: View {
             Spacer()
         }
         .padding(compact ? 10 : 22)
-        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: compact ? 456 : 420, alignment: .topLeading)
+        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: compact ? 500 : 420, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    private var compactHeader: some View {
-        HStack(spacing: 8) {
-            Button {
-                model.showDashboardInPopover()
-            } label: {
-                Image(systemName: "chevron.left")
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { model.launchAtLoginEnabled },
+            set: { model.setLaunchAtLoginEnabled($0) }
+        )
+    }
 
-            Text("Settings")
-                .font(.headline.weight(.semibold))
-
-            Spacer()
-
-            Button("Quit") {
-                model.quitApplication()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-        }
+    private var automaticUpdateChecksBinding: Binding<Bool> {
+        Binding(
+            get: { model.automaticallyChecksForUpdates },
+            set: { model.setAutomaticallyChecksForUpdates($0) }
+        )
     }
 }
