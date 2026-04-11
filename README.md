@@ -2,7 +2,7 @@
 
 **Token Monitor** is a native macOS menu bar companion for Claude and ChatGPT/Codex usage: provider-specific limits, isolated sessions, background refresh, and Sparkle-ready update checks in one lightweight desktop app.
 
-**Token Monitor** ist ein nativer macOS-Menueleisten-Begleiter fuer Claude- und ChatGPT/Codex-Nutzung: provider-spezifische Limits, getrennte Sessions, Hintergrund-Refresh und vorbereitete Sparkle-Updates in einer schlanken Desktop-App.
+**Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude- und ChatGPT/Codex-Nutzung: provider-spezifische Limits, getrennte Sessions, Hintergrund-Refresh und vorbereitete Sparkle-Updates in einer schlanken Desktop-App.
 
 > **Repository status / Repository-Status:** Public preview.
 
@@ -17,7 +17,7 @@
 
 Watch Claude and ChatGPT/Codex side by side from the macOS menu bar.
 
-Claude und ChatGPT/Codex bleiben direkt in der macOS-Menueleiste nebeneinander sichtbar.
+Claude und ChatGPT/Codex bleiben direkt in der macOS-Menüleiste nebeneinander sichtbar.
 
 ### Claude Usage
 ![Token Monitor Claude usage screenshot](assets/screenshots/app/claude.png)
@@ -133,29 +133,29 @@ Token Monitor stores only the latest successful usage snapshots locally at `~/Li
 
 ### Warum Token Monitor
 
-Wenn deine Arbeit von Claude und ChatGPT abhaengt, ist oft nicht die Modellqualitaet der Engpass, sondern ob im aktuellen Fenster noch Kapazitaet uebrig ist. Token Monitor schliesst genau diese Luecke in der Menueleiste.
+Wenn deine Arbeit von Claude und ChatGPT abhängt, ist oft nicht die Modellqualität der Engpass, sondern ob im aktuellen Fenster noch Kapazität übrig ist. Token Monitor schließt genau diese Lücke in der Menüleiste.
 
 - Claude und ChatGPT/Codex in einem kompakten Popover sehen
 - Jeden Provider in einer eigenen persistenten WebKit-Session halten
 - Beim Start, manuell und im Hintergrund aktualisieren
-- Quellnahe Metriken behalten statt einen kuenstlichen Gesamtscore zu bauen
-- Das Menueleisten-Icon als schnelles Restkapazitaets-Signal nutzen
-- Updates ueber Sparkle und den Projekt-Appcast pruefen
+- Quellnahe Metriken behalten statt einen künstlichen Gesamtscore zu bauen
+- Das Menüleisten-Icon als schnelles Restkapazitäts-Signal nutzen
+- Updates über Sparkle und den Projekt-Appcast prüfen
 
 ### Voraussetzungen
 
 - macOS 14.0 oder neuer
-- Swift 6 Toolchain / Command Line Tools fuer Source-Builds
+- Swift 6 Toolchain / Command Line Tools für Source-Builds
 - Claude- und/oder ChatGPT-Account-Zugriff
 
 ### Installation
 
-Normale Nutzer sollten ueber das GitHub-Release-DMG installieren:
+Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 
 1. `TokenMonitor-macOS.dmg` aus dem neuesten Release herunterladen.
-2. Disk Image oeffnen.
-3. `TokenMonitor.app` auf die Applications-Verknuepfung ziehen.
-4. Token Monitor oeffnen und Claude sowie ChatGPT in den Settings verbinden.
+2. Disk Image öffnen.
+3. `TokenMonitor.app` auf die Applications-Verknüpfung ziehen.
+4. Token Monitor öffnen und Claude sowie ChatGPT in den Settings verbinden.
 
 Aktueller Release-Download:
 
@@ -163,25 +163,25 @@ Aktueller Release-Download:
 https://github.com/MediaPublishing/token-monitor/releases/latest/download/TokenMonitor-macOS.dmg
 ```
 
-Gatekeeper-Hinweis: Preview-Builds koennen Apples "konnte nicht ueberpruefen"-Warnung zeigen, bis die App mit Developer ID signiert und notarized ist. Umgehe Gatekeeper nur bei einem Build, den du aus diesem Repository geladen hast und dem du vertraust; oeffentliche Releases sollten vor breiterer Verteilung notarized Builds nutzen.
+Gatekeeper-Hinweis: Preview-Builds können Apples "konnte nicht überprüfen"-Warnung zeigen, bis die App mit Developer ID signiert und notarized ist. Umgehe Gatekeeper nur bei einem Build, den du aus diesem Repository geladen hast und dem du vertraust; öffentliche Releases sollten vor breiterer Verteilung notarized Builds nutzen.
 
 ### Updates
 
-Token Monitor ist fuer Sparkle-Update-Checks vorbereitet. Die in der App hinterlegte Appcast-URL ist:
+Token Monitor ist für Sparkle-Update-Checks vorbereitet. Die in der App hinterlegte Appcast-URL ist:
 
 ```text
 https://mediapublishing.github.io/token-monitor/appcast.xml
 ```
 
-Wenn ein GitHub Release veroeffentlicht wird, kann `.github/workflows/release.yml` die App neu bauen, `TokenMonitor-macOS.dmg` und `TokenMonitor-macOS.zip` in das Release hochladen und `appcast.xml` plus versioniertes Update-ZIP auf GitHub Pages deployen.
+Wenn ein GitHub Release veröffentlicht wird, kann `.github/workflows/release.yml` die App neu bauen, `TokenMonitor-macOS.dmg` und `TokenMonitor-macOS.zip` in das Release hochladen und `appcast.xml` plus versioniertes Update-ZIP auf GitHub Pages deployen.
 
-Der GitHub Workflow nutzt das Repository-Secret `SPARKLE_PRIVATE_KEY`. Maintainer koennen einen lokalen Release-Build mit dem Keychain-Eintrag erstellen:
+Der GitHub Workflow nutzt das Repository-Secret `SPARKLE_PRIVATE_KEY`. Maintainer können einen lokalen Release-Build mit dem Keychain-Eintrag erstellen:
 
 ```bash
 TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 ./scripts/package-release.sh
 ```
 
-Fuer oeffentliche Verteilung in groesserem Umfang sollte die App vor dem Release signiert und notarisiert werden.
+Für öffentliche Verteilung in größerem Umfang sollte die App vor dem Release signiert und notarisiert werden.
 
 ### Aus dem Source Code bauen
 
@@ -192,7 +192,7 @@ swift build
 swift run TokenMonitorApp
 ```
 
-App direkt ueber das Projektskript starten:
+App direkt über das Projektskript starten:
 
 ```bash
 ./scripts/run-app.sh
