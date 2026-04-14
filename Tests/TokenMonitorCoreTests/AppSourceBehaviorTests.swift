@@ -18,6 +18,8 @@ struct AppSourceBehaviorTests {
         )
 
         #expect(!loginWindowController.contains("orderFrontRegardless"))
+        #expect(!sessionController.contains("browserController.loadUsagePage()"))
+        #expect(!sessionController.contains("browserController.evaluateJavaScript"))
         #expect(!sessionController.contains("beginBackgroundRefreshPresentationIfNeeded"))
         #expect(!sessionController.contains("endBackgroundPresentationIfNeeded"))
     }

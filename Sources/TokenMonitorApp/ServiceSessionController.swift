@@ -56,16 +56,12 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
 
         return try await withCheckedThrowingContinuation { continuation in
             pendingContinuation = continuation
-            if service == .chatGPT {
-                browserController.loadUsagePage()
-            } else {
-                let request = URLRequest(
-                    url: service.usageURL,
-                    cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-                    timeoutInterval: 60
-                )
-                backgroundWebView.load(request)
-            }
+            let request = URLRequest(
+                url: service.usageURL,
+                cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+                timeoutInterval: 60
+            )
+            backgroundWebView.load(request)
         }
     }
 
@@ -163,8 +159,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
                         writeDebugRecord(
                             from: ServicePageExtract(
                                 service: service,
-                                pageTitle: browserController.currentPageTitle(),
-                                url: browserController.currentPageURLString(),
+                                pageTitle: backgroundWebView.title ?? "",
+                                url: backgroundWebView.url?.absoluteString ?? service.usageURL.absoluteString,
                                 bodyText: "",
                                 segments: []
                             ),
@@ -179,12 +175,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
     }
 
     private func evaluateCurrentPage() async throws -> ServicePageExtract {
-        let payload: String
-        if service == .chatGPT {
-            payload = try await browserController.evaluateJavaScript(extractionScript(for: service))
-        } else {
-            payload = try await backgroundWebView.tm_evaluateJavaScript(extractionScript(for: service))
-        }
+        let payload = try await backgroundWebView.tm_evaluateJavaScript(extractionScript(for: service))
 
         guard let data = payload.data(using: .utf8) else {
             throw SessionControllerError.invalidPayload
