@@ -207,6 +207,25 @@ final class AppModel: ObservableObject {
         updateController.checkForUpdates()
     }
 
+    func openLoginItemsSettings() {
+        SMAppService.openSystemSettingsLoginItems()
+    }
+
+    var launchAtLoginStatusText: String {
+        switch SMAppService.mainApp.status {
+        case .enabled:
+            return "Enabled in macOS Login Items."
+        case .requiresApproval:
+            return "macOS requires approval in Login Items before Token Monitor can start automatically."
+        case .notRegistered:
+            return "Not registered yet. Keep Launch at login enabled after moving the app to Applications."
+        case .notFound:
+            return "macOS cannot find Token Monitor as a login item. Move the app to Applications, open it once, then toggle this setting again."
+        @unknown default:
+            return "macOS returned an unknown Login Items status."
+        }
+    }
+
     func stateDescription(for status: ServiceStatus) -> String {
         switch status.refreshState {
         case let .success(lastSuccess):

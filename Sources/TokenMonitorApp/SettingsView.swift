@@ -51,6 +51,19 @@ struct SettingsView: View {
             .controlSize(compact ? .small : .regular)
             .padding(.vertical, compact ? 2 : 4)
 
+            VStack(alignment: .leading, spacing: 6) {
+                Text(model.launchAtLoginStatusText)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Button("Open Login Items...") {
+                    model.openLoginItemsSettings()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(compact ? .small : .regular)
+            }
+            .padding(.bottom, compact ? 2 : 4)
+
             Toggle(isOn: automaticUpdateChecksBinding) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Automatically check for updates")

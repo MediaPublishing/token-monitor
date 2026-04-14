@@ -519,6 +519,18 @@
 
     summary::-webkit-details-marker { display: none; }
     details p { margin: 8px 0 0; color: var(--muted); }
+    .gatekeeper-steps {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    .gatekeeper-steps li { margin-bottom: 7px; }
+    .gatekeeper-link {
+      color: var(--accent-2);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .gatekeeper-link:hover { text-decoration: underline; }
 
     .thumbs {
       display: grid;
@@ -837,7 +849,22 @@
           </details>
           <details>
             <summary data-i18n="faq.five.q">Why can macOS show a Gatekeeper warning?</summary>
-            <p data-i18n="faq.five.a">Preview builds may show Apple's verification warning until Token Monitor is Developer ID signed and notarized. Only bypass Gatekeeper for a build you downloaded from this repository and trust.</p>
+            <p data-i18n="faq.five.a">Preview builds may show Apple's verification warning until Token Monitor is Developer ID signed and notarized. Only continue if you downloaded the DMG from this repository and trust that build.</p>
+            <ol class="gatekeeper-steps">
+              <li data-i18n="faq.five.step.one">Click Done, not Move to Trash.</li>
+              <li data-i18n="faq.five.step.two">Open System Settings > Privacy & Security.</li>
+              <li data-i18n="faq.five.step.three">Scroll to Security and click Open Anyway next to the Token Monitor warning.</li>
+              <li data-i18n="faq.five.step.four">Confirm with your Mac password or Touch ID, then click Open.</li>
+            </ol>
+            <p><a class="gatekeeper-link" href="https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac" target="_blank" rel="noopener noreferrer" data-i18n="faq.five.apple">Apple's official guide</a></p>
+          </details>
+          <details>
+            <summary data-i18n="faq.six.q">Would a PKG avoid the warning?</summary>
+            <p data-i18n="faq.six.a">No. A PKG only changes the installer format. The durable fix is a Developer ID signed and notarized build; without that, macOS can still block either a DMG or PKG download.</p>
+          </details>
+          <details>
+            <summary data-i18n="faq.seven.q">Why is Token Monitor missing from Login Items?</summary>
+            <p data-i18n="faq.seven.a">Launch at login uses Apple's ServiceManagement API, which expects a code-signed app. Move TokenMonitor.app to Applications, open it once, then enable Launch at login in Token Monitor Settings. If macOS still asks for approval, open Login Items from Token Monitor Settings and allow it there.</p>
           </details>
         </div>
         <div class="thumbs">
@@ -949,7 +976,16 @@
           'faq.four.q': 'How do updates work?',
           'faq.four.a': 'The app can check a signed Sparkle appcast. New GitHub releases can publish the update assets automatically.',
           'faq.five.q': 'Why can macOS show a Gatekeeper warning?',
-          'faq.five.a': 'Preview builds may show Apple\\'s verification warning until Token Monitor is Developer ID signed and notarized. Only bypass Gatekeeper for a build you downloaded from this repository and trust.',
+          'faq.five.a': 'Preview builds may show Apple\\'s verification warning until Token Monitor is Developer ID signed and notarized. Only continue if you downloaded the DMG from this repository and trust that build.',
+          'faq.five.step.one': 'Click Done, not Move to Trash.',
+          'faq.five.step.two': 'Open System Settings > Privacy & Security.',
+          'faq.five.step.three': 'Scroll to Security and click Open Anyway next to the Token Monitor warning.',
+          'faq.five.step.four': 'Confirm with your Mac password or Touch ID, then click Open.',
+          'faq.five.apple': 'Apple\\'s official guide',
+          'faq.six.q': 'Would a PKG avoid the warning?',
+          'faq.six.a': 'No. A PKG only changes the installer format. The durable fix is a Developer ID signed and notarized build; without that, macOS can still block either a DMG or PKG download.',
+          'faq.seven.q': 'Why is Token Monitor missing from Login Items?',
+          'faq.seven.a': 'Launch at login uses Apple\\'s ServiceManagement API, which expects a code-signed app. Move TokenMonitor.app to Applications, open it once, then enable Launch at login in Token Monitor Settings. If macOS still asks for approval, open Login Items from Token Monitor Settings and allow it there.',
           'repo.title': 'Repository',
           'repo.cta': 'Open GitHub Repo',
           'footer.tagline': 'Token Monitor - Claude and ChatGPT usage for macOS',
@@ -1027,7 +1063,16 @@
           'faq.four.q': 'Wie funktionieren Updates?',
           'faq.four.a': 'Die App kann einen signierten Sparkle-Appcast pruefen. Neue GitHub Releases koennen die Update-Artefakte automatisch veroeffentlichen.',
           'faq.five.q': 'Warum kann macOS eine Gatekeeper-Warnung zeigen?',
-          'faq.five.a': 'Preview-Builds koennen Apples Pruefwarnung zeigen, bis Token Monitor mit Developer ID signiert und notarized ist. Umgehe Gatekeeper nur bei einem Build, den du aus diesem Repository geladen hast und dem du vertraust.',
+          'faq.five.a': 'Preview-Builds können Apples Prüfwarnung zeigen, bis Token Monitor mit Developer ID signiert und notarized ist. Fahre nur fort, wenn du das DMG aus diesem Repository geladen hast und diesem Build vertraust.',
+          'faq.five.step.one': 'Fertig klicken, nicht In den Papierkorb legen.',
+          'faq.five.step.two': 'Systemeinstellungen > Datenschutz & Sicherheit öffnen.',
+          'faq.five.step.three': 'Zu Sicherheit scrollen und neben der Token-Monitor-Warnung Dennoch öffnen klicken.',
+          'faq.five.step.four': 'Mit Mac-Passwort oder Touch ID bestätigen, danach Öffnen klicken.',
+          'faq.five.apple': 'Apples offizielle Anleitung',
+          'faq.six.q': 'Würde eine PKG-Datei die Warnung vermeiden?',
+          'faq.six.a': 'Nein. Ein PKG ändert nur das Installer-Format. Die robuste Lösung ist ein mit Developer ID signierter und notarisierter Build; ohne das kann macOS sowohl DMG- als auch PKG-Downloads blockieren.',
+          'faq.seven.q': 'Warum fehlt Token Monitor bei den Anmeldeobjekten?',
+          'faq.seven.a': 'Launch at login nutzt Apples ServiceManagement-API, die eine code-signierte App erwartet. Verschiebe TokenMonitor.app nach Applications, öffne die App einmal und aktiviere danach Launch at login in den Token-Monitor-Settings. Wenn macOS weiterhin eine Freigabe verlangt, öffne Anmeldeobjekte aus den Token-Monitor-Settings und erlaube die App dort.',
           'repo.title': 'Repository',
           'repo.cta': 'GitHub Repo oeffnen',
           'footer.tagline': 'Token Monitor - Claude- und ChatGPT-Nutzung fuer macOS',
