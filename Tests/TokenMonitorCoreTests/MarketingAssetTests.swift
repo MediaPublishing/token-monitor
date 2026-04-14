@@ -21,7 +21,11 @@ struct MarketingAssetTests {
             "assets/branding/token-monitor-logo.png",
             "assets/screenshots/app/dashboard.png",
             "assets/screenshots/app/claude.png",
-            "assets/screenshots/app/chatgpt.png"
+            "assets/screenshots/app/chatgpt.png",
+            "assets/screenshots/install/gatekeeper-blocked.png",
+            "assets/screenshots/install/gatekeeper-privacy-security.png",
+            "assets/screenshots/install/gatekeeper-open-anyway.png",
+            "assets/screenshots/install/gatekeeper-admin-confirm.png"
         ]
 
         for assetPath in expectedAssetPaths {
@@ -33,6 +37,10 @@ struct MarketingAssetTests {
         #expect(readme.contains("assets/screenshots/app/dashboard.png"))
         #expect(readme.contains("assets/screenshots/app/claude.png"))
         #expect(readme.contains("assets/screenshots/app/chatgpt.png"))
+        #expect(readme.contains("assets/screenshots/install/gatekeeper-blocked.png"))
+        #expect(readme.contains("assets/screenshots/install/gatekeeper-privacy-security.png"))
+        #expect(readme.contains("assets/screenshots/install/gatekeeper-open-anyway.png"))
+        #expect(readme.contains("assets/screenshots/install/gatekeeper-admin-confirm.png"))
         #expect(readme.contains("[Landing page](landing/index.html)"))
     }
 

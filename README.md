@@ -85,6 +85,18 @@ Preview builds may show Apple's "could not verify" warning until the app is Deve
 4. Find the message that `TokenMonitor.app` was blocked and click **Open Anyway**.
 5. Confirm with your Mac password or Touch ID, then click **Open**.
 
+Visual walkthrough:
+
+| Step 1 | Step 2 |
+| --- | --- |
+| Click **Done**, not **Move to Trash**. | Open **System Settings > Privacy & Security** and click **Open Anyway**. |
+| ![Gatekeeper warning with Done button](assets/screenshots/install/gatekeeper-blocked.png) | ![Privacy and Security Open Anyway button](assets/screenshots/install/gatekeeper-privacy-security.png) |
+
+| Step 3 | Step 4 |
+| --- | --- |
+| Confirm by clicking **Open Anyway**. | Enter your Mac password or use Touch ID, then click **OK**. |
+| ![Open Anyway confirmation dialog](assets/screenshots/install/gatekeeper-open-anyway.png) | ![Privacy and Security password confirmation dialog](assets/screenshots/install/gatekeeper-admin-confirm.png) |
+
 macOS stores this exception for Token Monitor, so future launches should open normally. If **Open Anyway** is not visible, try opening `TokenMonitor.app` once more, then return to **Privacy & Security**. Apple's official guide is here: <https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac>
 
 #### DMG vs. PKG
@@ -207,6 +219,18 @@ Preview-Builds können Apples "konnte nicht überprüfen"-Warnung zeigen, bis di
 3. Zu **Sicherheit** scrollen.
 4. Die Meldung suchen, dass `TokenMonitor.app` blockiert wurde, und **Dennoch öffnen** klicken.
 5. Mit Mac-Passwort oder Touch ID bestätigen, danach **Öffnen** klicken.
+
+Visuelle Schritt-für-Schritt-Anleitung:
+
+| Schritt 1 | Schritt 2 |
+| --- | --- |
+| **Fertig** klicken, nicht **In den Papierkorb legen**. | **Systemeinstellungen > Datenschutz & Sicherheit** öffnen und **Dennoch öffnen** klicken. |
+| ![Gatekeeper-Warnung mit Fertig-Button](assets/screenshots/install/gatekeeper-blocked.png) | ![Datenschutz und Sicherheit mit Dennoch-oeffnen-Button](assets/screenshots/install/gatekeeper-privacy-security.png) |
+
+| Schritt 3 | Schritt 4 |
+| --- | --- |
+| Mit **Open Anyway** bestätigen. | Mac-Passwort eingeben oder Touch ID nutzen, danach **OK** klicken. |
+| ![Open-Anyway-Bestaetigungsdialog](assets/screenshots/install/gatekeeper-open-anyway.png) | ![Datenschutz-und-Sicherheit-Passwortbestaetigung](assets/screenshots/install/gatekeeper-admin-confirm.png) |
 
 macOS speichert diese Ausnahme für Token Monitor, danach sollte die App normal starten. Wenn **Dennoch öffnen** nicht sichtbar ist, öffne `TokenMonitor.app` noch einmal und gehe danach wieder zu **Datenschutz & Sicherheit**. Apples offizielle Anleitung: <https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac>
 
