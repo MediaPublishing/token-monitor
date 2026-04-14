@@ -21,7 +21,7 @@ enum SessionControllerError: LocalizedError {
 }
 
 @MainActor
-final class ServiceSessionController: NSObject, WKNavigationDelegate {
+final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelegate {
     private let service: ServiceKind
     private let parser: any UsageParsing
     private let dataStore: WKWebsiteDataStore
@@ -111,7 +111,20 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
             return
         }
 
+        if navigationAction.targetFrame == nil {
+            recordBlockedNavigation(
+                navigationAction.request.url,
+                reason: "Blocked new-window navigation during automatic refresh"
+            )
+            decisionHandler(.cancel)
+            return
+        }
+
         guard allowsEmbeddedWebNavigation(navigationAction) else {
+            recordBlockedNavigation(
+                navigationAction.request.url,
+                reason: "Blocked non-web navigation during automatic refresh"
+            )
             decisionHandler(.cancel)
             if navigationAction.targetFrame?.isMainFrame != false {
                 handlePageFinishedLoading()
@@ -120,6 +133,42 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
         }
 
         decisionHandler(.allow)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationResponse: WKNavigationResponse,
+        decisionHandler: @escaping @MainActor @Sendable (WKNavigationResponsePolicy) -> Void
+    ) {
+        guard webView === backgroundWebView else {
+            decisionHandler(.cancel)
+            return
+        }
+
+        guard allowsEmbeddedWebNavigation(navigationResponse.response.url) else {
+            recordBlockedNavigation(
+                navigationResponse.response.url,
+                reason: "Blocked non-web response during automatic refresh"
+            )
+            decisionHandler(.cancel)
+            handlePageFinishedLoading()
+            return
+        }
+
+        decisionHandler(.allow)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        createWebViewWith configuration: WKWebViewConfiguration,
+        for navigationAction: WKNavigationAction,
+        windowFeatures: WKWindowFeatures
+    ) -> WKWebView? {
+        recordBlockedNavigation(
+            navigationAction.request.url,
+            reason: "Blocked popup during automatic refresh"
+        )
+        return nil
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -250,6 +299,21 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
         )
     }
 
+    private func recordBlockedNavigation(_ url: URL?, reason: String) {
+        diagnosticsStore.record(
+            RefreshDebugRecord(
+                timestamp: Date(),
+                service: service,
+                outcome: .navigationBlocked,
+                pageTitle: backgroundWebView.title ?? "",
+                url: url?.absoluteString ?? "",
+                bodyPreview: "",
+                segments: [reason],
+                message: reason
+            )
+        )
+    }
+
     private func makeBrowserController() -> ServiceLoginWindowController {
         let controller = ServiceLoginWindowController(service: service, dataStore: dataStore)
         controller.onPageFinishedLoading = { [weak self] in
@@ -271,16 +335,22 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = dataStore
         configuration.defaultWebpagePreferences.preferredContentMode = .desktop
+        configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
 
         let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 1440, height: 2200), configuration: configuration)
         webView.navigationDelegate = self
+        webView.uiDelegate = self
         return webView
     }
 }
 
 @MainActor
 private func allowsEmbeddedWebNavigation(_ navigationAction: WKNavigationAction) -> Bool {
-    guard let scheme = navigationAction.request.url?.scheme?.lowercased() else {
+    allowsEmbeddedWebNavigation(navigationAction.request.url)
+}
+
+private func allowsEmbeddedWebNavigation(_ url: URL?) -> Bool {
+    guard let scheme = url?.scheme?.lowercased() else {
         return false
     }
 

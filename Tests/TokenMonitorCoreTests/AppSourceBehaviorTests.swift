@@ -16,6 +16,10 @@ struct AppSourceBehaviorTests {
             contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/ServiceSessionController.swift"),
             encoding: .utf8
         )
+        let appModel = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/AppModel.swift"),
+            encoding: .utf8
+        )
 
         #expect(!loginWindowController.contains("orderFrontRegardless"))
         #expect(!sessionController.contains("browserController.loadUsagePage()"))
@@ -23,6 +27,11 @@ struct AppSourceBehaviorTests {
         #expect(!sessionController.contains("beginBackgroundRefreshPresentationIfNeeded"))
         #expect(!sessionController.contains("endBackgroundPresentationIfNeeded"))
         #expect(sessionController.contains("decidePolicyFor navigationAction"))
+        #expect(sessionController.contains("createWebViewWith configuration"))
+        #expect(sessionController.contains("javaScriptCanOpenWindowsAutomatically = false"))
+        #expect(sessionController.contains("recordBlockedNavigation"))
         #expect(sessionController.contains("allowsEmbeddedWebNavigation"))
+        #expect(appModel.contains("shouldSkipAutomaticRefresh"))
+        #expect(appModel.contains("case .launch, .background"))
     }
 }

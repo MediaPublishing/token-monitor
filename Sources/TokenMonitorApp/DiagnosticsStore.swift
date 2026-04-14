@@ -7,6 +7,7 @@ struct RefreshDebugRecord: Codable, Sendable {
         case parseFailure
         case authRequired
         case transportFailure
+        case navigationBlocked
     }
 
     let timestamp: Date

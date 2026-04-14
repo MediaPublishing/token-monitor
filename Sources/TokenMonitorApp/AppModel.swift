@@ -107,6 +107,10 @@ final class AppModel: ObservableObject {
             return
         }
 
+        if shouldSkipAutomaticRefresh(for: service, trigger: trigger) {
+            return
+        }
+
         DashboardReducer.reduce(&dashboardState, event: .service(service, .refreshStarted(trigger: trigger)))
 
         let task = Task { [weak self] in
@@ -310,6 +314,19 @@ final class AppModel: ObservableObject {
                 &dashboardState,
                 event: .service(service, .refreshFailed(message: message))
             )
+        }
+    }
+
+    private func shouldSkipAutomaticRefresh(for service: ServiceKind, trigger: RefreshTrigger) -> Bool {
+        switch trigger {
+        case .launch, .background:
+            let status = dashboardState.service(service)
+            if case .authRequired = status.refreshState, status.snapshot == nil {
+                return true
+            }
+            return false
+        case .manual, .popover, .login:
+            return false
         }
     }
 

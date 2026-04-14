@@ -4,7 +4,7 @@ import TokenMonitorCore
 import WebKit
 
 @MainActor
-final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, WKNavigationDelegate {
+final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, WKNavigationDelegate, WKUIDelegate {
     private let service: ServiceKind
     private let dataStore: WKWebsiteDataStore
     private let webView: WKWebView
@@ -27,9 +27,11 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = dataStore
         configuration.defaultWebpagePreferences.preferredContentMode = .desktop
+        configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
 
         webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 1180, height: 840), configuration: configuration)
         webView.navigationDelegate = nil
+        webView.uiDelegate = nil
 
         let containerView = NSView(frame: NSRect(x: 0, y: 0, width: 1180, height: 840))
         let stackView = NSStackView()
@@ -71,6 +73,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
         window.delegate = self
         webView.navigationDelegate = self
+        webView.uiDelegate = self
     }
 
     @available(*, unavailable)
@@ -134,6 +137,33 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         }
 
         decisionHandler(.allow)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationResponse: WKNavigationResponse,
+        decisionHandler: @escaping @MainActor @Sendable (WKNavigationResponsePolicy) -> Void
+    ) {
+        guard allowsEmbeddedWebNavigation(navigationResponse.response.url) else {
+            decisionHandler(.cancel)
+            return
+        }
+
+        decisionHandler(.allow)
+    }
+
+    func webView(
+        _ webView: WKWebView,
+        createWebViewWith configuration: WKWebViewConfiguration,
+        for navigationAction: WKNavigationAction,
+        windowFeatures: WKWindowFeatures
+    ) -> WKWebView? {
+        guard allowsEmbeddedWebNavigation(navigationAction), let url = navigationAction.request.url else {
+            return nil
+        }
+
+        webView.load(URLRequest(url: url))
+        return nil
     }
 
     private func finishLoadedPage(currentURL: String) {
@@ -304,7 +334,11 @@ private struct ChatGPTPageReadiness: Decodable {
 
 @MainActor
 private func allowsEmbeddedWebNavigation(_ navigationAction: WKNavigationAction) -> Bool {
-    guard let scheme = navigationAction.request.url?.scheme?.lowercased() else {
+    allowsEmbeddedWebNavigation(navigationAction.request.url)
+}
+
+private func allowsEmbeddedWebNavigation(_ url: URL?) -> Bool {
+    guard let scheme = url?.scheme?.lowercased() else {
         return false
     }
 
