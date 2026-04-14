@@ -117,6 +117,25 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         finishLoadedPage(currentURL: currentURL)
     }
 
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void
+    ) {
+        guard allowsEmbeddedWebNavigation(navigationAction) else {
+            decisionHandler(.cancel)
+            return
+        }
+
+        if navigationAction.targetFrame == nil, let url = navigationAction.request.url {
+            webView.load(URLRequest(url: url))
+            decisionHandler(.cancel)
+            return
+        }
+
+        decisionHandler(.allow)
+    }
+
     private func finishLoadedPage(currentURL: String) {
         if currentURL.contains(service.usageURL.host() ?? ""),
            currentURL.contains(service.usageURL.path),
@@ -281,6 +300,15 @@ private struct ChatGPTPageReadiness: Decodable {
         let visibleText = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
         return visibleText.isEmpty
     }
+}
+
+@MainActor
+private func allowsEmbeddedWebNavigation(_ navigationAction: WKNavigationAction) -> Bool {
+    guard let scheme = navigationAction.request.url?.scheme?.lowercased() else {
+        return false
+    }
+
+    return ["about", "http", "https"].contains(scheme)
 }
 
 @MainActor

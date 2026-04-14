@@ -22,5 +22,7 @@ struct AppSourceBehaviorTests {
         #expect(!sessionController.contains("browserController.evaluateJavaScript"))
         #expect(!sessionController.contains("beginBackgroundRefreshPresentationIfNeeded"))
         #expect(!sessionController.contains("endBackgroundPresentationIfNeeded"))
+        #expect(sessionController.contains("decidePolicyFor navigationAction"))
+        #expect(sessionController.contains("allowsEmbeddedWebNavigation"))
     }
 }

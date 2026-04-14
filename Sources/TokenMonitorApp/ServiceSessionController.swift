@@ -101,6 +101,27 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
         handlePageFinishedLoading()
     }
 
+    func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void
+    ) {
+        guard webView === backgroundWebView else {
+            decisionHandler(.cancel)
+            return
+        }
+
+        guard allowsEmbeddedWebNavigation(navigationAction) else {
+            decisionHandler(.cancel)
+            if navigationAction.targetFrame?.isMainFrame != false {
+                handlePageFinishedLoading()
+            }
+            return
+        }
+
+        decisionHandler(.allow)
+    }
+
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         guard webView === backgroundWebView else {
             return
@@ -255,6 +276,15 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
         webView.navigationDelegate = self
         return webView
     }
+}
+
+@MainActor
+private func allowsEmbeddedWebNavigation(_ navigationAction: WKNavigationAction) -> Bool {
+    guard let scheme = navigationAction.request.url?.scheme?.lowercased() else {
+        return false
+    }
+
+    return ["about", "http", "https"].contains(scheme)
 }
 
 @MainActor
