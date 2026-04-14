@@ -1,8 +1,8 @@
 # Token Monitor
 
-**Token Monitor** is a native macOS menu bar companion for Claude and ChatGPT/Codex usage: provider-specific limits, isolated sessions, background refresh, and Sparkle-ready update checks in one lightweight desktop app.
+**Token Monitor** is a native macOS menu bar companion for Claude and ChatGPT/Codex usage: provider-specific limits, isolated sessions, and background refresh in one lightweight desktop app.
 
-**Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude- und ChatGPT/Codex-Nutzung: provider-spezifische Limits, getrennte Sessions, Hintergrund-Refresh und vorbereitete Sparkle-Updates in einer schlanken Desktop-App.
+**Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude- und ChatGPT/Codex-Nutzung: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
   <a href="https://github.com/MediaPublishing/token-monitor/releases/latest/download/TokenMonitor-macOS.dmg">
@@ -14,7 +14,6 @@
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
-![Updates](https://img.shields.io/badge/updates-Sparkle-green)
 
 ## Screenshots
 
@@ -52,7 +51,6 @@ If your work depends on Claude and ChatGPT, the limiting factor is often not the
 - Refresh on launch, on demand, and in the background
 - Preserve source-native metrics instead of inventing a combined score
 - Use the menu bar icon as a quick remaining-capacity signal
-- Check for updates through Sparkle and the project appcast
 
 ### Requirements
 
@@ -99,42 +97,9 @@ Visual walkthrough:
 
 macOS stores this exception for Token Monitor, so future launches should open normally. If **Open Anyway** is not visible, try opening `TokenMonitor.app` once more, then return to **Privacy & Security**. Apple's official guide is here: <https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac>
 
-#### DMG vs. PKG
-
-A PKG installer would not remove this warning by itself. macOS applies Gatekeeper checks to unsigned or non-notarized downloads regardless of whether the app ships as a DMG or PKG. The durable fix is a Developer ID signed and notarized build. A PKG can still be useful later if the installer needs extra install steps, but Token Monitor's current drag-to-Applications install flow works fine as a DMG once the app is signed and notarized.
-
 #### Launch at login
 
 Token Monitor tries to register itself as a login item when **Launch at login** is enabled in Settings. macOS requires apps that use Apple's ServiceManagement login-item API to be code signed, so ad-hoc preview builds may not appear under **System Settings > General > Login Items**. Move `TokenMonitor.app` to **Applications**, open it once, then use **Settings > Launch at login** inside Token Monitor. If macOS still requires approval, open **Login Items** from Token Monitor Settings and allow Token Monitor there.
-
-### Updates
-
-Token Monitor is wired for Sparkle update checks. The appcast URL baked into the app is:
-
-```text
-https://mediapublishing.github.io/token-monitor/appcast.xml
-```
-
-When a GitHub Release is published, `.github/workflows/release.yml` can rebuild the app, upload `TokenMonitor-macOS.dmg` and `TokenMonitor-macOS.zip` to the release, and deploy `appcast.xml` plus the versioned update ZIP to GitHub Pages.
-
-The GitHub workflow uses repository secret `SPARKLE_PRIVATE_KEY`. Maintainers can create a local release build with the Keychain entry instead:
-
-```bash
-TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 ./scripts/package-release.sh
-```
-
-For public distribution at scale, sign and notarize the app before publishing. If you already have Apple Developer Program access and a Developer ID Application certificate, the existing scripts can produce a signed and notarized DMG:
-
-```bash
-xcrun notarytool store-credentials token-monitor-notary
-TOKEN_MONITOR_CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
-TOKEN_MONITOR_NOTARIZE=1 \
-TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary \
-TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 \
-./scripts/package-release.sh
-```
-
-Short version: DMG can stay. Developer ID signing plus notarization is the part that removes the Gatekeeper warning for normal users.
 
 ### Build From Source
 
@@ -156,12 +121,6 @@ Create a local app bundle:
 ```bash
 ./scripts/build-app.sh
 open dist/TokenMonitor.app
-```
-
-Create a release ZIP and signed appcast:
-
-```bash
-TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 ./scripts/package-release.sh
 ```
 
 Create only the local DMG installer:
@@ -187,7 +146,6 @@ Wenn deine Arbeit von Claude und ChatGPT abhängt, ist oft nicht die Modellquali
 - Beim Start, manuell und im Hintergrund aktualisieren
 - Quellnahe Metriken behalten statt einen künstlichen Gesamtscore zu bauen
 - Das Menüleisten-Icon als schnelles Restkapazitäts-Signal nutzen
-- Updates über Sparkle und den Projekt-Appcast prüfen
 
 ### Voraussetzungen
 
@@ -234,42 +192,9 @@ Visuelle Schritt-für-Schritt-Anleitung:
 
 macOS speichert diese Ausnahme für Token Monitor, danach sollte die App normal starten. Wenn **Dennoch öffnen** nicht sichtbar ist, öffne `TokenMonitor.app` noch einmal und gehe danach wieder zu **Datenschutz & Sicherheit**. Apples offizielle Anleitung: <https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac>
 
-#### DMG vs. PKG
-
-Eine PKG-Datei würde diese Warnung nicht automatisch entfernen. macOS prüft unsignierte oder nicht notarisierte Downloads unabhängig davon, ob die App als DMG oder PKG ausgeliefert wird. Die robuste Lösung ist ein mit Developer ID signierter und notarisierter Build. Ein PKG kann später sinnvoll sein, wenn der Installer zusätzliche Installationsschritte braucht; für Token Monitor reicht der aktuelle Drag-to-Applications-DMG-Flow, sobald die App signiert und notarisiert ist.
-
 #### Beim Login starten
 
 Token Monitor versucht, sich als Login Item zu registrieren, wenn **Launch at login** in den Settings aktiv ist. macOS verlangt für Apps mit Apples ServiceManagement-Login-Item-API eine Code-Signatur, deshalb erscheinen ad-hoc signierte Preview-Builds möglicherweise nicht unter **Systemeinstellungen > Allgemein > Anmeldeobjekte**. Verschiebe `TokenMonitor.app` nach **Applications**, öffne die App einmal und nutze danach **Settings > Launch at login** in Token Monitor. Wenn macOS weiterhin eine Freigabe verlangt, öffne **Anmeldeobjekte** aus den Token-Monitor-Settings und erlaube Token Monitor dort.
-
-### Updates
-
-Token Monitor ist für Sparkle-Update-Checks vorbereitet. Die in der App hinterlegte Appcast-URL ist:
-
-```text
-https://mediapublishing.github.io/token-monitor/appcast.xml
-```
-
-Wenn ein GitHub Release veröffentlicht wird, kann `.github/workflows/release.yml` die App neu bauen, `TokenMonitor-macOS.dmg` und `TokenMonitor-macOS.zip` in das Release hochladen und `appcast.xml` plus versioniertes Update-ZIP auf GitHub Pages deployen.
-
-Der GitHub Workflow nutzt das Repository-Secret `SPARKLE_PRIVATE_KEY`. Maintainer können einen lokalen Release-Build mit dem Keychain-Eintrag erstellen:
-
-```bash
-TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 ./scripts/package-release.sh
-```
-
-Für öffentliche Verteilung in größerem Umfang sollte die App vor dem Release signiert und notarisiert werden. Wenn du bereits Zugriff auf das Apple Developer Program und ein Developer-ID-Application-Zertifikat hast, können die bestehenden Skripte ein signiertes und notarisiertes DMG bauen:
-
-```bash
-xcrun notarytool store-credentials token-monitor-notary
-TOKEN_MONITOR_CODESIGN_IDENTITY="Developer ID Application: Dein Name (TEAMID)" \
-TOKEN_MONITOR_NOTARIZE=1 \
-TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary \
-TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 \
-./scripts/package-release.sh
-```
-
-Kurzfassung: Das DMG kann bleiben. Developer-ID-Signierung plus Notarisierung ist der Teil, der die Gatekeeper-Warnung für normale Nutzer entfernt.
 
 ### Aus dem Source Code bauen
 
@@ -291,12 +216,6 @@ Lokales App-Bundle erstellen:
 ```bash
 ./scripts/build-app.sh
 open dist/TokenMonitor.app
-```
-
-Release-ZIP und signierten Appcast erstellen:
-
-```bash
-TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 ./scripts/package-release.sh
 ```
 
 Nur den lokalen DMG-Installer erstellen:

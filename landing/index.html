@@ -735,7 +735,7 @@
             <a class="btn btn-source" href="https://github.com/MediaPublishing/token-monitor" target="_blank" rel="noopener noreferrer" data-i18n="hero.ctaSecondary">Explore Source Code</a>
           </div>
 
-          <p class="microcopy" data-i18n="hero.microcopy">Install once from the DMG. Future builds can be offered through Sparkle update checks.</p>
+          <p class="microcopy" data-i18n="hero.microcopy">Install once from the DMG, then keep Token Monitor in the menu bar.</p>
         </div>
 
         <div class="hero-surface">
@@ -846,8 +846,8 @@
             <span data-i18n="native.stat.one.body">Claude remains Claude. ChatGPT remains ChatGPT.</span>
           </div>
           <div class="native-stat">
-            <strong data-i18n="native.stat.two.title">Updates are ready</strong>
-            <span data-i18n="native.stat.two.body">Sparkle checks the signed appcast.</span>
+            <strong data-i18n="native.stat.two.title">Menu bar first</strong>
+            <span data-i18n="native.stat.two.body">Usage status stays one click away.</span>
           </div>
         </div>
       </article>
@@ -866,10 +866,6 @@
           <details>
             <summary data-i18n="faq.three.q">Where can I inspect the UI before installing?</summary>
             <p data-i18n="faq.three.a">All screenshots are real Token Monitor views. Click any of them to open an enlarged preview.</p>
-          </details>
-          <details>
-            <summary data-i18n="faq.four.q">How do updates work?</summary>
-            <p data-i18n="faq.four.a">The app can check a signed Sparkle appcast. New GitHub releases can publish the update assets automatically.</p>
           </details>
           <details>
             <summary data-i18n="faq.five.q">Why can macOS show a Gatekeeper warning?</summary>
@@ -899,10 +895,6 @@
               </figure>
             </div>
             <p><a class="gatekeeper-link" href="https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac" target="_blank" rel="noopener noreferrer" data-i18n="faq.five.apple">Apple's official guide</a></p>
-          </details>
-          <details>
-            <summary data-i18n="faq.six.q">Would a PKG avoid the warning?</summary>
-            <p data-i18n="faq.six.a">No. A PKG only changes the installer format. The durable fix is a Developer ID signed and notarized build; without that, macOS can still block either a DMG or PKG download.</p>
           </details>
           <details>
             <summary data-i18n="faq.seven.q">Why is Token Monitor missing from Login Items?</summary>
@@ -970,7 +962,7 @@
           'hero.sub': 'Token Monitor keeps Claude and ChatGPT usage visible in your macOS menu bar, with separate local sessions and source-native limits for each provider.',
           'hero.ctaPrimary': 'Download macOS DMG',
           'hero.ctaSecondary': 'Explore Source Code',
-          'hero.microcopy': 'Install once from the DMG. Future builds can be offered through Sparkle update checks.',
+          'hero.microcopy': 'Install once from the DMG, then keep Token Monitor in the menu bar.',
           'shots.realViews': 'Real App Views',
           'shots.zoomHint': 'Click any screenshot to zoom',
           'label.dashboard': 'Dashboard',
@@ -1014,8 +1006,8 @@
           'native.point.four': 'Only the latest successful snapshots are stored locally',
           'native.stat.one.title': 'Provider rules stay intact',
           'native.stat.one.body': 'Claude remains Claude. ChatGPT remains ChatGPT.',
-          'native.stat.two.title': 'Updates are ready',
-          'native.stat.two.body': 'Sparkle checks the signed appcast.',
+          'native.stat.two.title': 'Menu bar first',
+          'native.stat.two.body': 'Usage status stays one click away.',
           'faq.title': 'FAQ + screenshot gallery',
           'faq.one.q': 'Do I need to compile anything to use Token Monitor?',
           'faq.one.a': 'No. Download the DMG, open it, and drag the app onto Applications.',
@@ -1023,8 +1015,6 @@
           'faq.two.a': 'No. Claude and ChatGPT use separate persistent WebKit sessions inside the app.',
           'faq.three.q': 'Where can I inspect the UI before installing?',
           'faq.three.a': 'All screenshots are real Token Monitor views. Click any of them to open an enlarged preview.',
-          'faq.four.q': 'How do updates work?',
-          'faq.four.a': 'The app can check a signed Sparkle appcast. New GitHub releases can publish the update assets automatically.',
           'faq.five.q': 'Why can macOS show a Gatekeeper warning?',
           'faq.five.a': 'Preview builds may show Apple\\'s verification warning until Token Monitor is Developer ID signed and notarized. Only continue if you downloaded the DMG from this repository and trust that build.',
           'faq.five.step.one': 'Click Done, not Move to Trash.',
@@ -1036,8 +1026,6 @@
           'faq.five.shot.three': '3. Confirm with Open Anyway.',
           'faq.five.shot.four': '4. Enter your Mac password or use Touch ID.',
           'faq.five.apple': 'Apple\\'s official guide',
-          'faq.six.q': 'Would a PKG avoid the warning?',
-          'faq.six.a': 'No. A PKG only changes the installer format. The durable fix is a Developer ID signed and notarized build; without that, macOS can still block either a DMG or PKG download.',
           'faq.seven.q': 'Why is Token Monitor missing from Login Items?',
           'faq.seven.a': 'Launch at login uses Apple\\'s ServiceManagement API, which expects a code-signed app. Move TokenMonitor.app to Applications, open it once, then enable Launch at login in Token Monitor Settings. If macOS still asks for approval, open Login Items from Token Monitor Settings and allow it there.',
           'repo.title': 'Repository',
@@ -1069,7 +1057,7 @@
           'hero.sub': 'Token Monitor haelt Claude- und ChatGPT-Nutzung in deiner macOS-Menueleiste sichtbar, mit getrennten lokalen Sessions und originalen Limits je Provider.',
           'hero.ctaPrimary': 'macOS DMG herunterladen',
           'hero.ctaSecondary': 'Source Code ansehen',
-          'hero.microcopy': 'Einmal aus dem DMG installieren. Kuenftige Builds koennen per Sparkle-Update angeboten werden.',
+          'hero.microcopy': 'Einmal aus dem DMG installieren, danach bleibt Token Monitor in der Menueleiste.',
           'shots.realViews': 'Echte App-Ansichten',
           'shots.zoomHint': 'Klicke auf Screenshots zum Zoomen',
           'label.dashboard': 'Dashboard',
@@ -1113,8 +1101,8 @@
           'native.point.four': 'Nur die letzten erfolgreichen Snapshots werden lokal gespeichert',
           'native.stat.one.title': 'Provider-Regeln bleiben intakt',
           'native.stat.one.body': 'Claude bleibt Claude. ChatGPT bleibt ChatGPT.',
-          'native.stat.two.title': 'Updates sind vorbereitet',
-          'native.stat.two.body': 'Sparkle prueft den signierten Appcast.',
+          'native.stat.two.title': 'Menueleiste zuerst',
+          'native.stat.two.body': 'Der Usage-Status bleibt einen Klick entfernt.',
           'faq.title': 'FAQ + Screenshot-Galerie',
           'faq.one.q': 'Muss ich etwas kompilieren, um Token Monitor zu nutzen?',
           'faq.one.a': 'Nein. DMG laden, oeffnen und die App auf Applications ziehen.',
@@ -1122,8 +1110,6 @@
           'faq.two.a': 'Nein. Claude und ChatGPT nutzen getrennte persistente WebKit-Sessions in der App.',
           'faq.three.q': 'Wo kann ich die UI vor der Installation ansehen?',
           'faq.three.a': 'Alle Screenshots sind echte Token-Monitor-Ansichten. Klicke sie an, um eine vergroesserte Vorschau zu oeffnen.',
-          'faq.four.q': 'Wie funktionieren Updates?',
-          'faq.four.a': 'Die App kann einen signierten Sparkle-Appcast pruefen. Neue GitHub Releases koennen die Update-Artefakte automatisch veroeffentlichen.',
           'faq.five.q': 'Warum kann macOS eine Gatekeeper-Warnung zeigen?',
           'faq.five.a': 'Preview-Builds können Apples Prüfwarnung zeigen, bis Token Monitor mit Developer ID signiert und notarized ist. Fahre nur fort, wenn du das DMG aus diesem Repository geladen hast und diesem Build vertraust.',
           'faq.five.step.one': 'Fertig klicken, nicht In den Papierkorb legen.',
@@ -1135,8 +1121,6 @@
           'faq.five.shot.three': '3. Mit Open Anyway bestätigen.',
           'faq.five.shot.four': '4. Mac-Passwort eingeben oder Touch ID nutzen.',
           'faq.five.apple': 'Apples offizielle Anleitung',
-          'faq.six.q': 'Würde eine PKG-Datei die Warnung vermeiden?',
-          'faq.six.a': 'Nein. Ein PKG ändert nur das Installer-Format. Die robuste Lösung ist ein mit Developer ID signierter und notarisierter Build; ohne das kann macOS sowohl DMG- als auch PKG-Downloads blockieren.',
           'faq.seven.q': 'Warum fehlt Token Monitor bei den Anmeldeobjekten?',
           'faq.seven.a': 'Launch at login nutzt Apples ServiceManagement-API, die eine code-signierte App erwartet. Verschiebe TokenMonitor.app nach Applications, öffne die App einmal und aktiviere danach Launch at login in den Token-Monitor-Settings. Wenn macOS weiterhin eine Freigabe verlangt, öffne Anmeldeobjekte aus den Token-Monitor-Settings und erlaube die App dort.',
           'repo.title': 'Repository',
