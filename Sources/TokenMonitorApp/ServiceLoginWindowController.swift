@@ -12,7 +12,6 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     private let statusLabel = NSTextField(wrappingLabelWithString: "")
     private var didNotifyAuthenticated = false
     private var didAutoResetBlankChatGPTPage = false
-    private var isBackgroundPresented = false
     private var blankPageCheckTask: Task<Void, Never>?
 
     var onAuthenticated: (@MainActor () -> Void)?
@@ -80,7 +79,6 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     func showWindowAndActivate() {
-        endBackgroundPresentationIfNeeded()
         didAutoResetBlankChatGPTPage = false
         showStatusBannerIfNeeded("Loading ChatGPT connection page...")
         loadUsagePage()
@@ -103,32 +101,6 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         blankPageCheckTask?.cancel()
         let request = URLRequest(url: service.usageURL, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 60)
         webView.load(request)
-    }
-
-    func beginBackgroundRefreshPresentationIfNeeded() {
-        guard let window, !window.isVisible else {
-            return
-        }
-
-        isBackgroundPresented = true
-        window.setFrame(NSRect(x: 24, y: 24, width: 1180, height: 840), display: false)
-        window.alphaValue = 0.01
-        window.ignoresMouseEvents = true
-        window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
-        window.level = .floating
-        window.orderFrontRegardless()
-    }
-
-    func endBackgroundPresentationIfNeeded() {
-        guard isBackgroundPresented, let window else {
-            return
-        }
-
-        isBackgroundPresented = false
-        window.orderOut(nil)
-        window.alphaValue = 1
-        window.ignoresMouseEvents = false
-        window.level = .normal
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -291,7 +263,6 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         blankPageCheckTask?.cancel()
-        endBackgroundPresentationIfNeeded()
         sender.orderOut(nil)
         let dismissCallback = onAuthenticationDismissed
         onAuthenticationDismissed = nil

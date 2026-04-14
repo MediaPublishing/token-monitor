@@ -57,7 +57,6 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
         return try await withCheckedThrowingContinuation { continuation in
             pendingContinuation = continuation
             if service == .chatGPT {
-                browserController.beginBackgroundRefreshPresentationIfNeeded()
                 browserController.loadUsagePage()
             } else {
                 let request = URLRequest(
@@ -205,9 +204,6 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
 
     private func finishRefresh(with result: Result<ServiceSnapshot, Error>) {
         extractionScheduled = false
-        if service == .chatGPT {
-            browserController.endBackgroundPresentationIfNeeded()
-        }
 
         guard let continuation = pendingContinuation else {
             return
