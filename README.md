@@ -4,6 +4,12 @@
 
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude- und ChatGPT/Codex-Nutzung: provider-spezifische Limits, getrennte Sessions, Hintergrund-Refresh und vorbereitete Sparkle-Updates in einer schlanken Desktop-App.
 
+<p>
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/latest/download/TokenMonitor-macOS.dmg">
+    <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
+  </a>
+</p>
+
 > **Repository status / Repository-Status:** Public preview.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
