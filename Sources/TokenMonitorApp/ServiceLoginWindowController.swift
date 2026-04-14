@@ -6,16 +6,23 @@ import WebKit
 @MainActor
 final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, WKNavigationDelegate {
     private let service: ServiceKind
+    private let dataStore: WKWebsiteDataStore
     private let webView: WKWebView
+    private let statusBanner = NSView()
+    private let statusLabel = NSTextField(wrappingLabelWithString: "")
     private var didNotifyAuthenticated = false
+    private var didAutoResetBlankChatGPTPage = false
     private var isBackgroundPresented = false
+    private var blankPageCheckTask: Task<Void, Never>?
 
     var onAuthenticated: (@MainActor () -> Void)?
+    var onAuthenticationDismissed: (@MainActor () -> Void)?
     var onPageFinishedLoading: (@MainActor () -> Void)?
     var onNavigationFailure: (@MainActor (Error) -> Void)?
 
     init(service: ServiceKind, dataStore: WKWebsiteDataStore, onAuthenticated: (@MainActor () -> Void)? = nil) {
         self.service = service
+        self.dataStore = dataStore
         self.onAuthenticated = onAuthenticated
 
         let configuration = WKWebViewConfiguration()
@@ -57,6 +64,12 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
         super.init(window: window)
 
+        if service == .chatGPT {
+            configureStatusBanner()
+            stackView.insertArrangedSubview(statusBanner, at: 0)
+            statusBanner.isHidden = true
+        }
+
         window.delegate = self
         webView.navigationDelegate = self
     }
@@ -68,18 +81,26 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
     func showWindowAndActivate() {
         endBackgroundPresentationIfNeeded()
+        didAutoResetBlankChatGPTPage = false
+        showStatusBannerIfNeeded("Loading ChatGPT connection page...")
         loadUsagePage()
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    func prepareForAuthentication(_ callback: @escaping @MainActor () -> Void) {
+    func prepareForAuthentication(
+        onAuthenticated callback: @escaping @MainActor () -> Void,
+        onDismissed: @escaping @MainActor () -> Void
+    ) {
         didNotifyAuthenticated = false
+        didAutoResetBlankChatGPTPage = false
         onAuthenticated = callback
+        onAuthenticationDismissed = onDismissed
     }
 
     func loadUsagePage() {
+        blankPageCheckTask?.cancel()
         let request = URLRequest(url: service.usageURL, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 60)
         webView.load(request)
     }
@@ -116,16 +137,123 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
             return
         }
 
+        if service == .chatGPT {
+            scheduleChatGPTBlankPageCheck(currentURL: currentURL)
+            return
+        }
+
+        finishLoadedPage(currentURL: currentURL)
+    }
+
+    private func finishLoadedPage(currentURL: String) {
         if currentURL.contains(service.usageURL.host() ?? ""),
            currentURL.contains(service.usageURL.path),
            !didNotifyAuthenticated {
             didNotifyAuthenticated = true
             let callback = onAuthenticated
             onAuthenticated = nil
+            onAuthenticationDismissed = nil
             callback?()
         }
 
         onPageFinishedLoading?()
+    }
+
+    private func scheduleChatGPTBlankPageCheck(currentURL: String) {
+        blankPageCheckTask?.cancel()
+        blankPageCheckTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 4_000_000_000)
+
+            guard !Task.isCancelled else {
+                return
+            }
+
+            guard let readiness = await readChatGPTPageReadiness() else {
+                showStatusBannerIfNeeded("ChatGPT did not return a readable page. Resetting the local session and retrying...")
+                resetLocalWebSessionAndReload()
+                return
+            }
+
+            if readiness.isBlank {
+                if !didAutoResetBlankChatGPTPage {
+                    didAutoResetBlankChatGPTPage = true
+                    showStatusBannerIfNeeded("ChatGPT returned an empty connection page. Resetting the local Token Monitor session and retrying...")
+                    resetLocalWebSessionAndReload()
+                    return
+                }
+
+                showStatusBannerIfNeeded("ChatGPT still returned an empty page after a local session reset. Token Monitor will mark this reconnect as failed instead of showing Healthy.")
+            } else {
+                hideStatusBannerIfNeeded()
+            }
+
+            finishLoadedPage(currentURL: currentURL)
+        }
+    }
+
+    private func readChatGPTPageReadiness() async -> ChatGPTPageReadiness? {
+        let payload = try? await evaluateJavaScript(
+            """
+            JSON.stringify({
+              title: document.title || "",
+              url: location.href,
+              bodyText: ((document.body && (document.body.innerText || document.body.textContent)) || "").trim(),
+              elementCount: document.body ? document.body.querySelectorAll("*").length : 0
+            })
+            """
+        )
+
+        guard let payload, let data = payload.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(ChatGPTPageReadiness.self, from: data)
+    }
+
+    private func resetLocalWebSessionAndReload() {
+        blankPageCheckTask?.cancel()
+        let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
+        dataStore.removeData(ofTypes: dataTypes, modifiedSince: .distantPast) { [weak self] in
+            Task { @MainActor in
+                self?.loadUsagePage()
+            }
+        }
+    }
+
+    private func configureStatusBanner() {
+        statusBanner.translatesAutoresizingMaskIntoConstraints = false
+        statusBanner.wantsLayer = true
+        statusBanner.layer?.backgroundColor = NSColor.systemYellow.withAlphaComponent(0.14).cgColor
+
+        statusLabel.font = .systemFont(ofSize: 12)
+        statusLabel.textColor = .secondaryLabelColor
+        statusLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        statusBanner.addSubview(statusLabel)
+        NSLayoutConstraint.activate([
+            statusLabel.leadingAnchor.constraint(equalTo: statusBanner.leadingAnchor, constant: 14),
+            statusLabel.trailingAnchor.constraint(equalTo: statusBanner.trailingAnchor, constant: -14),
+            statusLabel.topAnchor.constraint(equalTo: statusBanner.topAnchor, constant: 10),
+            statusLabel.bottomAnchor.constraint(equalTo: statusBanner.bottomAnchor, constant: -10),
+            statusBanner.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
+        ])
+    }
+
+    private func showStatusBannerIfNeeded(_ message: String) {
+        guard service == .chatGPT else {
+            return
+        }
+
+        statusLabel.stringValue = message
+        statusBanner.isHidden = false
+    }
+
+    private func hideStatusBannerIfNeeded() {
+        guard service == .chatGPT else {
+            return
+        }
+
+        statusBanner.isHidden = true
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -162,9 +290,25 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
+        blankPageCheckTask?.cancel()
         endBackgroundPresentationIfNeeded()
         sender.orderOut(nil)
+        let dismissCallback = onAuthenticationDismissed
+        onAuthenticationDismissed = nil
+        dismissCallback?()
         return false
+    }
+}
+
+private struct ChatGPTPageReadiness: Decodable {
+    let title: String
+    let url: String
+    let bodyText: String
+    let elementCount: Int
+
+    var isBlank: Bool {
+        let visibleText = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return visibleText.isEmpty
     }
 }
 

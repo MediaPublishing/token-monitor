@@ -70,8 +70,14 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate {
         }
     }
 
-    func showLoginWindow(onAuthenticated: @escaping @MainActor () -> Void) {
-        browserController.prepareForAuthentication(onAuthenticated)
+    func showLoginWindow(
+        onAuthenticated: @escaping @MainActor () -> Void,
+        onDismissed: @escaping @MainActor () -> Void
+    ) {
+        browserController.prepareForAuthentication(
+            onAuthenticated: onAuthenticated,
+            onDismissed: onDismissed
+        )
         browserController.showWindowAndActivate()
     }
 

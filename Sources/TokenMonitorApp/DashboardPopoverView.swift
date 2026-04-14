@@ -95,7 +95,7 @@ private struct ServiceSectionView: View {
         switch status.connectionStatus {
         case .authRequired:
             return "Connect"
-        case .healthy, .stale, .error:
+        case .healthy, .refreshing, .stale, .error:
             return "Reconnect"
         }
     }
@@ -117,6 +117,8 @@ private struct StateBadgeView: View {
         switch status {
         case .healthy:
             return "Healthy"
+        case .refreshing:
+            return "Refreshing"
         case .stale:
             return "Stale"
         case .authRequired:
@@ -130,6 +132,8 @@ private struct StateBadgeView: View {
         switch status {
         case .healthy:
             return .green
+        case .refreshing:
+            return .blue
         case .stale:
             return .orange
         case .authRequired:

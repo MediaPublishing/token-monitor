@@ -167,6 +167,7 @@ public enum RefreshState: Equatable, Sendable {
 
 public enum ServiceConnectionStatus: String, Equatable, Sendable {
     case healthy
+    case refreshing
     case stale
     case authRequired
     case error
@@ -185,8 +186,10 @@ public struct ServiceStatus: Equatable, Sendable {
 
     public var connectionStatus: ServiceConnectionStatus {
         switch refreshState {
-        case .success, .refreshing:
+        case .success:
             return .healthy
+        case .refreshing:
+            return .refreshing
         case .stale:
             return .stale
         case .authRequired:

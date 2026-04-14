@@ -32,6 +32,7 @@ struct DashboardReducerTests {
 
         DashboardReducer.reduce(&state, event: .service(.chatGPT, .refreshStarted(trigger: .manual)), now: now)
         #expect(state.service(.chatGPT).refreshState == .refreshing(trigger: .manual))
+        #expect(state.service(.chatGPT).connectionStatus == .refreshing)
 
         DashboardReducer.reduce(&state, event: .service(.chatGPT, .refreshSucceeded(snapshot)), now: now)
         #expect(state.service(.chatGPT).connectionStatus == .healthy)

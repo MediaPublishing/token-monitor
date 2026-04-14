@@ -171,6 +171,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         switch status {
         case .healthy:
             return .systemGreen
+        case .refreshing:
+            return .systemBlue
         case .stale:
             return .systemOrange
         case .authRequired:
@@ -186,6 +188,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             return .systemRed
         case .authRequired:
             return .systemYellow
+        case .refreshing:
+            if score >= 0.65 { return .systemGreen }
+            if score >= 0.35 { return .systemOrange }
+            return .systemRed
         case .stale:
             return score > 0.5 ? .systemOrange : .systemRed
         case .healthy:

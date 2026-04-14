@@ -147,9 +147,24 @@ final class AppModel: ObservableObject {
     }
 
     func openLogin(for service: ServiceKind) {
-        sessionCoordinator.showLoginWindow(for: service) { [weak self] in
-            self?.refresh(service, trigger: .login, force: true)
-        }
+        DashboardReducer.reduce(&dashboardState, event: .service(service, .refreshStarted(trigger: .login)))
+        sessionCoordinator.showLoginWindow(
+            for: service,
+            onAuthenticated: { [weak self] in
+                self?.refresh(service, trigger: .login, force: true)
+            },
+            onDismissed: { [weak self] in
+                guard let self else {
+                    return
+                }
+                if case .refreshing(trigger: .login) = self.dashboardState.service(service).refreshState {
+                    DashboardReducer.reduce(
+                        &self.dashboardState,
+                        event: .service(service, .refreshFailed(message: "Reconnect window closed before a successful refresh"))
+                    )
+                }
+            }
+        )
     }
 
     func openUsagePageInDefaultBrowser(for service: ServiceKind) {
@@ -232,6 +247,9 @@ final class AppModel: ObservableObject {
         }
         if states.contains(.authRequired) {
             return .authRequired
+        }
+        if states.contains(.refreshing) {
+            return .refreshing
         }
         if states.contains(.stale) {
             return .stale

@@ -19,7 +19,14 @@ final class SessionCoordinator {
         return try await controller.refresh()
     }
 
-    func showLoginWindow(for service: ServiceKind, onAuthenticated: @escaping @MainActor () -> Void) {
-        controllers[service]?.showLoginWindow(onAuthenticated: onAuthenticated)
+    func showLoginWindow(
+        for service: ServiceKind,
+        onAuthenticated: @escaping @MainActor () -> Void,
+        onDismissed: @escaping @MainActor () -> Void
+    ) {
+        controllers[service]?.showLoginWindow(
+            onAuthenticated: onAuthenticated,
+            onDismissed: onDismissed
+        )
     }
 }
