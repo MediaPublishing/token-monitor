@@ -141,7 +141,9 @@ public struct ChatGPTUsageParser: UsageParsing {
             guard let metric = parseChatGPTMetricCard(from: cardLines, specs: specs) else {
                 continue
             }
-            metricsByKey[metric.key] = metric
+            if shouldReplaceChatGPTMetric(metricsByKey[metric.key], with: metric) {
+                metricsByKey[metric.key] = metric
+            }
         }
 
         let lines = chatGPTCandidateLines(from: extract)
@@ -215,6 +217,18 @@ private func parseChatGPTMetricCard(from lines: [String], specs: [ChatGPTMetricS
         progress: spec.kind == .progress ? percentage(from: valueText) : nil,
         style: spec.kind
     )
+}
+
+private func shouldReplaceChatGPTMetric(_ existing: UsageMetric?, with candidate: UsageMetric) -> Bool {
+    guard let existing else {
+        return true
+    }
+
+    if existing.subtitle == nil, candidate.subtitle != nil {
+        return true
+    }
+
+    return false
 }
 
 private enum ChatGPTDuration {

@@ -63,6 +63,44 @@ struct ChatGPTUsageParserTests {
         #expect(snapshot.metric(for: "credits-remaining")?.valueText == "12.50")
     }
 
+    @Test func keepsWeeklyResetFromRicherDuplicateUsageSegment() throws {
+        let extract = ServicePageExtract(
+            service: .chatGPT,
+            pageTitle: "Codex",
+            url: "https://chatgpt.com/codex/cloud/settings/analytics#usage",
+            bodyText: "",
+            segments: [
+                """
+                Weekly usage limit
+                87%
+                remaining
+                Resets Apr 23, 2026 12:55 PM
+                """,
+                """
+                Weekly usage limit
+                87%
+                remaining
+                """,
+                """
+                5 hour usage limit
+                97%
+                remaining
+                Resets 12:30 PM
+                """,
+                """
+                GPT-5.3-Codex-Spark Weekly usage limit
+                100%
+                remaining
+                """
+            ]
+        )
+
+        let snapshot = try ChatGPTUsageParser().parse(extract: extract, now: .now)
+
+        #expect(snapshot.metric(for: "weekly-limit")?.valueText == "87% remaining")
+        #expect(snapshot.metric(for: "weekly-limit")?.subtitle == "Resets Apr 23, 2026 12:55 PM")
+    }
+
     @Test func parsesPartialChatGPTUsageLayoutWithoutFailingWholeSnapshot() throws {
         let bodyText = """
         Usage dashboard
