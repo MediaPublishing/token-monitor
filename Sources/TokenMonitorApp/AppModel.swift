@@ -324,6 +324,10 @@ final class AppModel: ObservableObject {
             if case .authRequired = status.refreshState, status.snapshot == nil {
                 return true
             }
+            if case let .stale(_, message) = status.refreshState,
+               message.localizedCaseInsensitiveContains("login required") {
+                return true
+            }
             return false
         case .manual, .popover, .login:
             return false

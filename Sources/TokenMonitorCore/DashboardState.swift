@@ -73,7 +73,11 @@ public enum DashboardReducer {
                 }
 
             case let .authRequired(message):
-                state.services[index].refreshState = .authRequired(message: message)
+                if let snapshot = state.services[index].snapshot {
+                    state.services[index].refreshState = .stale(lastSuccess: snapshot.capturedAt, message: message)
+                } else {
+                    state.services[index].refreshState = .authRequired(message: message)
+                }
             }
         }
     }

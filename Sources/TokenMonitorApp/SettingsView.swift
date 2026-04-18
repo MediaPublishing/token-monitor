@@ -33,7 +33,7 @@ struct SettingsView: View {
                     Text("Provider settings")
                         .font(.headline.weight(.semibold))
                 }
-                Text("Each provider uses its own persistent WebKit session. Browser cookies from Chrome or Arc are never reused.")
+                Text("Token Monitor uses a persistent WebKit session that is kept across app updates. Browser cookies from Chrome or Arc are never reused.")
                     .font(compact ? .caption : .subheadline)
                     .foregroundStyle(.secondary)
             }

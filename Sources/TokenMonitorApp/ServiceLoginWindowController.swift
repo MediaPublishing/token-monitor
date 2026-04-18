@@ -11,7 +11,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     private let statusBanner = NSView()
     private let statusLabel = NSTextField(wrappingLabelWithString: "")
     private var didNotifyAuthenticated = false
-    private var didAutoResetBlankChatGPTPage = false
+    private var didAutoRetryBlankChatGPTPage = false
     private var blankPageCheckTask: Task<Void, Never>?
 
     var onAuthenticated: (@MainActor () -> Void)?
@@ -82,7 +82,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     func showWindowAndActivate() {
-        didAutoResetBlankChatGPTPage = false
+        didAutoRetryBlankChatGPTPage = false
         showStatusBannerIfNeeded("Loading ChatGPT connection page...")
         loadUsagePage()
         showWindow(nil)
@@ -95,7 +95,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         onDismissed: @escaping @MainActor () -> Void
     ) {
         didNotifyAuthenticated = false
-        didAutoResetBlankChatGPTPage = false
+        didAutoRetryBlankChatGPTPage = false
         onAuthenticated = callback
         onAuthenticationDismissed = onDismissed
     }
@@ -190,20 +190,20 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
             }
 
             guard let readiness = await readChatGPTPageReadiness() else {
-                showStatusBannerIfNeeded("ChatGPT did not return a readable page. Resetting the local session and retrying...")
-                resetLocalWebSessionAndReload()
+                showStatusBannerIfNeeded("ChatGPT did not return a readable page. Retrying without clearing your local session...")
+                reloadUsagePageAfterBlankLoad()
                 return
             }
 
             if readiness.isBlank {
-                if !didAutoResetBlankChatGPTPage {
-                    didAutoResetBlankChatGPTPage = true
-                    showStatusBannerIfNeeded("ChatGPT returned an empty connection page. Resetting the local Token Monitor session and retrying...")
-                    resetLocalWebSessionAndReload()
+                if !didAutoRetryBlankChatGPTPage {
+                    didAutoRetryBlankChatGPTPage = true
+                    showStatusBannerIfNeeded("ChatGPT returned an empty connection page. Retrying without clearing your local session...")
+                    reloadUsagePageAfterBlankLoad()
                     return
                 }
 
-                showStatusBannerIfNeeded("ChatGPT still returned an empty page after a local session reset. Token Monitor will mark this reconnect as failed instead of showing Healthy.")
+                showStatusBannerIfNeeded("ChatGPT still returned an empty page after retrying. Token Monitor will mark this reconnect as failed instead of showing Healthy.")
             } else {
                 hideStatusBannerIfNeeded()
             }
@@ -231,13 +231,10 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         return try? JSONDecoder().decode(ChatGPTPageReadiness.self, from: data)
     }
 
-    private func resetLocalWebSessionAndReload() {
+    private func reloadUsagePageAfterBlankLoad() {
         blankPageCheckTask?.cancel()
-        let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
-        dataStore.removeData(ofTypes: dataTypes, modifiedSince: .distantPast) { [weak self] in
-            Task { @MainActor in
-                self?.loadUsagePage()
-            }
+        Task { @MainActor in
+            loadUsagePage()
         }
     }
 

@@ -67,7 +67,7 @@ struct DashboardReducerTests {
         #expect(state.service(.claude).refreshState == .stale(lastSuccess: now, message: "Network timeout"))
     }
 
-    @Test func authRequiredKeepsLastSnapshotVisible() {
+    @Test func authRequiredWithSnapshotKeepsLastSnapshotVisibleAndMarksStale() {
         let now = Date(timeIntervalSince1970: 1_700_000_000)
         let snapshot = ServiceSnapshot(
             service: .claude,
@@ -80,7 +80,8 @@ struct DashboardReducerTests {
 
         DashboardReducer.reduce(&state, event: .service(.claude, .authRequired(message: "Claude login required")), now: now)
 
-        #expect(state.service(.claude).connectionStatus == .authRequired)
+        #expect(state.service(.claude).connectionStatus == .stale)
         #expect(state.service(.claude).snapshot == snapshot)
+        #expect(state.service(.claude).refreshState == .stale(lastSuccess: now, message: "Claude login required"))
     }
 }

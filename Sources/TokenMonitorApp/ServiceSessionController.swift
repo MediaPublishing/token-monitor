@@ -42,7 +42,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         case .chatGPT:
             parser = ChatGPTUsageParser()
         }
-        dataStore = WKWebsiteDataStore(forIdentifier: service.dataStoreIdentifier)
+        dataStore = WKWebsiteDataStore.default()
         super.init()
     }
 
@@ -257,6 +257,10 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private func handleNavigationError(_ error: Error) {
         let nsError = error as NSError
         if nsError.domain == NSURLErrorDomain, nsError.code == NSURLErrorCancelled {
+            return
+        }
+        if nsError.domain == WKError.errorDomain, nsError.code == 102 {
+            handlePageFinishedLoading()
             return
         }
 

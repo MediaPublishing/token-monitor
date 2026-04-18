@@ -22,8 +22,11 @@ struct AppSourceBehaviorTests {
         )
 
         #expect(!loginWindowController.contains("orderFrontRegardless"))
+        #expect(!loginWindowController.contains("removeData(ofTypes:"))
         #expect(!sessionController.contains("browserController.loadUsagePage()"))
         #expect(!sessionController.contains("browserController.evaluateJavaScript"))
+        #expect(!sessionController.contains("WKWebsiteDataStore(forIdentifier:"))
+        #expect(sessionController.contains("WKWebsiteDataStore.default()"))
         #expect(!sessionController.contains("beginBackgroundRefreshPresentationIfNeeded"))
         #expect(!sessionController.contains("endBackgroundPresentationIfNeeded"))
         #expect(sessionController.contains("decidePolicyFor navigationAction"))
