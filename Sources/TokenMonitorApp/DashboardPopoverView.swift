@@ -58,9 +58,9 @@ private struct ServiceSectionView: View {
                     .controlSize(.small)
             }
 
-            if let snapshot = status.snapshot, !snapshot.metrics.isEmpty {
+            if let snapshot = status.snapshot, !visibleMetrics(from: snapshot).isEmpty {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
-                    ForEach(snapshot.metrics) { metric in
+                    ForEach(visibleMetrics(from: snapshot)) { metric in
                         MetricCardView(metric: metric)
                     }
                 }
@@ -97,6 +97,12 @@ private struct ServiceSectionView: View {
             return "Connect"
         case .healthy, .refreshing, .stale, .error:
             return "Reconnect"
+        }
+    }
+
+    private func visibleMetrics(from snapshot: ServiceSnapshot) -> [UsageMetric] {
+        snapshot.metrics.filter { metric in
+            metric.key != "credits-remaining"
         }
     }
 }
