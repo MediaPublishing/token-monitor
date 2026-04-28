@@ -216,7 +216,16 @@ private struct MetricCardView: View {
 
     private var tintColor: Color {
         if metric.valueText.localizedCaseInsensitiveContains("remaining") {
-            return .green
+            guard let progress = metric.progress else {
+                return .green
+            }
+            if progress >= 0.5 {
+                return .green
+            }
+            if progress >= 0.25 {
+                return .orange
+            }
+            return .red
         }
         if let progress = metric.progress, progress >= 0.9 {
             return .red

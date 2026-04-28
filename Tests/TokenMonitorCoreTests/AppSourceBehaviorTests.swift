@@ -37,4 +37,21 @@ struct AppSourceBehaviorTests {
         #expect(appModel.contains("shouldSkipAutomaticRefresh"))
         #expect(appModel.contains("case .launch, .background"))
     }
+
+    @Test func remainingProgressBarsUseThresholdColors() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let dashboardView = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/DashboardPopoverView.swift"),
+            encoding: .utf8
+        )
+
+        #expect(dashboardView.contains("if progress >= 0.5"))
+        #expect(dashboardView.contains("if progress >= 0.25"))
+        #expect(dashboardView.contains("return .red"))
+        #expect(!dashboardView.contains("localizedCaseInsensitiveContains(\"remaining\") {\n            return .green"))
+    }
 }
