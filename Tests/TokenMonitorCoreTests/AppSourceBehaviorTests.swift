@@ -82,4 +82,24 @@ struct AppSourceBehaviorTests {
         #expect(settingsView.contains("GitHub Issue Draft"))
         #expect(settingsView.contains("Email Draft"))
     }
+
+    @Test func claudeExtractionHandlesEmptyAndLocalizedDomText() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let sessionController = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/ServiceSessionController.swift"),
+            encoding: .utf8
+        )
+
+        #expect(sessionController.contains("emptyUsagePage"))
+        #expect(sessionController.contains("Usage page returned no readable text"))
+        #expect(sessionController.contains("document.documentElement"))
+        #expect(sessionController.contains("shadowRoot"))
+        #expect(sessionController.contains("aria-label"))
+        #expect(sessionController.contains("Aktuelle Sitzung"))
+        #expect(sessionController.contains("€"))
+    }
 }

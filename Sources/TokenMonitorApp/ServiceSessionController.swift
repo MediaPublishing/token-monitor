@@ -7,6 +7,7 @@ enum SessionControllerError: LocalizedError {
     case controllerMissing(String)
     case refreshAlreadyInProgress
     case invalidPayload
+    case emptyUsagePage
 
     var errorDescription: String? {
         switch self {
@@ -16,6 +17,8 @@ enum SessionControllerError: LocalizedError {
             return "Refresh already in progress"
         case .invalidPayload:
             return "The usage page returned an unreadable payload"
+        case .emptyUsagePage:
+            return "The usage page returned no readable text"
         }
     }
 }
@@ -201,6 +204,17 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             do {
                 let extract = try await evaluateCurrentPage()
                 latestExtract = extract
+                if extract.isEmptyUsagePayload {
+                    if index == delays.count - 1 {
+                        writeDebugRecord(
+                            from: extract,
+                            outcome: .transportFailure,
+                            message: "Usage page returned no readable text"
+                        )
+                        finishRefresh(with: .failure(SessionControllerError.emptyUsagePage))
+                    }
+                    continue
+                }
                 let snapshot = try parser.parse(extract: extract, now: Date())
                 writeDebugRecord(from: extract, outcome: .success, message: nil)
                 finishRefresh(with: .success(snapshot))
@@ -381,22 +395,55 @@ private extension WKWebView {
     }
 }
 
+private extension ServicePageExtract {
+    var isEmptyUsagePayload: Bool {
+        pageTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && segments.allSatisfy { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+}
+
 private func extractionScript(for service: ServiceKind) -> String {
     switch service {
     case .claude:
         return """
         (() => {
+          const textParts = (node, seen = new Set()) => {
+            if (!node || seen.has(node)) return [];
+            seen.add(node);
+            const parts = [];
+            if (node.nodeType === Node.TEXT_NODE) {
+              const value = (node.nodeValue || '').trim();
+              if (value) parts.push(value);
+              return parts;
+            }
+            if (node.nodeType !== Node.ELEMENT_NODE && node.nodeType !== Node.DOCUMENT_NODE && node.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
+              return parts;
+            }
+            if (node.matches && node.matches('script, style, noscript, template')) {
+              return parts;
+            }
+            const label = node.getAttribute ? (node.getAttribute('aria-label') || node.getAttribute('title') || node.getAttribute('placeholder')) : '';
+            if (label && label.trim()) parts.push(label.trim());
+            if (node.shadowRoot) parts.push(...textParts(node.shadowRoot, seen));
+            for (const child of Array.from(node.childNodes || [])) {
+              parts.push(...textParts(child, seen));
+            }
+            return parts;
+          };
           const readableText = (root) => {
             if (!root) return "";
             const clone = root.cloneNode(true);
             clone.querySelectorAll('script, style, noscript, template').forEach(node => node.remove());
-            return clone.innerText || clone.textContent || "";
+            const visible = clone.innerText || clone.textContent || "";
+            return visible || Array.from(new Set(textParts(root))).join("\\n");
           };
-          const bodyText = readableText(document.body);
-          const interesting = Array.from(document.querySelectorAll('main, main *, section, article, div'))
-            .map(node => (node.innerText || '').trim())
+          const roots = [document.body, document.documentElement].filter(Boolean);
+          const bodyText = Array.from(new Set(roots.map(readableText).filter(Boolean))).join("\\n");
+          const interesting = Array.from(document.querySelectorAll('main, main *, section, article, div, span, p, h1, h2, h3, button, [aria-label]'))
+            .map(node => (node.innerText || node.textContent || node.getAttribute('aria-label') || '').trim())
             .filter(text => text.length > 0 && text.length < 320)
-            .filter(text => /% used|Current session|All models|Sonnet only|Extra usage|Monthly spend limit|Current balance|\\$\\d/i.test(text));
+            .filter(text => /%\\s*(used|genutzt|verwendet|verbraucht)|Current session|Aktuelle Sitzung|All models|Alle Modelle|Sonnet only|Nur Sonnet|Sonnet|Extra usage|Zusätzliche Nutzung|Zusätzliche Verwendung|Monthly spend limit|Monatliches Ausgabenlimit|Current balance|Aktueller Kontostand|Guthaben|\\$\\s?\\d|€\\s?\\d|\\d[\\d.,]*\\s?€/i.test(text));
           return JSON.stringify({
             service: "\(service.rawValue)",
             pageTitle: document.title || "",
