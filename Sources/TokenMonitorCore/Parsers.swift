@@ -20,20 +20,20 @@ public struct ClaudeUsageParser: UsageParsing {
 
         let lines = claudeCandidateLines(from: extract)
         guard
-            let currentSessionIndex = firstIndex(in: lines, containing: "Current session"),
-            let allModelsIndex = firstIndex(in: lines, containing: "All models"),
-            let sonnetIndex = firstIndex(in: lines, containing: "Sonnet only"),
-            let extraUsageIndex = firstIndex(in: lines, containing: "Extra usage"),
-            let monthlyLimitIndex = firstIndex(in: lines, containing: "Monthly spend limit"),
-            let balanceIndex = firstIndex(in: lines, containing: "Current balance"),
-            let currentSessionValue = firstLine(after: currentSessionIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("% used") }),
-            let allModelsValue = firstLine(after: allModelsIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("% used") }),
-            let allModelsReset = firstLine(after: allModelsIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("Resets") }),
-            let sonnetValue = firstLine(after: sonnetIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("% used") }),
-            let sonnetReset = firstLine(after: sonnetIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("Resets") }),
-            let extraUsageSpent = firstLine(after: extraUsageIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("spent") }),
-            let extraUsageReset = firstLine(after: extraUsageIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("Resets") }),
-            let extraUsagePercent = firstLine(after: extraUsageIndex, in: lines, matching: { $0.localizedCaseInsensitiveContains("% used") }),
+            let currentSessionIndex = firstIndex(in: lines, containingAny: ["Current session", "Aktuelle Sitzung", "Sitzung"]),
+            let allModelsIndex = firstIndex(in: lines, containingAny: ["All models", "Alle Modelle"]),
+            let sonnetIndex = firstIndex(in: lines, containingAny: ["Sonnet only", "Nur Sonnet", "Sonnet"]),
+            let extraUsageIndex = firstIndex(in: lines, containingAny: ["Extra usage", "Zusätzliche Nutzung", "Zusätzliche Verwendung"]),
+            let monthlyLimitIndex = firstIndex(in: lines, containingAny: ["Monthly spend limit", "Monatliches Ausgabenlimit", "Monatliches Limit"]),
+            let balanceIndex = firstIndex(in: lines, containingAny: ["Current balance", "Aktueller Kontostand", "Aktuelles Guthaben", "Guthaben"]),
+            let currentSessionValue = firstLine(after: currentSessionIndex, in: lines, matching: isUsageUsedValue),
+            let allModelsValue = firstLine(after: allModelsIndex, in: lines, matching: isUsageUsedValue),
+            let allModelsReset = firstLine(after: allModelsIndex, in: lines, matching: isResetLine),
+            let sonnetValue = firstLine(after: sonnetIndex, in: lines, matching: isUsageUsedValue),
+            let sonnetReset = firstLine(after: sonnetIndex, in: lines, matching: isResetLine),
+            let extraUsageSpent = firstLine(after: extraUsageIndex, in: lines, matching: isSpentLine),
+            let extraUsageReset = firstLine(after: extraUsageIndex, in: lines, matching: isResetLine),
+            let extraUsagePercent = firstLine(after: extraUsageIndex, in: lines, matching: isUsageUsedValue),
             let monthlyLimitValue = previousLine(before: monthlyLimitIndex, in: lines),
             let currentBalanceValue = previousLine(before: balanceIndex, in: lines),
             isClaudeMoneyValue(monthlyLimitValue),
@@ -396,7 +396,13 @@ private func looksLikeCollapsedClaudeBodyLine(_ line: String) -> Bool {
         "Sonnet only",
         "Extra usage",
         "Monthly spend limit",
-        "Current balance"
+        "Current balance",
+        "Aktuelle Sitzung",
+        "Alle Modelle",
+        "Zusätzliche Nutzung",
+        "Monatliches Ausgabenlimit",
+        "Aktueller Kontostand",
+        "Guthaben"
     ]
 
     let markerCount = markers.filter { line.localizedCaseInsensitiveContains($0) }.count
@@ -405,7 +411,40 @@ private func looksLikeCollapsedClaudeBodyLine(_ line: String) -> Bool {
 
 private func isClaudeMoneyValue(_ text: String) -> Bool {
     let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-    return normalized.range(of: #"^\$\d+(?:[.,]\d+)?$"#, options: .regularExpression) != nil
+    let patterns = [
+        #"^\$\s?\d+(?:[.,]\d+)?$"#,
+        #"^€\s?\d+(?:[.,]\d+)?$"#,
+        #"^\d+(?:[.,]\d+)?\s?€$"#
+    ]
+    return patterns.contains { pattern in
+        normalized.range(of: pattern, options: .regularExpression) != nil
+    }
+}
+
+private func isUsageUsedValue(_ text: String) -> Bool {
+    let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    let patterns = [
+        #"\d+(?:[.,]\d+)?\s*%\s*used"#,
+        #"\d+(?:[.,]\d+)?\s*%\s*(genutzt|verwendet|verbraucht)"#
+    ]
+    return patterns.contains { pattern in
+        normalized.range(of: pattern, options: [.regularExpression, .caseInsensitive]) != nil
+    }
+}
+
+private func isResetLine(_ text: String) -> Bool {
+    let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    return normalized.localizedCaseInsensitiveContains("Resets")
+        || normalized.localizedCaseInsensitiveContains("Zurücksetzen")
+        || normalized.localizedCaseInsensitiveContains("zurückgesetzt")
+        || normalized.localizedCaseInsensitiveContains("Setzt zurück")
+}
+
+private func isSpentLine(_ text: String) -> Bool {
+    let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    return normalized.localizedCaseInsensitiveContains("spent")
+        || normalized.localizedCaseInsensitiveContains("ausgegeben")
+        || normalized.localizedCaseInsensitiveContains("verbraucht")
 }
 
 private func normalizedProgressValue(_ text: String) -> String? {
@@ -450,6 +489,12 @@ private func normalizedStatValue(_ text: String) -> String? {
 
 private func firstIndex(in lines: [String], containing needle: String) -> Int? {
     lines.firstIndex { $0.localizedCaseInsensitiveContains(needle) }
+}
+
+private func firstIndex(in lines: [String], containingAny needles: [String]) -> Int? {
+    lines.firstIndex { line in
+        needles.contains { line.localizedCaseInsensitiveContains($0) }
+    }
 }
 
 private func firstLine(after index: Int, in lines: [String], matching predicate: (String) -> Bool = { _ in true }) -> String? {
@@ -497,12 +542,12 @@ private func remainingProgress(fromUsedText valueText: String) -> Double? {
 }
 
 private func percentage(from valueText: String) -> Double? {
-    guard let range = valueText.range(of: #"(\d+)%"#, options: .regularExpression) else {
+    guard let range = valueText.range(of: #"(\d+(?:[.,]\d+)?)%"#, options: .regularExpression) else {
         return nil
     }
 
     let numberText = String(valueText[range]).replacingOccurrences(of: "%", with: "")
-    guard let value = Double(numberText) else {
+    guard let value = Double(numberText.replacingOccurrences(of: ",", with: ".")) else {
         return nil
     }
 

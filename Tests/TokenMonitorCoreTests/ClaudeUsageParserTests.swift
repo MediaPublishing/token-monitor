@@ -54,6 +54,55 @@ struct ClaudeUsageParserTests {
         #expect(snapshot.metric(for: "current-balance")?.valueText == "$0.00")
     }
 
+    @Test func parsesGermanClaudeUsageWithEuroAmounts() throws {
+        let extract = ServicePageExtract(
+            service: .claude,
+            pageTitle: "Claude",
+            url: "https://claude.ai/settings/usage",
+            bodyText: "",
+            segments: [
+                """
+                Plannutzungslimits
+                Max (20x)
+                Aktuelle Sitzung
+                Startet, wenn eine Nachricht gesendet wird
+                0% genutzt
+                Wöchentliche Limits
+                Alle Modelle
+                Wird zurückgesetzt Fr 12:00
+                18% genutzt
+                Nur Sonnet
+                Wird zurückgesetzt Fr 12:00
+                7% genutzt
+                """,
+                """
+                Zusätzliche Nutzung
+                Aktiviere zusätzliche Nutzung, um Claude weiter zu verwenden.
+                €17,14 ausgegeben
+                Wird zurückgesetzt 1. Mai
+                9% genutzt
+                €200
+                Monatliches Ausgabenlimit
+                182,86 €
+                Aktueller Kontostand
+                Automatisches Aufladen aus
+                """
+            ]
+        )
+
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: Date(timeIntervalSince1970: 1_700_000_000))
+
+        #expect(snapshot.metric(for: "current-session")?.valueText == "100% remaining")
+        #expect(snapshot.metric(for: "weekly-all-models")?.valueText == "82% remaining")
+        #expect(snapshot.metric(for: "weekly-all-models")?.subtitle == "Wird zurückgesetzt Fr 12:00")
+        #expect(snapshot.metric(for: "weekly-sonnet")?.valueText == "93% remaining")
+        #expect(snapshot.metric(for: "extra-usage-spend")?.valueText == "€17,14 ausgegeben")
+        #expect(snapshot.metric(for: "extra-usage-spend")?.progress == 0.09)
+        #expect(snapshot.metric(for: "extra-usage-spend")?.subtitle == "Wird zurückgesetzt 1. Mai")
+        #expect(snapshot.metric(for: "monthly-spend-limit")?.valueText == "€200")
+        #expect(snapshot.metric(for: "current-balance")?.valueText == "182,86 €")
+    }
+
     @Test func rejectsClaudeExtractWhileBalanceIsStillLoading() throws {
         let extract = ServicePageExtract(
             service: .claude,
