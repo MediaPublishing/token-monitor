@@ -58,31 +58,71 @@ final class DiagnosticsStore {
     private let directoryURL: URL
     private let fileManager: FileManager
     private let encoder: JSONEncoder
+    private let decoder: JSONDecoder
 
-    init(baseDirectory: URL, fileManager: FileManager = .default) {
+    var isEnabled: Bool
+
+    init(baseDirectory: URL, isEnabled: Bool = false, fileManager: FileManager = .default) {
         self.fileManager = fileManager
+        self.isEnabled = isEnabled
         directoryURL = baseDirectory.appendingPathComponent("Debug", isDirectory: true)
         encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
 
         try? fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
     }
 
     func record(_ debugRecord: RefreshDebugRecord) {
+        guard isEnabled else {
+            return
+        }
+
         do {
             try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
-            let fileURL = directoryURL
-                .appendingPathComponent("\(debugRecord.service.rawValue)-latest")
-                .appendingPathExtension("json")
             let data = try encoder.encode(debugRecord.redacted)
-            try data.write(to: fileURL, options: .atomic)
+            try data.write(to: latestRecordURL(for: debugRecord.service), options: .atomic)
         } catch {
             NSLog("Failed to write debug record: \(error.localizedDescription)")
         }
     }
 
+    func latestRecords() -> [RefreshDebugRecord] {
+        ServiceKind.allCases.compactMap { service in
+            let fileURL = latestRecordURL(for: service)
+            guard fileManager.fileExists(atPath: fileURL.path),
+                  let data = try? Data(contentsOf: fileURL) else {
+                return nil
+            }
+            return try? decoder.decode(RefreshDebugRecord.self, from: data)
+        }
+    }
+
+    func writeReport(_ report: String) -> URL? {
+        do {
+            try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyyMMdd-HHmmss"
+            let fileURL = directoryURL
+                .appendingPathComponent("report-\(formatter.string(from: Date()))")
+                .appendingPathExtension("txt")
+            try report.write(to: fileURL, atomically: true, encoding: .utf8)
+            return fileURL
+        } catch {
+            NSLog("Failed to write debug report: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
     var directoryPath: String {
         directoryURL.path
+    }
+
+    private func latestRecordURL(for service: ServiceKind) -> URL {
+        directoryURL
+            .appendingPathComponent("\(service.rawValue)-latest")
+            .appendingPathExtension("json")
     }
 }

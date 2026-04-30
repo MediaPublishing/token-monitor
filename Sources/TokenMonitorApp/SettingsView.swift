@@ -83,6 +83,52 @@ struct SettingsView: View {
             .buttonStyle(.bordered)
             .controlSize(compact ? .small : .regular)
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Debugging")
+                    .font(.headline)
+
+                Toggle(isOn: debugModeBinding) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Enable debug mode")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Store redacted refresh diagnostics locally when a provider refresh runs.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
+                .controlSize(compact ? .small : .regular)
+
+                Text("Reports open as drafts. Review before submitting because usage values and page text can still be account-specific.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    Button("GitHub Issue Draft") {
+                        model.openGitHubDebugReportDraft()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(compact ? .small : .regular)
+
+                    Button("Email Draft") {
+                        model.openEmailDebugReportDraft()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(compact ? .small : .regular)
+
+                    Button("Open Folder") {
+                        model.openDiagnosticsFolder()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(compact ? .small : .regular)
+                }
+            }
+            .padding(compact ? 10 : 14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(nsColor: .textBackgroundColor))
+            )
+
             ForEach(model.dashboardState.services, id: \.service) { status in
                 VStack(alignment: .leading, spacing: 10) {
                     HStack(alignment: .top, spacing: 14) {
@@ -178,7 +224,7 @@ struct SettingsView: View {
             Spacer()
         }
         .padding(compact ? 10 : 22)
-        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: compact ? 500 : 420, alignment: .topLeading)
+        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: compact ? 620 : 560, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
@@ -193,6 +239,13 @@ struct SettingsView: View {
         Binding(
             get: { model.automaticallyChecksForUpdates },
             set: { model.setAutomaticallyChecksForUpdates($0) }
+        )
+    }
+
+    private var debugModeBinding: Binding<Bool> {
+        Binding(
+            get: { model.debugModeEnabled },
+            set: { model.setDebugModeEnabled($0) }
         )
     }
 }

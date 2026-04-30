@@ -14,6 +14,7 @@ final class AppModel: ObservableObject {
     static let shared = AppModel()
     private enum Keys {
         static let launchAtLoginEnabled = "launchAtLoginEnabled"
+        static let debugModeEnabled = "debugModeEnabled"
     }
 
     @Published private(set) var dashboardState: DashboardState
@@ -21,6 +22,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var isPopoverVisible = false
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var automaticallyChecksForUpdates: Bool
+    @Published private(set) var debugModeEnabled: Bool
 
     let snapshotDirectoryURL: URL
     let diagnosticsDirectoryURL: URL
@@ -38,8 +40,13 @@ final class AppModel: ObservableObject {
     ) {
         self.snapshotStore = snapshotStore
         self.updateController = updateController
-        UserDefaults.standard.register(defaults: [Keys.launchAtLoginEnabled: true])
+        UserDefaults.standard.register(defaults: [
+            Keys.launchAtLoginEnabled: true,
+            Keys.debugModeEnabled: false
+        ])
         launchAtLoginEnabled = UserDefaults.standard.bool(forKey: Keys.launchAtLoginEnabled)
+        let initialDebugModeEnabled = UserDefaults.standard.bool(forKey: Keys.debugModeEnabled)
+        debugModeEnabled = initialDebugModeEnabled
         automaticallyChecksForUpdates = updateController.automaticallyChecksForUpdates
         let snapshots = (try? snapshotStore.loadSnapshots()) ?? [:]
         dashboardState = DashboardState.initial(lastSnapshots: snapshots)
@@ -50,7 +57,7 @@ final class AppModel: ObservableObject {
             snapshotDirectoryURL = FileManager.default.homeDirectoryForCurrentUser
                 .appendingPathComponent("Library/Application Support/TokenMonitor", isDirectory: true)
         }
-        diagnosticsStore = DiagnosticsStore(baseDirectory: snapshotDirectoryURL)
+        diagnosticsStore = DiagnosticsStore(baseDirectory: snapshotDirectoryURL, isEnabled: initialDebugModeEnabled)
         diagnosticsDirectoryURL = snapshotDirectoryURL.appendingPathComponent("Debug", isDirectory: true)
         sessionCoordinator = SessionCoordinator(diagnosticsStore: diagnosticsStore)
     }
@@ -180,7 +187,7 @@ final class AppModel: ObservableObject {
         case .dashboard:
             return 540
         case .settings:
-            return 500
+            return 620
         }
     }
 
@@ -207,12 +214,57 @@ final class AppModel: ObservableObject {
         updateController.automaticallyChecksForUpdates = enabled
     }
 
+    func setDebugModeEnabled(_ enabled: Bool) {
+        guard debugModeEnabled != enabled else {
+            return
+        }
+
+        debugModeEnabled = enabled
+        diagnosticsStore.isEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: Keys.debugModeEnabled)
+    }
+
     func checkForUpdates() {
         updateController.checkForUpdates()
     }
 
     func openLoginItemsSettings() {
         SMAppService.openSystemSettingsLoginItems()
+    }
+
+    func openDiagnosticsFolder() {
+        NSWorkspace.shared.open(diagnosticsDirectoryURL)
+    }
+
+    func openGitHubDebugReportDraft() {
+        let report = makeDebugReport()
+        _ = diagnosticsStore.writeReport(report)
+        var components = URLComponents(string: "https://github.com/MediaPublishing/token-monitor/issues/new")
+        components?.queryItems = [
+            URLQueryItem(name: "title", value: "Token Monitor debug report"),
+            URLQueryItem(name: "body", value: report)
+        ]
+        guard let url = components?.url else {
+            return
+        }
+        NSWorkspace.shared.open(url)
+    }
+
+    func openEmailDebugReportDraft() {
+        let report = makeDebugReport()
+        _ = diagnosticsStore.writeReport(report)
+        let recipient = ["info", "@", "etraininghq", ".", "com"].joined()
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = recipient
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "Token Monitor debug report"),
+            URLQueryItem(name: "body", value: report)
+        ]
+        guard let url = components.url else {
+            return
+        }
+        NSWorkspace.shared.open(url)
     }
 
     var launchAtLoginStatusText: String {
@@ -340,6 +392,61 @@ final class AppModel: ObservableObject {
         }
 
         return error.localizedDescription
+    }
+
+    private func makeDebugReport() -> String {
+        let shortVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
+        let buildVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
+        let debugModeText = debugModeEnabled ? "yes" : "no"
+
+        var lines: [String] = [
+            "# Token Monitor Debug Report",
+            "",
+            "Created: \(ISO8601DateFormatter().string(from: Date()))",
+            "App version: \(shortVersion) (\(buildVersion))",
+            "macOS: \(ProcessInfo.processInfo.operatingSystemVersionString)",
+            "Debug mode enabled: \(debugModeText)",
+            "",
+            "## Current status"
+        ]
+
+        for status in dashboardState.services {
+            lines.append("- \(status.service.displayName): \(status.connectionStatus.rawValue) - \(stateDescription(for: status))")
+        }
+
+        lines.append("")
+        lines.append("## Latest redacted debug records")
+
+        let records = diagnosticsStore.latestRecords()
+        if records.isEmpty {
+            lines.append("No debug records found yet. Enable Debug mode, refresh a provider, then create the report again.")
+        } else {
+            for record in records {
+                lines.append("")
+                lines.append("### \(record.service.displayName)")
+                lines.append("- Timestamp: \(ISO8601DateFormatter().string(from: record.timestamp))")
+                lines.append("- Outcome: \(record.outcome.rawValue)")
+                lines.append("- Page title: \(record.pageTitle)")
+                lines.append("- URL: \(record.url)")
+                if let message = record.message, !message.isEmpty {
+                    lines.append("- Message: \(message)")
+                }
+                lines.append("")
+                lines.append("Body preview:")
+                lines.append("```")
+                lines.append(record.bodyPreview)
+                lines.append("```")
+                lines.append("")
+                lines.append("Segments:")
+                lines.append("```")
+                lines.append(record.segments.joined(separator: "\n---\n"))
+                lines.append("```")
+            }
+        }
+
+        lines.append("")
+        lines.append("Note: This report is generated locally. Review it before submitting because usage values and page text can still be account-specific even after token/email redaction.")
+        return lines.joined(separator: "\n")
     }
 
     private func relativeDateText(from date: Date) -> String {

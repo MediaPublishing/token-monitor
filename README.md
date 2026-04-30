@@ -133,6 +133,8 @@ Create only the local DMG installer:
 
 Token Monitor stores only the latest successful usage snapshots locally at `~/Library/Application Support/TokenMonitor/snapshots.json`. Each provider uses its own persistent WebKit session, so Claude and ChatGPT login state stay isolated from each other and from your normal browser cookies.
 
+Debug mode is off by default. When enabled in Settings, Token Monitor stores redacted refresh diagnostics locally in `~/Library/Application Support/TokenMonitor/Debug/`. Reports open only as drafts for GitHub Issues or email, so you can review them before submitting. GitHub Issues are public.
+
 ---
 
 ## Deutsch
@@ -227,6 +229,8 @@ Nur den lokalen DMG-Installer erstellen:
 ### Datenschutz
 
 Token Monitor speichert nur die letzten erfolgreichen Usage-Snapshots lokal unter `~/Library/Application Support/TokenMonitor/snapshots.json`. Jeder Provider nutzt eine eigene persistente WebKit-Session, damit Claude- und ChatGPT-Login getrennt bleiben und keine normalen Browser-Cookies verwendet werden.
+
+Der Debug-Modus ist standardmäßig aus. Wenn er in den Einstellungen aktiviert wird, speichert Token Monitor redigierte Refresh-Diagnosen lokal unter `~/Library/Application Support/TokenMonitor/Debug/`. Reports werden nur als GitHub-Issue- oder E-Mail-Entwurf geöffnet, damit du sie vor dem Absenden prüfen kannst. GitHub Issues sind öffentlich.
 
 ---
 

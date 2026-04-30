@@ -54,4 +54,32 @@ struct AppSourceBehaviorTests {
         #expect(dashboardView.contains("return .red"))
         #expect(!dashboardView.contains("localizedCaseInsensitiveContains(\"remaining\") {\n            return .green"))
     }
+
+    @Test func debugReportingRequiresExplicitModeAndUsesDrafts() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let appModel = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/AppModel.swift"),
+            encoding: .utf8
+        )
+        let diagnosticsStore = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/DiagnosticsStore.swift"),
+            encoding: .utf8
+        )
+        let settingsView = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/SettingsView.swift"),
+            encoding: .utf8
+        )
+
+        #expect(appModel.contains("Keys.debugModeEnabled: false"))
+        #expect(appModel.contains("openGitHubDebugReportDraft"))
+        #expect(appModel.contains("openEmailDebugReportDraft"))
+        #expect(diagnosticsStore.contains("guard isEnabled else"))
+        #expect(settingsView.contains("Enable debug mode"))
+        #expect(settingsView.contains("GitHub Issue Draft"))
+        #expect(settingsView.contains("Email Draft"))
+    }
 }
