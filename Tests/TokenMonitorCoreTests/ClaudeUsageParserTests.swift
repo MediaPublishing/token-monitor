@@ -103,6 +103,51 @@ struct ClaudeUsageParserTests {
         #expect(snapshot.metric(for: "current-balance")?.valueText == "182,86 €")
     }
 
+    @Test func parsesClaudeProLayoutWithoutSonnetButWithClaudeDesign() throws {
+        let extract = ServicePageExtract(
+            service: .claude,
+            pageTitle: "Claude",
+            url: "https://claude.ai/settings/usage",
+            bodyText: "",
+            segments: [
+                """
+                Current session
+                Resets in 4 hr 54 min
+                26% used
+                Weekly limits
+                All models
+                Resets Wed 4:00 AM
+                20% used
+                Claude Design
+                0% used
+                """,
+                """
+                Extra usage
+                €17.14 spent
+                Resets Jun 1
+                38% used
+                €45
+                Monthly spend limit
+                €0.00
+                Current balance
+                """
+            ]
+        )
+
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: Date(timeIntervalSince1970: 1_700_000_000))
+
+        #expect(snapshot.metric(for: "current-session")?.valueText == "74% remaining")
+        #expect(snapshot.metric(for: "current-session")?.subtitle == "Resets in 4 hr 54 min")
+        #expect(snapshot.metric(for: "weekly-all-models")?.valueText == "80% remaining")
+        #expect(snapshot.metric(for: "weekly-all-models")?.subtitle == "Resets Wed 4:00 AM")
+        #expect(snapshot.metric(for: "weekly-sonnet") == nil)
+        #expect(snapshot.metric(for: "claude-design")?.valueText == "100% remaining")
+        #expect(snapshot.metric(for: "extra-usage-spend")?.valueText == "€17.14 spent")
+        #expect(snapshot.metric(for: "extra-usage-spend")?.progress == 0.38)
+        #expect(snapshot.metric(for: "monthly-spend-limit")?.valueText == "€45")
+        #expect(snapshot.metric(for: "current-balance")?.valueText == "€0.00")
+    }
+
     @Test func rejectsClaudeExtractWhileBalanceIsStillLoading() throws {
         let extract = ServicePageExtract(
             service: .claude,

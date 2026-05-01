@@ -203,6 +203,8 @@ private struct MetricCardView: View {
             return "All models"
         case "weekly-sonnet":
             return "Sonnet"
+        case "claude-design":
+            return "Design"
         case "extra-usage-spend":
             return "Extra usage"
         case "monthly-spend-limit":

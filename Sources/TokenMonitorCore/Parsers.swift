@@ -22,15 +22,12 @@ public struct ClaudeUsageParser: UsageParsing {
         guard
             let currentSessionIndex = firstIndex(in: lines, containingAny: ["Current session", "Aktuelle Sitzung", "Sitzung"]),
             let allModelsIndex = firstIndex(in: lines, containingAny: ["All models", "Alle Modelle"]),
-            let sonnetIndex = firstIndex(in: lines, containingAny: ["Sonnet only", "Nur Sonnet", "Sonnet"]),
             let extraUsageIndex = firstIndex(in: lines, containingAny: ["Extra usage", "Zusätzliche Nutzung", "Zusätzliche Verwendung"]),
             let monthlyLimitIndex = firstIndex(in: lines, containingAny: ["Monthly spend limit", "Monatliches Ausgabenlimit", "Monatliches Limit"]),
             let balanceIndex = firstIndex(in: lines, containingAny: ["Current balance", "Aktueller Kontostand", "Aktuelles Guthaben", "Guthaben"]),
             let currentSessionValue = firstLine(after: currentSessionIndex, in: lines, matching: isUsageUsedValue),
             let allModelsValue = firstLine(after: allModelsIndex, in: lines, matching: isUsageUsedValue),
             let allModelsReset = firstLine(after: allModelsIndex, in: lines, matching: isResetLine),
-            let sonnetValue = firstLine(after: sonnetIndex, in: lines, matching: isUsageUsedValue),
-            let sonnetReset = firstLine(after: sonnetIndex, in: lines, matching: isResetLine),
             let extraUsageSpent = firstLine(after: extraUsageIndex, in: lines, matching: isSpentLine),
             let extraUsageReset = firstLine(after: extraUsageIndex, in: lines, matching: isResetLine),
             let extraUsagePercent = firstLine(after: extraUsageIndex, in: lines, matching: isUsageUsedValue),
@@ -42,7 +39,7 @@ public struct ClaudeUsageParser: UsageParsing {
             throw UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")
         }
 
-        let metrics = [
+        var metrics = [
             UsageMetric(
                 key: "current-session",
                 title: "Current session",
@@ -57,14 +54,6 @@ public struct ClaudeUsageParser: UsageParsing {
                 valueText: remainingProgressText(fromUsedText: allModelsValue),
                 subtitle: allModelsReset,
                 progress: remainingProgress(fromUsedText: allModelsValue),
-                style: .progress
-            ),
-            UsageMetric(
-                key: "weekly-sonnet",
-                title: "Sonnet only",
-                valueText: remainingProgressText(fromUsedText: sonnetValue),
-                subtitle: sonnetReset,
-                progress: remainingProgress(fromUsedText: sonnetValue),
                 style: .progress
             ),
             UsageMetric(
@@ -92,6 +81,25 @@ public struct ClaudeUsageParser: UsageParsing {
                 style: .stat
             )
         ]
+
+        if let sonnetMetric = optionalClaudeUsageMetric(
+            key: "weekly-sonnet",
+            title: "Sonnet only",
+            lines: lines,
+            labels: ["Sonnet only", "Nur Sonnet", "Sonnet"]
+        ) {
+            metrics.insert(sonnetMetric, at: 2)
+        }
+
+        if let claudeDesignMetric = optionalClaudeUsageMetric(
+            key: "claude-design",
+            title: "Claude Design",
+            lines: lines,
+            labels: ["Claude Design"]
+        ) {
+            let insertIndex = metrics.firstIndex { $0.key == "extra-usage-spend" } ?? metrics.endIndex
+            metrics.insert(claudeDesignMetric, at: insertIndex)
+        }
 
         return ServiceSnapshot(
             service: .claude,
@@ -445,6 +453,22 @@ private func isSpentLine(_ text: String) -> Bool {
     return normalized.localizedCaseInsensitiveContains("spent")
         || normalized.localizedCaseInsensitiveContains("ausgegeben")
         || normalized.localizedCaseInsensitiveContains("verbraucht")
+}
+
+private func optionalClaudeUsageMetric(key: String, title: String, lines: [String], labels: [String]) -> UsageMetric? {
+    guard let titleIndex = firstIndex(in: lines, containingAny: labels),
+          let value = firstLine(after: titleIndex, in: lines, matching: isUsageUsedValue) else {
+        return nil
+    }
+
+    return UsageMetric(
+        key: key,
+        title: title,
+        valueText: remainingProgressText(fromUsedText: value),
+        subtitle: firstLine(after: titleIndex, in: lines, matching: isResetLine),
+        progress: remainingProgress(fromUsedText: value),
+        style: .progress
+    )
 }
 
 private func normalizedProgressValue(_ text: String) -> String? {
