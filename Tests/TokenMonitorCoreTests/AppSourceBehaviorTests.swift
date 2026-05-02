@@ -65,9 +65,9 @@ struct AppSourceBehaviorTests {
         #expect(appDelegate.contains("model.statusMenuUsesColor"))
         #expect(appDelegate.contains("model.statusMenuShowsPercentages"))
         #expect(appDelegate.contains("model.statusMenuShowsPercentages ? 58 : 20"))
-        #expect(appDelegate.contains("NSRect(x: 1, y: 2, width: 27, height: 12)"))
-        #expect(appDelegate.contains("NSRect(x: 30, y: 2, width: 27, height: 12)"))
-        #expect(appDelegate.contains("drawBarLabel(label, in: rect"))
+        #expect(appDelegate.contains("NSRect(x: 0, y: 8, width: 28, height: 8)"))
+        #expect(appDelegate.contains("NSRect(x: 32, y: 9, width: 24, height: 6)"))
+        #expect(appDelegate.contains("drawStatusValue"))
         #expect(appDelegate.contains("button.attributedTitle = NSAttributedString(string: \"\")"))
         #expect(appDelegate.contains("if score >= 0.75 { return .systemGreen }"))
         #expect(appDelegate.contains("if score >= 0.5 { return .systemMint }"))
@@ -112,7 +112,7 @@ struct AppSourceBehaviorTests {
         #expect(settingsView.contains("Show percentages in dashboard bars"))
         #expect(settingsView.contains("GitHub Issue Draft"))
         #expect(settingsView.contains("Email Draft"))
-        #expect(appDelegate.contains("drawBarLabel"))
+        #expect(appDelegate.contains("drawStatusValue"))
     }
 
     @Test func claudeExtractionHandlesEmptyAndLocalizedDomText() throws {

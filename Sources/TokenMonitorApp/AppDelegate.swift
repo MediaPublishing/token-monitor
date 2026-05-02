@@ -142,13 +142,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         NSBezierPath(rect: NSRect(origin: .zero, size: size)).fill()
 
         if model.statusMenuShowsPercentages {
+            drawStatusValue(
+                for: model.capacityScore(for: .claude),
+                in: NSRect(x: 0, y: 8, width: 28, height: 8)
+            )
+            drawStatusValue(
+                for: model.capacityScore(for: .chatGPT),
+                in: NSRect(x: 0, y: 0, width: 28, height: 8)
+            )
             drawBar(
-                in: NSRect(x: 1, y: 2, width: 27, height: 12),
+                in: NSRect(x: 32, y: 9, width: 24, height: 6),
                 score: model.capacityScore(for: .claude),
                 status: model.dashboardState.service(.claude).connectionStatus
             )
             drawBar(
-                in: NSRect(x: 30, y: 2, width: 27, height: 12),
+                in: NSRect(x: 32, y: 1, width: 24, height: 6),
                 score: model.capacityScore(for: .chatGPT),
                 status: model.dashboardState.service(.chatGPT).connectionStatus
             )
@@ -180,7 +188,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             statusAccentColor(for: status).setStroke()
             outline.lineWidth = 1
             outline.stroke()
-            drawBarLabel("--", in: rect, color: .secondaryLabelColor)
             return
         }
 
@@ -190,27 +197,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         capacityColor(for: score, status: status).setFill()
         fillPath.fill()
 
-        if model.statusMenuShowsPercentages {
-            let label = "\(Int((max(0, min(score, 1)) * 100).rounded()))%"
-            let textColor: NSColor = model.statusMenuUsesColor ? .labelColor : .white
-            drawBarLabel(label, in: rect, color: textColor)
-        }
     }
 
-    private func drawBarLabel(_ label: String, in rect: NSRect, color: NSColor) {
-        guard model.statusMenuShowsPercentages else {
-            return
-        }
-
+    private func drawStatusValue(for score: Double?, in rect: NSRect) {
+        let label = score.map { "\(Int((max(0, min($0, 1)) * 100).rounded()))%" } ?? "--"
         let paragraph = NSMutableParagraphStyle()
-        paragraph.alignment = .center
+        paragraph.alignment = .right
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.monospacedDigitSystemFont(ofSize: 7.5, weight: .bold),
-            .foregroundColor: color,
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 7, weight: .semibold),
+            .foregroundColor: NSColor.labelColor,
             .paragraphStyle: paragraph
         ]
-        let textRect = rect.insetBy(dx: 1, dy: -2)
-        (label as NSString).draw(in: textRect, withAttributes: attributes)
+        (label as NSString).draw(in: rect, withAttributes: attributes)
     }
 
     private func statusAccentColor(for status: ServiceConnectionStatus) -> NSColor {

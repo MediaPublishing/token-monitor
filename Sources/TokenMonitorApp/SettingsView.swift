@@ -85,7 +85,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Show percentages in menu bar")
                             .font(.subheadline.weight(.semibold))
-                        Text("Draws compact Claude and ChatGPT capacity values inside the status bars.")
+                        Text("Shows compact Claude and ChatGPT values to the left of the status bars.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
