@@ -119,6 +119,12 @@ Marketing URL:
 https://mediapublishing.github.io/token-monitor/
 ```
 
+Privacy URL:
+
+```text
+https://github.com/MediaPublishing/token-monitor/blob/main/docs/privacy.md
+```
+
 Review notes draft:
 
 ```text

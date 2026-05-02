@@ -254,6 +254,7 @@ token-monitor/
 - [Current screenshot](docs/token-monitor-screenshot.png)
 - [Apple distribution readiness](docs/apple-distribution-readiness.md)
 - [Marketing launch kit](docs/marketing-launch-kit.md)
+- [Privacy summary](docs/privacy.md)
 
 ## License
 

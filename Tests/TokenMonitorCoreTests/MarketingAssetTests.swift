@@ -168,19 +168,29 @@ struct MarketingAssetTests {
             contentsOf: rootURL.appendingPathComponent("README.md"),
             encoding: .utf8
         )
+        let landingHTML = try String(
+            contentsOf: rootURL.appendingPathComponent("landing/index.html"),
+            encoding: .utf8
+        )
         let distributionDoc = try String(
             contentsOf: rootURL.appendingPathComponent("docs/apple-distribution-readiness.md"),
             encoding: .utf8
         )
         let launchKitURL = rootURL.appendingPathComponent("docs/marketing-launch-kit.md")
         let launchKit = try String(contentsOf: launchKitURL, encoding: .utf8)
+        let privacyURL = rootURL.appendingPathComponent("docs/privacy.md")
+        let privacy = try String(contentsOf: privacyURL, encoding: .utf8)
 
         #expect(FileManager.default.fileExists(atPath: launchKitURL.path))
+        #expect(FileManager.default.fileExists(atPath: privacyURL.path))
         #expect(readme.contains("docs/marketing-launch-kit.md"))
+        #expect(readme.contains("docs/privacy.md"))
+        #expect(landingHTML.contains("docs/privacy.md"))
         #expect(distributionDoc.contains("docs/marketing-launch-kit.md"))
         #expect(launchKit.contains("Direct Distribution Listing"))
         #expect(launchKit.contains("Mac App Store Draft Metadata"))
         #expect(launchKit.contains("Privacy label draft"))
+        #expect(launchKit.contains("https://github.com/MediaPublishing/token-monitor/blob/main/docs/privacy.md"))
         #expect(launchKit.contains("Review notes draft"))
         #expect(launchKit.contains("Screenshot Inventory"))
         #expect(launchKit.contains("Launch Checklist"))
@@ -188,5 +198,9 @@ struct MarketingAssetTests {
         #expect(launchKit.contains("https://mediapublishing.github.io/token-monitor/"))
         #expect(launchKit.contains("https://github.com/MediaPublishing/token-monitor/issues"))
         #expect(launchKit.contains("Token Monitor is not affiliated with Anthropic, OpenAI, or Apple."))
+        #expect(privacy.contains("does not send usage data to Token Monitor server infrastructure"))
+        #expect(privacy.contains("Provider login sessions managed by WebKit"))
+        #expect(privacy.contains("Debug mode is off by default"))
+        #expect(privacy.contains("GitHub Issues are public"))
     }
 }
