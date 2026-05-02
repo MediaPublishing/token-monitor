@@ -110,7 +110,7 @@ Claude,ChatGPT,Codex,AI,usage,quota,monitor,menubar
 Support URL:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/issues
+https://github.com/MediaPublishing/token-monitor/blob/main/SUPPORT.md
 ```
 
 Marketing URL:

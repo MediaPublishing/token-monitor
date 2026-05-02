@@ -199,6 +199,35 @@ struct MarketingAssetTests {
         #expect(!issueConfig.contains("info@etraininghq.com"))
     }
 
+    @Test func supportPageRoutesPublicAndPrivateReports() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let readme = try String(
+            contentsOf: rootURL.appendingPathComponent("README.md"),
+            encoding: .utf8
+        )
+        let launchKit = try String(
+            contentsOf: rootURL.appendingPathComponent("docs/marketing-launch-kit.md"),
+            encoding: .utf8
+        )
+        let supportURL = rootURL.appendingPathComponent("SUPPORT.md")
+        let support = try String(contentsOf: supportURL, encoding: .utf8)
+
+        #expect(FileManager.default.fileExists(atPath: supportURL.path))
+        #expect(readme.contains("SUPPORT.md"))
+        #expect(launchKit.contains("https://github.com/MediaPublishing/token-monitor/blob/main/SUPPORT.md"))
+        #expect(support.contains("GitHub Issues are public"))
+        #expect(support.contains("Do not post raw debug dumps"))
+        #expect(support.contains("Installation Or Gatekeeper"))
+        #expect(support.contains("parser-layout-bug.yml"))
+        #expect(support.contains("docs/privacy.md"))
+        #expect(support.contains("Apple ID passwords"))
+        #expect(!support.contains("info@etraininghq.com"))
+    }
+
     @Test func marketingLaunchKitCoversDistributionMetadata() throws {
         let rootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -239,7 +268,7 @@ struct MarketingAssetTests {
         #expect(launchKit.contains("TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1"))
         #expect(launchKit.contains("Approval Gates"))
         #expect(launchKit.contains("https://mediapublishing.github.io/token-monitor/"))
-        #expect(launchKit.contains("https://github.com/MediaPublishing/token-monitor/issues"))
+        #expect(launchKit.contains("https://github.com/MediaPublishing/token-monitor/blob/main/SUPPORT.md"))
         #expect(launchKit.contains("Token Monitor is not affiliated with Anthropic, OpenAI, or Apple."))
         #expect(privacy.contains("does not send usage data to Token Monitor server infrastructure"))
         #expect(privacy.contains("Provider login sessions managed by WebKit"))

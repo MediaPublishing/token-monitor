@@ -252,6 +252,7 @@ token-monitor/
 
 - [Landing page](landing/index.html)
 - [Current screenshot](docs/token-monitor-screenshot.png)
+- [Support](SUPPORT.md)
 - [Apple distribution readiness](docs/apple-distribution-readiness.md)
 - [Apple credential runbook](docs/apple-credential-runbook.md)
 - [Mac App Store feasibility audit](docs/mac-app-store-feasibility.md)
