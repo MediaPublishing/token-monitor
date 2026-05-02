@@ -139,6 +139,8 @@ Preferred access model:
 
 ## Marketing Setup
 
+Operational launch copy and App Store draft metadata live in `docs/marketing-launch-kit.md`.
+
 Allowed to automate after approval:
 
 - Landing page updates.

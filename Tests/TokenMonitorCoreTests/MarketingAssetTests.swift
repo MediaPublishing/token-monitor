@@ -157,4 +157,36 @@ struct MarketingAssetTests {
         #expect(!parserIssueTemplate.contains("info@etraininghq.com"))
         #expect(!issueConfig.contains("info@etraininghq.com"))
     }
+
+    @Test func marketingLaunchKitCoversDistributionMetadata() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let readme = try String(
+            contentsOf: rootURL.appendingPathComponent("README.md"),
+            encoding: .utf8
+        )
+        let distributionDoc = try String(
+            contentsOf: rootURL.appendingPathComponent("docs/apple-distribution-readiness.md"),
+            encoding: .utf8
+        )
+        let launchKitURL = rootURL.appendingPathComponent("docs/marketing-launch-kit.md")
+        let launchKit = try String(contentsOf: launchKitURL, encoding: .utf8)
+
+        #expect(FileManager.default.fileExists(atPath: launchKitURL.path))
+        #expect(readme.contains("docs/marketing-launch-kit.md"))
+        #expect(distributionDoc.contains("docs/marketing-launch-kit.md"))
+        #expect(launchKit.contains("Direct Distribution Listing"))
+        #expect(launchKit.contains("Mac App Store Draft Metadata"))
+        #expect(launchKit.contains("Privacy label draft"))
+        #expect(launchKit.contains("Review notes draft"))
+        #expect(launchKit.contains("Screenshot Inventory"))
+        #expect(launchKit.contains("Launch Checklist"))
+        #expect(launchKit.contains("Approval Gates"))
+        #expect(launchKit.contains("https://mediapublishing.github.io/token-monitor/"))
+        #expect(launchKit.contains("https://github.com/MediaPublishing/token-monitor/issues"))
+        #expect(launchKit.contains("Token Monitor is not affiliated with Anthropic, OpenAI, or Apple."))
+    }
 }

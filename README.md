@@ -253,6 +253,7 @@ token-monitor/
 - [Landing page](landing/index.html)
 - [Current screenshot](docs/token-monitor-screenshot.png)
 - [Apple distribution readiness](docs/apple-distribution-readiness.md)
+- [Marketing launch kit](docs/marketing-launch-kit.md)
 
 ## License
 
