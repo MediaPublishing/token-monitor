@@ -70,6 +70,18 @@ Notes:
 - `TOKEN_MONITOR_RELEASE_KEYCHAIN_PASSWORD` is optional. If it is missing, the GitHub workflow creates a temporary password.
 - `SPARKLE_PRIVATE_KEY` is required for appcast signing.
 
+Verify the repository secret names without exposing any secret values:
+
+```bash
+./scripts/check-github-release-secrets.sh
+```
+
+After Developer ID access exists, make the check fail if signing or notarization secrets are missing:
+
+```bash
+TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 ./scripts/check-github-release-secrets.sh
+```
+
 ## Notarization Password
 
 Create an app-specific password for the Apple ID used for notarization. Store it as:

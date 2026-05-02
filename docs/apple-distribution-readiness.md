@@ -195,6 +195,7 @@ Prepared and verified repo artifacts:
 - Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
 - Apple credential setup: `docs/apple-credential-runbook.md`.
 - Local signing/notarization verifier: `scripts/check-apple-distribution.sh`.
+- GitHub release secret verifier: `scripts/check-github-release-secrets.sh`.
 - Public release verifier: `scripts/verify-public-release.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - GitHub CI workflow: `.github/workflows/ci.yml` runs tests, direct app build, MAS build, MAS build verification, and MAS readiness checks.
@@ -222,7 +223,7 @@ Current blockers:
 - The current `dist/TokenMonitor.app` is version `1.0.18` build `19` and ad hoc signed.
 - Gatekeeper rejects the current local app and DMG.
 - The current DMG has no stapled notarization ticket.
-- GitHub release signing secrets are documented but not configured with real Apple credentials.
+- GitHub has `SPARKLE_PRIVATE_KEY` configured, but Developer ID signing/notarization secrets are not configured with real Apple credentials.
 - Mac App Store submission remains a separate, not-ready track until Apple Distribution signing, App Store Connect setup, sandbox smoke testing, reviewer accounts, screenshots, and final approvals are complete.
 - The MAS candidate build removes Sparkle and passes local verification, but it has not been signed with an Apple Distribution certificate or smoke-tested with real reviewer accounts under App Sandbox.
 - Repository license and final legal/privacy approvals remain human approval gates before broad promotion or App Store submission.
