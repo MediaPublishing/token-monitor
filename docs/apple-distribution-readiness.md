@@ -18,7 +18,7 @@ Success means:
 
 Verified locally:
 
-- `swift test` passes with 30 tests.
+- `swift test` passes with 31 tests.
 - `scripts/build-app.sh` builds `dist/TokenMonitor.app`.
 - Current local build is ad hoc signed when no `TOKEN_MONITOR_CODESIGN_IDENTITY` is provided.
 - `spctl --assess --type execute --verbose=4 dist/TokenMonitor.app` rejects the ad hoc build, as expected.
@@ -144,6 +144,7 @@ Preferred access model:
 ## Marketing Setup
 
 Operational launch copy and App Store draft metadata live in `docs/marketing-launch-kit.md`.
+Publication/legal gates live in `docs/publication-legal-checklist.md`.
 
 Allowed to automate after approval:
 
@@ -195,9 +196,10 @@ Prepared and verified repo artifacts:
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
 - Marketing and App Store draft metadata: `docs/marketing-launch-kit.md`.
+- Publication/legal checklist: `docs/publication-legal-checklist.md`.
 - Public privacy summary: `docs/privacy.md`.
 - Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
-- Regression coverage: `swift test` passes with 30 tests.
+- Regression coverage: `swift test` passes with 31 tests.
 
 Current blockers:
 
@@ -208,6 +210,7 @@ Current blockers:
 - The current DMG has no stapled notarization ticket.
 - GitHub release signing secrets are documented but not configured with real Apple credentials.
 - Mac App Store submission remains a separate, not-ready track until Sparkle is removed from a MAS build and sandboxing is tested.
+- Repository license and final legal/privacy approvals remain human approval gates before broad promotion or App Store submission.
 
 Conclusion:
 

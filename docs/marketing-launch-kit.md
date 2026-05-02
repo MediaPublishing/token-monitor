@@ -195,6 +195,7 @@ Before Mac App Store submission:
 Human approval required:
 
 - Paid ads or launch spend.
+- License choice and formal publication/legal approval.
 - App Store submission.
 - App privacy labels.
 - Public security, privacy, notarization, or compatibility claims.
