@@ -169,9 +169,9 @@ Before App Store submission:
 
 Before public direct-DMG launch:
 
-1. Run `swift test`.
-2. Run `./scripts/build-app.sh`.
-3. Run `./scripts/check-apple-distribution.sh`.
+1. Run `./scripts/preflight-release.sh`.
+2. Run `./scripts/build-app.sh` again if another code change landed after preflight.
+3. Run `./scripts/check-apple-distribution.sh` again if signing/notarization credentials changed.
 4. Confirm Developer ID certificate and notary profile are available.
 5. Produce a signed/notarized release with `./scripts/package-release.sh`.
 6. Verify Gatekeeper accepts `dist/TokenMonitor.app`.

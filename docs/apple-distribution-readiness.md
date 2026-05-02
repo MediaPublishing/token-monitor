@@ -31,6 +31,7 @@ Verified locally:
   - `dist/TokenMonitor-macOS.dmg`
   - `dist/appcast.xml`
   - `dist/updates/TokenMonitor-<version>-<build>-macOS.zip`
+- `scripts/preflight-release.sh` runs the local release readiness checks in operator order before publishing or republishing assets.
 - `.github/workflows/release.yml` publishes release assets, deploys the Sparkle appcast to GitHub Pages, and can import Developer ID/notary credentials from GitHub Secrets when they are available.
 - The release workflow can also be run manually with an existing tag through `workflow_dispatch` to rebuild and republish release assets, the appcast, and GitHub Pages without creating a new version.
 
@@ -196,6 +197,7 @@ Prepared and verified repo artifacts:
 - Apple credential setup: `docs/apple-credential-runbook.md`.
 - Local signing/notarization verifier: `scripts/check-apple-distribution.sh`.
 - GitHub release secret verifier: `scripts/check-github-release-secrets.sh`.
+- Local release preflight: `scripts/preflight-release.sh`.
 - Public release verifier: `scripts/verify-public-release.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - GitHub CI workflow: `.github/workflows/ci.yml` runs tests, direct app build, MAS build, MAS build verification, and MAS readiness checks.
