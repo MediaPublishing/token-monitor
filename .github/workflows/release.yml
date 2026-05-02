@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Check out release tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.event.release.tag_name }}
 
@@ -104,9 +104,9 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: public
 
       - name: Deploy Pages
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
