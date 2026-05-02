@@ -189,8 +189,8 @@ Triage workflow:
 
 Prepared and verified repo artifacts:
 
-- Current public GitHub/Sparkle release: `v1.0.16` / build `17`.
-- Public release verification: `./scripts/verify-public-release.sh v1.0.16 1.0.16 17` passes for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
+- Current public GitHub/Sparkle release: `v1.0.18` / build `19`.
+- Public release verification: `./scripts/verify-public-release.sh v1.0.18 1.0.18 19` passes for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
 - Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
 - Apple credential setup: `docs/apple-credential-runbook.md`.
 - Local signing/notarization verifier: `scripts/check-apple-distribution.sh`.
@@ -208,14 +208,15 @@ Prepared and verified repo artifacts:
 - Public privacy summary: `docs/privacy.md`.
 - Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
 - Regression coverage: `swift test` passes with 31 tests.
-- Latest verified CI: `https://github.com/MediaPublishing/token-monitor/actions/runs/25257992013` passed for commit `533ec8d`.
-- Latest verified release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25258059307` passed for `v1.0.16`.
+- Latest verified CI: `https://github.com/MediaPublishing/token-monitor/actions/runs/25259520650` passed for commit `fbab578`.
+- Latest verified release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25259525409` passed for `v1.0.18`.
 
 Current blockers:
 
 - No Developer ID Application certificate is installed locally.
+- No Apple Distribution certificate is installed locally.
 - No local `TOKEN_MONITOR_NOTARY_PROFILE` is configured.
-- The local app bundle is ad hoc signed.
+- The current `dist/TokenMonitor.app` is version `1.0.18` build `19` and ad hoc signed.
 - Gatekeeper rejects the current local app and DMG.
 - The current DMG has no stapled notarization ticket.
 - GitHub release signing secrets are documented but not configured with real Apple credentials.
