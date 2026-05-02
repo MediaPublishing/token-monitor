@@ -100,6 +100,8 @@ xcrun stapler validate dist/TokenMonitor-macOS.dmg
 
 Mac App Store is possible only as a separate track until proven otherwise.
 
+Detailed current-state audit: `docs/mac-app-store-feasibility.md`.
+
 Known blockers or risks:
 
 - Sparkle must be disabled or removed for the Mac App Store build because App Store apps must use App Store updates.

@@ -254,6 +254,7 @@ token-monitor/
 - [Current screenshot](docs/token-monitor-screenshot.png)
 - [Apple distribution readiness](docs/apple-distribution-readiness.md)
 - [Apple credential runbook](docs/apple-credential-runbook.md)
+- [Mac App Store feasibility audit](docs/mac-app-store-feasibility.md)
 - [Marketing launch kit](docs/marketing-launch-kit.md)
 - [Privacy summary](docs/privacy.md)
 
