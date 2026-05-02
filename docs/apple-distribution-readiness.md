@@ -189,14 +189,18 @@ Triage workflow:
 
 Prepared and verified repo artifacts:
 
-- App release behavior: `v1.0.14` / build `15` includes the remaining-quota progress bar fix.
+- Current public GitHub/Sparkle release: `v1.0.15` / build `16`.
+- Public release verification: `./scripts/verify-public-release.sh v1.0.15 1.0.15 16` passes for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
 - Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
 - Apple credential setup: `docs/apple-credential-runbook.md`.
 - Local signing/notarization verifier: `scripts/check-apple-distribution.sh`.
 - Public release verifier: `scripts/verify-public-release.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
+- GitHub CI workflow: `.github/workflows/ci.yml` runs tests, direct app build, MAS build, MAS build verification, and MAS readiness checks.
 - Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
 - App Store submission packet: `docs/app-store-submission-packet.md`.
+- MAS candidate build path: `scripts/build-mas-app.sh`.
+- MAS build verifier: `scripts/verify-mas-build.sh`.
 - MAS readiness checker: `scripts/check-mas-readiness.sh`.
 - Draft MAS entitlements: `packaging/TokenMonitorMAS.entitlements`.
 - Marketing and App Store draft metadata: `docs/marketing-launch-kit.md`.
@@ -204,6 +208,7 @@ Prepared and verified repo artifacts:
 - Public privacy summary: `docs/privacy.md`.
 - Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
 - Regression coverage: `swift test` passes with 31 tests.
+- Latest verified CI: `https://github.com/MediaPublishing/token-monitor/actions/runs/25257619010` passed for commit `3f36fe2`.
 
 Current blockers:
 
@@ -213,7 +218,8 @@ Current blockers:
 - Gatekeeper rejects the current local app and DMG.
 - The current DMG has no stapled notarization ticket.
 - GitHub release signing secrets are documented but not configured with real Apple credentials.
-- Mac App Store submission remains a separate, not-ready track until Sparkle is removed from a MAS build and sandboxing is tested.
+- Mac App Store submission remains a separate, not-ready track until Apple Distribution signing, App Store Connect setup, sandbox smoke testing, reviewer accounts, screenshots, and final approvals are complete.
+- The MAS candidate build removes Sparkle and passes local verification, but it has not been signed with an Apple Distribution certificate or smoke-tested with real reviewer accounts under App Sandbox.
 - Repository license and final legal/privacy approvals remain human approval gates before broad promotion or App Store submission.
 
 Conclusion:
