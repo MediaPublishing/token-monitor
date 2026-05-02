@@ -64,6 +64,16 @@ struct SettingsView: View {
             }
             .padding(.bottom, compact ? 2 : 4)
 
+            #if MAS_BUILD
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Updates")
+                    .font(.subheadline.weight(.semibold))
+                Text("Updates are delivered by the Mac App Store.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, compact ? 2 : 4)
+            #else
             Toggle(isOn: automaticUpdateChecksBinding) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Automatically check for updates")
@@ -82,6 +92,7 @@ struct SettingsView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(compact ? .small : .regular)
+            #endif
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Debugging")

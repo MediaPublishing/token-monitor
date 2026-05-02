@@ -42,23 +42,24 @@ Launch at login:
 Entitlements:
 
 - A draft MAS entitlements file exists at `packaging/TokenMonitorMAS.entitlements`.
-- No App Sandbox build path exists yet.
+- A draft App Sandbox build path now exists at `scripts/build-mas-app.sh`.
 
 ## Required MAS Build Changes
 
 Before submitting to the Mac App Store:
 
-1. Add a separate MAS build script or configuration.
-2. Remove Sparkle from the MAS binary.
-3. Remove `SUFeedURL` and Sparkle update UI from the MAS build.
-4. Add App Sandbox entitlements.
-5. Include at least:
+1. Build the separate MAS app candidate with `scripts/build-mas-app.sh`.
+2. Verify Sparkle is absent from the MAS binary.
+3. Verify `SUFeedURL` and Sparkle update UI are absent from the MAS build.
+4. Sign with an Apple Distribution certificate once App Store Connect access exists.
+5. Keep App Sandbox entitlements enabled.
+6. Include at least:
    - `com.apple.security.app-sandbox`
    - `com.apple.security.network.client`
-6. Verify Application Support and WebKit storage work inside the app container.
-7. Verify `SMAppService` launch-at-login behavior under sandbox.
-8. Prepare reviewer notes explaining embedded WebKit sessions and local-only storage.
-9. Provide reviewer accounts or a reviewer test plan.
+7. Verify Application Support and WebKit storage work inside the app container.
+8. Verify `SMAppService` launch-at-login behavior under sandbox.
+9. Prepare reviewer notes explaining embedded WebKit sessions and local-only storage.
+10. Provide reviewer accounts or a reviewer test plan.
 
 ## App Review Risks
 
@@ -102,10 +103,9 @@ Keep Developer ID DMG only if any are true:
 
 ## Recommended Next Step
 
-After Developer ID distribution is working, revisit MAS with a small proof-of-concept branch:
+After Developer ID distribution is working, continue MAS validation with the current proof-of-concept build path:
 
-1. Add `scripts/build-mas-app.sh`.
-2. Use `packaging/TokenMonitorMAS.entitlements`.
-3. Compile a MAS build without Sparkle.
-4. Run a sandbox smoke test for login, refresh, snapshots, and Login Items.
-5. Decide whether to continue toward App Store Connect submission.
+1. Run `scripts/build-mas-app.sh`.
+2. Inspect the built app for Sparkle references and `SU*` Info.plist keys.
+3. Run a sandbox smoke test for login, refresh, snapshots, and Login Items.
+4. Decide whether to continue toward App Store Connect submission.

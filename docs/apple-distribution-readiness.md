@@ -104,7 +104,7 @@ Detailed current-state audit: `docs/mac-app-store-feasibility.md`.
 
 Known blockers or risks:
 
-- Sparkle must be disabled or removed for the Mac App Store build because App Store apps must use App Store updates.
+- Sparkle is disabled in the draft Mac App Store build path because App Store apps must use App Store updates.
 - App Sandbox must be enabled and tested. Token Monitor uses persistent WebKit sessions, local Application Support storage, network access, and login item registration.
 - Review may question embedded WebKit login and usage-page scraping of third-party services.
 - Review notes will need a clear explanation of what the app does, what data stays local, and how reviewers can test without private user accounts.
@@ -112,8 +112,8 @@ Known blockers or risks:
 
 Mac App Store prep tasks:
 
-- Add a separate MAS build configuration or script.
-- Disable Sparkle and update-related settings in the MAS build.
+- Use `scripts/build-mas-app.sh` as the separate MAS build configuration.
+- Keep Sparkle and update-related settings disabled in the MAS build.
 - Add App Sandbox entitlements:
   - `com.apple.security.app-sandbox`
   - `com.apple.security.network.client`

@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ENTITLEMENTS_PATH="$ROOT_DIR/packaging/TokenMonitorMAS.entitlements"
+MAS_BUILD_SCRIPT="$ROOT_DIR/scripts/build-mas-app.sh"
 
 pass() {
   printf '[OK] %s\n' "$1"
@@ -46,29 +47,38 @@ else
   blockers=$((blockers + 1))
 fi
 
-if has_text "$ROOT_DIR/Package.swift" "Sparkle"; then
-  warn "Package.swift still depends on Sparkle; MAS build must remove or disable Sparkle"
+if has_text "$ROOT_DIR/Package.swift" "TOKEN_MONITOR_MAS_BUILD" && has_text "$ROOT_DIR/Package.swift" "MAS_BUILD"; then
+  pass "Package.swift has a TOKEN_MONITOR_MAS_BUILD path for a no-Sparkle app target"
+elif has_text "$ROOT_DIR/Package.swift" "Sparkle"; then
+  warn "Package.swift still depends on Sparkle without a MAS build switch"
   blockers=$((blockers + 1))
 else
   pass "Package.swift does not reference Sparkle"
 fi
 
-if has_text "$ROOT_DIR/Sources/TokenMonitorApp/AppUpdateController.swift" "import Sparkle"; then
-  warn "AppUpdateController imports Sparkle; MAS build needs a no-Sparkle path"
+if has_text "$ROOT_DIR/Sources/TokenMonitorApp/AppUpdateController.swift" "#if MAS_BUILD"; then
+  pass "AppUpdateController has a no-Sparkle MAS path"
+elif has_text "$ROOT_DIR/Sources/TokenMonitorApp/AppUpdateController.swift" "import Sparkle"; then
+  warn "AppUpdateController imports Sparkle without a MAS no-op path"
   blockers=$((blockers + 1))
 else
   pass "AppUpdateController does not import Sparkle"
 fi
 
-if has_text "$ROOT_DIR/Sources/TokenMonitorApp/Resources/Info.plist" "SUFeedURL"; then
-  warn "Info.plist contains SUFeedURL; MAS build must remove Sparkle update feed settings"
+if [[ -f "$MAS_BUILD_SCRIPT" ]] && has_text "$MAS_BUILD_SCRIPT" "SUFeedURL"; then
+  pass "MAS build script strips Sparkle update feed settings from Info.plist"
+elif has_text "$ROOT_DIR/Sources/TokenMonitorApp/Resources/Info.plist" "SUFeedURL"; then
+  warn "Info.plist contains SUFeedURL and no MAS stripping step was found"
   blockers=$((blockers + 1))
 else
   pass "Info.plist does not contain SUFeedURL"
 fi
 
-if [[ -f "$ROOT_DIR/scripts/build-mas-app.sh" ]]; then
+if [[ -x "$MAS_BUILD_SCRIPT" ]]; then
   pass "MAS build script exists: scripts/build-mas-app.sh"
+elif [[ -f "$MAS_BUILD_SCRIPT" ]]; then
+  warn "MAS build script exists but is not executable: scripts/build-mas-app.sh"
+  blockers=$((blockers + 1))
 else
   warn "Missing scripts/build-mas-app.sh"
   blockers=$((blockers + 1))
@@ -94,8 +104,8 @@ MAS readiness summary:
 - See docs/mac-app-store-feasibility.md for the full audit.
 
 Recommended next MAS step:
-1. Add scripts/build-mas-app.sh.
-2. Build without Sparkle.
-3. Sign with packaging/TokenMonitorMAS.entitlements.
+1. Build with scripts/build-mas-app.sh.
+2. Inspect the built app for Sparkle references and SU* Info.plist keys.
+3. Sign with an Apple Distribution certificate when App Store Connect access exists.
 4. Smoke-test WebKit login, refresh, snapshots, and Login Items under sandbox.
 EOF

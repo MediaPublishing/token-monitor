@@ -1,4 +1,27 @@
 import Foundation
+
+#if MAS_BUILD
+
+@MainActor
+final class AppUpdateController: NSObject, ObservableObject {
+    static let shared = AppUpdateController()
+
+    private override init() {
+        super.init()
+    }
+
+    var automaticallyChecksForUpdates: Bool {
+        get { false }
+        set { _ = newValue }
+    }
+
+    func checkForUpdates() {
+        // Updates are delivered by the Mac App Store for MAS builds.
+    }
+}
+
+#else
+
 import Sparkle
 
 @MainActor
@@ -29,3 +52,5 @@ final class AppUpdateController: NSObject, ObservableObject {
         updaterController.checkForUpdates(nil)
     }
 }
+
+#endif
