@@ -133,7 +133,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func makeCapacityStatusImage() -> NSImage? {
-        let width: CGFloat = model.statusMenuShowsPercentages ? 34 : 20
+        let width: CGFloat = model.statusMenuShowsPercentages ? 58 : 20
         let size = NSSize(width: width, height: 16)
         let image = NSImage(size: size)
         image.lockFocus()
@@ -141,16 +141,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         NSColor.clear.setFill()
         NSBezierPath(rect: NSRect(origin: .zero, size: size)).fill()
 
-        drawBar(
-            in: NSRect(x: 1, y: 9, width: width - 2, height: 6),
-            score: model.capacityScore(for: .claude),
-            status: model.dashboardState.service(.claude).connectionStatus
-        )
-        drawBar(
-            in: NSRect(x: 1, y: 1, width: width - 2, height: 6),
-            score: model.capacityScore(for: .chatGPT),
-            status: model.dashboardState.service(.chatGPT).connectionStatus
-        )
+        if model.statusMenuShowsPercentages {
+            drawBar(
+                in: NSRect(x: 1, y: 2, width: 27, height: 12),
+                score: model.capacityScore(for: .claude),
+                status: model.dashboardState.service(.claude).connectionStatus
+            )
+            drawBar(
+                in: NSRect(x: 30, y: 2, width: 27, height: 12),
+                score: model.capacityScore(for: .chatGPT),
+                status: model.dashboardState.service(.chatGPT).connectionStatus
+            )
+        } else {
+            drawBar(
+                in: NSRect(x: 1, y: 9, width: width - 2, height: 6),
+                score: model.capacityScore(for: .claude),
+                status: model.dashboardState.service(.claude).connectionStatus
+            )
+            drawBar(
+                in: NSRect(x: 1, y: 1, width: width - 2, height: 6),
+                score: model.capacityScore(for: .chatGPT),
+                status: model.dashboardState.service(.chatGPT).connectionStatus
+            )
+        }
 
         image.unlockFocus()
         image.isTemplate = false
@@ -192,11 +205,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.monospacedDigitSystemFont(ofSize: 6.5, weight: .bold),
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 7.5, weight: .bold),
             .foregroundColor: color,
             .paragraphStyle: paragraph
         ]
-        let textRect = rect.insetBy(dx: 1, dy: -1.5)
+        let textRect = rect.insetBy(dx: 1, dy: -2)
         (label as NSString).draw(in: textRect, withAttributes: attributes)
     }
 
