@@ -121,6 +121,7 @@ Mac App Store prep tasks:
 - Verify whether `SMAppService` launch-at-login works as expected under sandbox and App Review expectations.
 - Prepare App Store metadata, privacy labels, screenshots, support URL, marketing URL, and review notes.
 - Create a reviewer demo plan that does not require sharing private Claude or ChatGPT credentials.
+- Use `docs/app-store-submission-packet.md` for the draft metadata, privacy label notes, reviewer notes, screenshot requirements, and reviewer test plan.
 
 ## Apple Access Checklist
 
@@ -195,6 +196,7 @@ Prepared and verified repo artifacts:
 - Public release verifier: `scripts/verify-public-release.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
+- App Store submission packet: `docs/app-store-submission-packet.md`.
 - MAS readiness checker: `scripts/check-mas-readiness.sh`.
 - Draft MAS entitlements: `packaging/TokenMonitorMAS.entitlements`.
 - Marketing and App Store draft metadata: `docs/marketing-launch-kit.md`.

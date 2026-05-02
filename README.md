@@ -257,6 +257,7 @@ token-monitor/
 - [Apple distribution readiness](docs/apple-distribution-readiness.md)
 - [Apple credential runbook](docs/apple-credential-runbook.md)
 - [Mac App Store feasibility audit](docs/mac-app-store-feasibility.md)
+- [App Store submission packet](docs/app-store-submission-packet.md)
 - [Marketing launch kit](docs/marketing-launch-kit.md)
 - [Publication legal checklist](docs/publication-legal-checklist.md)
 - [Privacy summary](docs/privacy.md)

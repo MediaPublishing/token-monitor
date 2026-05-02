@@ -73,6 +73,8 @@ macOS, menu bar, Claude, ChatGPT, Codex, AI tools, usage monitor, quota tracker,
 
 Use only if a Mac App Store track is approved after the feasibility work in `docs/apple-distribution-readiness.md`.
 
+The fuller submission packet lives in `docs/app-store-submission-packet.md`.
+
 App name:
 
 ```text
@@ -184,7 +186,7 @@ Before Mac App Store submission:
 1. Decide whether the MAS track is approved despite Sparkle and WebKit-review risks.
 2. Create a MAS build without Sparkle updates.
 3. Enable and test App Sandbox entitlements.
-4. Fill App Store metadata from this file.
+4. Fill App Store metadata from this file and `docs/app-store-submission-packet.md`.
 5. Complete privacy labels with final legal/human approval.
 6. Attach screenshots captured from the submitted binary.
 7. Add reviewer notes and a test-account plan.
