@@ -82,6 +82,29 @@ After Developer ID access exists, make the check fail if signing or notarization
 TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 ./scripts/check-github-release-secrets.sh
 ```
 
+## After Credentials Are Ready
+
+Use this operator sequence after the Apple Developer certificate, notary credentials, and GitHub secrets exist:
+
+```bash
+TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 ./scripts/check-github-release-secrets.sh
+
+xcrun notarytool store-credentials token-monitor-notary
+
+./scripts/preflight-release.sh --require-signing-secrets
+
+TOKEN_MONITOR_CODESIGN_IDENTITY="Developer ID Application: <Name> (<TEAMID>)" \
+TOKEN_MONITOR_NOTARIZE=1 \
+TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary \
+TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 \
+./scripts/package-release.sh
+
+TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 \
+./scripts/verify-public-release.sh <tag> <version> <build>
+```
+
+For a GitHub Actions rebuild of an existing release, run the `Release` workflow manually with the existing tag after the required repository secrets pass the strict check.
+
 ## Notarization Password
 
 Create an app-specific password for the Apple ID used for notarization. Store it as:
