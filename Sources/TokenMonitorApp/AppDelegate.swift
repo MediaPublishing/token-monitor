@@ -94,7 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private func configureStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = item.button {
-            button.image = makeCapacityStatusImage()
+            button.image = makeCapacityStatusImage(for: button.effectiveAppearance)
             button.imagePosition = .imageLeading
             button.target = self
             button.action = #selector(togglePopover(_:))
@@ -127,15 +127,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             return
         }
 
-        button.image = makeCapacityStatusImage()
+        button.image = makeCapacityStatusImage(for: button.effectiveAppearance)
         button.attributedTitle = NSAttributedString(string: "")
         button.toolTip = tooltipText()
     }
 
-    private func makeCapacityStatusImage() -> NSImage? {
+    private func makeCapacityStatusImage(for appearance: NSAppearance?) -> NSImage? {
         let width: CGFloat = model.statusMenuShowsPercentages ? 58 : 20
         let size = NSSize(width: width, height: 16)
         let image = NSImage(size: size)
+        let foregroundColor = statusBarForegroundColor(for: appearance)
+        let trackColor = statusBarTrackColor(for: appearance)
         image.lockFocus()
 
         NSColor.clear.setFill()
@@ -144,32 +146,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         if model.statusMenuShowsPercentages {
             drawStatusValue(
                 for: model.capacityScore(for: .claude),
-                in: NSRect(x: 0, y: 8, width: 28, height: 8)
+                in: NSRect(x: 0, y: 8, width: 28, height: 8),
+                foregroundColor: foregroundColor
             )
             drawStatusValue(
                 for: model.capacityScore(for: .chatGPT),
-                in: NSRect(x: 0, y: 0, width: 28, height: 8)
+                in: NSRect(x: 0, y: 0, width: 28, height: 8),
+                foregroundColor: foregroundColor
             )
             drawBar(
                 in: NSRect(x: 32, y: 9, width: 24, height: 6),
                 score: model.capacityScore(for: .claude),
-                status: model.dashboardState.service(.claude).connectionStatus
+                status: model.dashboardState.service(.claude).connectionStatus,
+                foregroundColor: foregroundColor,
+                trackColor: trackColor
             )
             drawBar(
                 in: NSRect(x: 32, y: 1, width: 24, height: 6),
                 score: model.capacityScore(for: .chatGPT),
-                status: model.dashboardState.service(.chatGPT).connectionStatus
+                status: model.dashboardState.service(.chatGPT).connectionStatus,
+                foregroundColor: foregroundColor,
+                trackColor: trackColor
             )
         } else {
             drawBar(
                 in: NSRect(x: 1, y: 9, width: width - 2, height: 6),
                 score: model.capacityScore(for: .claude),
-                status: model.dashboardState.service(.claude).connectionStatus
+                status: model.dashboardState.service(.claude).connectionStatus,
+                foregroundColor: foregroundColor,
+                trackColor: trackColor
             )
             drawBar(
                 in: NSRect(x: 1, y: 1, width: width - 2, height: 6),
                 score: model.capacityScore(for: .chatGPT),
-                status: model.dashboardState.service(.chatGPT).connectionStatus
+                status: model.dashboardState.service(.chatGPT).connectionStatus,
+                foregroundColor: foregroundColor,
+                trackColor: trackColor
             )
         }
 
@@ -178,14 +190,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         return image
     }
 
-    private func drawBar(in rect: NSRect, score: Double?, status: ServiceConnectionStatus) {
+    private func drawBar(
+        in rect: NSRect,
+        score: Double?,
+        status: ServiceConnectionStatus,
+        foregroundColor: NSColor,
+        trackColor: NSColor
+    ) {
         let trackPath = NSBezierPath(roundedRect: rect, xRadius: 2.5, yRadius: 2.5)
-        NSColor.quaternaryLabelColor.setFill()
+        trackColor.setFill()
         trackPath.fill()
 
         guard let score else {
             let outline = NSBezierPath(roundedRect: rect.insetBy(dx: 0.5, dy: 0.5), xRadius: 2, yRadius: 2)
-            statusAccentColor(for: status).setStroke()
+            statusAccentColor(for: status, foregroundColor: foregroundColor).setStroke()
             outline.lineWidth = 1
             outline.stroke()
             return
@@ -194,26 +212,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let clamped = max(0.08, min(score, 1))
         let fillRect = NSRect(x: rect.minX, y: rect.minY, width: rect.width * clamped, height: rect.height)
         let fillPath = NSBezierPath(roundedRect: fillRect, xRadius: 2.5, yRadius: 2.5)
-        capacityColor(for: score, status: status).setFill()
+        capacityColor(for: score, status: status, foregroundColor: foregroundColor).setFill()
         fillPath.fill()
 
     }
 
-    private func drawStatusValue(for score: Double?, in rect: NSRect) {
+    private func drawStatusValue(for score: Double?, in rect: NSRect, foregroundColor: NSColor) {
         let label = score.map { "\(Int((max(0, min($0, 1)) * 100).rounded()))%" } ?? "--"
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .right
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.monospacedDigitSystemFont(ofSize: 7, weight: .semibold),
-            .foregroundColor: NSColor.labelColor,
+            .foregroundColor: foregroundColor,
             .paragraphStyle: paragraph
         ]
         (label as NSString).draw(in: rect, withAttributes: attributes)
     }
 
-    private func statusAccentColor(for status: ServiceConnectionStatus) -> NSColor {
+    private func statusBarForegroundColor(for appearance: NSAppearance?) -> NSColor {
+        isDarkStatusBarAppearance(appearance) ? .white : .black
+    }
+
+    private func statusBarTrackColor(for appearance: NSAppearance?) -> NSColor {
+        statusBarForegroundColor(for: appearance).withAlphaComponent(isDarkStatusBarAppearance(appearance) ? 0.32 : 0.16)
+    }
+
+    private func isDarkStatusBarAppearance(_ appearance: NSAppearance?) -> Bool {
+        let bestMatch = (appearance ?? NSApp.effectiveAppearance)
+            .bestMatch(from: [.aqua, .darkAqua, .vibrantLight, .vibrantDark])
+        return bestMatch == .darkAqua || bestMatch == .vibrantDark
+    }
+
+    private func statusAccentColor(for status: ServiceConnectionStatus, foregroundColor: NSColor) -> NSColor {
         guard model.statusMenuUsesColor else {
-            return .secondaryLabelColor
+            return foregroundColor
         }
 
         switch status {
@@ -230,9 +262,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         }
     }
 
-    private func capacityColor(for score: Double, status: ServiceConnectionStatus) -> NSColor {
+    private func capacityColor(for score: Double, status: ServiceConnectionStatus, foregroundColor: NSColor) -> NSColor {
         guard model.statusMenuUsesColor else {
-            return .labelColor
+            return foregroundColor
         }
 
         switch status {

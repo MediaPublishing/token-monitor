@@ -17,7 +17,6 @@ final class AppModel: ObservableObject {
         static let debugModeEnabled = "debugModeEnabled"
         static let statusMenuUsesColor = "statusMenuUsesColor"
         static let statusMenuShowsPercentages = "statusMenuShowsPercentages"
-        static let dashboardShowsProgressPercentages = "dashboardShowsProgressPercentages"
     }
 
     @Published private(set) var dashboardState: DashboardState
@@ -28,7 +27,6 @@ final class AppModel: ObservableObject {
     @Published private(set) var debugModeEnabled: Bool
     @Published private(set) var statusMenuUsesColor: Bool
     @Published private(set) var statusMenuShowsPercentages: Bool
-    @Published private(set) var dashboardShowsProgressPercentages: Bool
 
     let snapshotDirectoryURL: URL
     let diagnosticsDirectoryURL: URL
@@ -50,15 +48,13 @@ final class AppModel: ObservableObject {
             Keys.launchAtLoginEnabled: true,
             Keys.debugModeEnabled: false,
             Keys.statusMenuUsesColor: true,
-            Keys.statusMenuShowsPercentages: false,
-            Keys.dashboardShowsProgressPercentages: true
+            Keys.statusMenuShowsPercentages: false
         ])
         launchAtLoginEnabled = UserDefaults.standard.bool(forKey: Keys.launchAtLoginEnabled)
         let initialDebugModeEnabled = UserDefaults.standard.bool(forKey: Keys.debugModeEnabled)
         debugModeEnabled = initialDebugModeEnabled
         statusMenuUsesColor = UserDefaults.standard.bool(forKey: Keys.statusMenuUsesColor)
         statusMenuShowsPercentages = UserDefaults.standard.bool(forKey: Keys.statusMenuShowsPercentages)
-        dashboardShowsProgressPercentages = UserDefaults.standard.bool(forKey: Keys.dashboardShowsProgressPercentages)
         automaticallyChecksForUpdates = updateController.automaticallyChecksForUpdates
         let snapshots = (try? snapshotStore.loadSnapshots()) ?? [:]
         dashboardState = DashboardState.initial(lastSnapshots: snapshots)
@@ -252,15 +248,6 @@ final class AppModel: ObservableObject {
 
         statusMenuShowsPercentages = enabled
         UserDefaults.standard.set(enabled, forKey: Keys.statusMenuShowsPercentages)
-    }
-
-    func setDashboardShowsProgressPercentages(_ enabled: Bool) {
-        guard dashboardShowsProgressPercentages != enabled else {
-            return
-        }
-
-        dashboardShowsProgressPercentages = enabled
-        UserDefaults.standard.set(enabled, forKey: Keys.dashboardShowsProgressPercentages)
     }
 
     func checkForUpdates() {

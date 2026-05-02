@@ -61,10 +61,7 @@ private struct ServiceSectionView: View {
             if let snapshot = status.snapshot, !visibleMetrics(from: snapshot).isEmpty {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
                     ForEach(visibleMetrics(from: snapshot)) { metric in
-                        MetricCardView(
-                            metric: metric,
-                            showsProgressPercentage: model.dashboardShowsProgressPercentages
-                        )
+                        MetricCardView(metric: metric)
                     }
                 }
             } else {
@@ -189,7 +186,6 @@ private struct StateBadgeView: View {
 
 private struct MetricCardView: View {
     let metric: UsageMetric
-    let showsProgressPercentage: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -203,7 +199,7 @@ private struct MetricCardView: View {
                 .foregroundStyle(.primary)
 
             if metric.style == .progress, let progress = availableProgress {
-                ProgressTrack(progress: progress, tint: tintColor, label: progressLabel(for: progress))
+                ProgressTrack(progress: progress, tint: tintColor)
             }
 
             if let subtitle = metric.subtitle {
@@ -291,19 +287,11 @@ private struct MetricCardView: View {
         return clamped
     }
 
-    private func progressLabel(for progress: Double) -> String {
-        guard showsProgressPercentage else {
-            return ""
-        }
-
-        return "\(Int((max(0, min(progress, 1)) * 100).rounded()))%"
-    }
 }
 
 private struct ProgressTrack: View {
     let progress: Double
     let tint: Color
-    let label: String
 
     var body: some View {
         GeometryReader { proxy in
@@ -315,15 +303,6 @@ private struct ProgressTrack: View {
                 Capsule()
                     .fill(tint)
                     .frame(width: max(8, proxy.size.width * clamped))
-
-                if !label.isEmpty {
-                    Text(label)
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                }
             }
         }
         .frame(height: 12)

@@ -92,18 +92,6 @@ struct SettingsView: View {
                 }
                 .toggleStyle(.switch)
                 .controlSize(compact ? .small : .regular)
-
-                Toggle(isOn: dashboardProgressPercentagesBinding) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Show percentages in dashboard bars")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Hide or show the number inside each usage bar.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .toggleStyle(.switch)
-                .controlSize(compact ? .small : .regular)
             }
             .padding(compact ? 10 : 14)
             .background(
@@ -323,10 +311,4 @@ struct SettingsView: View {
         )
     }
 
-    private var dashboardProgressPercentagesBinding: Binding<Bool> {
-        Binding(
-            get: { model.dashboardShowsProgressPercentages },
-            set: { model.setDashboardShowsProgressPercentages($0) }
-        )
-    }
 }
