@@ -18,7 +18,7 @@ Success means:
 
 Verified locally:
 
-- `swift test` passes with 27 tests.
+- `swift test` passes with 30 tests.
 - `scripts/build-app.sh` builds `dist/TokenMonitor.app`.
 - Current local build is ad hoc signed when no `TOKEN_MONITOR_CODESIGN_IDENTITY` is provided.
 - `spctl --assess --type execute --verbose=4 dist/TokenMonitor.app` rejects the ad hoc build, as expected.
@@ -182,6 +182,36 @@ Triage workflow:
 5. Build with `./scripts/build-app.sh`.
 6. Release through GitHub if user impact is active.
 7. Comment publicly with sanitized findings only.
+
+## Completion Audit
+
+Prepared and verified repo artifacts:
+
+- App release behavior: `v1.0.14` / build `15` includes the remaining-quota progress bar fix.
+- Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
+- Apple credential setup: `docs/apple-credential-runbook.md`.
+- Local signing/notarization verifier: `scripts/check-apple-distribution.sh`.
+- GitHub signed release workflow: `.github/workflows/release.yml`.
+- Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
+- Marketing and App Store draft metadata: `docs/marketing-launch-kit.md`.
+- Public privacy summary: `docs/privacy.md`.
+- Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
+- Regression coverage: `swift test` passes with 30 tests.
+
+Current blockers:
+
+- No Developer ID Application certificate is installed locally.
+- No local `TOKEN_MONITOR_NOTARY_PROFILE` is configured.
+- The local app bundle is ad hoc signed.
+- Gatekeeper rejects the current local app and DMG.
+- The current DMG has no stapled notarization ticket.
+- GitHub release signing secrets are documented but not configured with real Apple credentials.
+- Mac App Store submission remains a separate, not-ready track until Sparkle is removed from a MAS build and sandboxing is tested.
+
+Conclusion:
+
+- The repository is prepared for Apple Developer access.
+- The objective is not complete until a signed, notarized, stapled Developer ID release is produced and verified with real Apple credentials.
 
 ## Source References
 
