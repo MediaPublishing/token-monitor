@@ -1,0 +1,94 @@
+name: Parser or layout bug
+description: Report a Claude or ChatGPT usage page that Token Monitor cannot parse correctly.
+title: "[Parser]: "
+labels:
+  - parser
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a parser issue.
+
+        GitHub Issues are public. Do not attach raw debug dumps, screenshots with private account data, chat titles, usage budgets, balances, email addresses, or access tokens. Redact anything private before posting.
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      options:
+        - Claude
+        - ChatGPT
+        - Both
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: Token Monitor version
+      description: Example: 1.0.14 build 15
+      placeholder: 1.0.14 build 15
+    validations:
+      required: true
+
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: macOS 15.4
+    validations:
+      required: true
+
+  - type: dropdown
+    id: account-locale
+    attributes:
+      label: Account language or locale
+      options:
+        - English
+        - German
+        - Other
+        - Unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: visible-metrics
+    attributes:
+      label: Visible usage metrics
+      description: List only sanitized values that are needed to understand the layout. Percentages and reset labels are usually enough.
+      placeholder: |
+        Current session: 52% remaining, resets in 47 min
+        Weekly: 57% remaining, resets May 5
+        Extra usage: visible, currency EUR, amount redacted
+    validations:
+      required: true
+
+  - type: textarea
+    id: failure-state
+    attributes:
+      label: What Token Monitor shows
+      placeholder: |
+        Status: Stale
+        Message: Claude usage layout could not be parsed
+        Last good snapshot: 10 minutes ago
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      placeholder: Token Monitor should parse the available metrics and keep missing quota blocks optional.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: privacy-confirmation
+    attributes:
+      label: Privacy check
+      options:
+        - label: I did not attach raw debug dumps or private account data.
+          required: true
+        - label: I redacted screenshots or text snippets before posting.
+          required: true

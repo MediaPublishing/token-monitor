@@ -154,6 +154,7 @@ Current debug/reporting policy:
 - Debug mode is opt-in.
 - Reports open as drafts.
 - GitHub Issues are public.
+- Public parser reports should use `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
 - Private usage dumps should not be attached unredacted.
 
 Triage workflow:

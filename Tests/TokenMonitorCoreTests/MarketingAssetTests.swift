@@ -120,4 +120,34 @@ struct MarketingAssetTests {
         #expect(readinessScript.contains("Developer ID Application"))
         #expect(readinessScript.contains("TOKEN_MONITOR_NOTARY_PROFILE"))
     }
+
+    @Test func publicIssueTemplatesProtectPrivateDebugData() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let distributionDoc = try String(
+            contentsOf: rootURL.appendingPathComponent("docs/apple-distribution-readiness.md"),
+            encoding: .utf8
+        )
+        let parserIssueTemplateURL = rootURL.appendingPathComponent(".github/ISSUE_TEMPLATE/parser-layout-bug.yml")
+        let issueConfigURL = rootURL.appendingPathComponent(".github/ISSUE_TEMPLATE/config.yml")
+        let parserIssueTemplate = try String(contentsOf: parserIssueTemplateURL, encoding: .utf8)
+        let issueConfig = try String(contentsOf: issueConfigURL, encoding: .utf8)
+
+        #expect(FileManager.default.fileExists(atPath: parserIssueTemplateURL.path))
+        #expect(FileManager.default.fileExists(atPath: issueConfigURL.path))
+        #expect(distributionDoc.contains(".github/ISSUE_TEMPLATE/parser-layout-bug.yml"))
+        #expect(parserIssueTemplate.contains("GitHub Issues are public"))
+        #expect(parserIssueTemplate.contains("Do not attach raw debug dumps"))
+        #expect(parserIssueTemplate.contains("chat titles"))
+        #expect(parserIssueTemplate.contains("usage budgets"))
+        #expect(parserIssueTemplate.contains("Token Monitor version"))
+        #expect(parserIssueTemplate.contains("Account language or locale"))
+        #expect(parserIssueTemplate.contains("Privacy check"))
+        #expect(issueConfig.contains("blank_issues_enabled: false"))
+        #expect(!parserIssueTemplate.contains("info@etraininghq.com"))
+        #expect(!issueConfig.contains("info@etraininghq.com"))
+    }
 }
