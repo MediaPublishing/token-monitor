@@ -42,6 +42,12 @@ https://github.com/MediaPublishing/token-monitor/blob/main/docs/privacy.md
 
 For sensitive concerns, use GitHub private vulnerability reporting if available for the repository. Do not open a public issue with private account data.
 
+Security policy:
+
+```text
+https://github.com/MediaPublishing/token-monitor/blob/main/SECURITY.md
+```
+
 ## Developer ID Or Release Problems
 
 For release/signing/notarization work, use the repo runbooks:

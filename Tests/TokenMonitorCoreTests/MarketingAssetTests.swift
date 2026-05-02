@@ -215,17 +215,28 @@ struct MarketingAssetTests {
         )
         let supportURL = rootURL.appendingPathComponent("SUPPORT.md")
         let support = try String(contentsOf: supportURL, encoding: .utf8)
+        let securityURL = rootURL.appendingPathComponent("SECURITY.md")
+        let security = try String(contentsOf: securityURL, encoding: .utf8)
 
         #expect(FileManager.default.fileExists(atPath: supportURL.path))
+        #expect(FileManager.default.fileExists(atPath: securityURL.path))
         #expect(readme.contains("SUPPORT.md"))
+        #expect(readme.contains("SECURITY.md"))
         #expect(launchKit.contains("https://github.com/MediaPublishing/token-monitor/blob/main/SUPPORT.md"))
         #expect(support.contains("GitHub Issues are public"))
         #expect(support.contains("Do not post raw debug dumps"))
         #expect(support.contains("Installation Or Gatekeeper"))
         #expect(support.contains("parser-layout-bug.yml"))
         #expect(support.contains("docs/privacy.md"))
+        #expect(support.contains("SECURITY.md"))
         #expect(support.contains("Apple ID passwords"))
         #expect(!support.contains("info@etraininghq.com"))
+        #expect(security.contains("Reporting A Vulnerability"))
+        #expect(security.contains("Do not open a public issue"))
+        #expect(security.contains("GitHub private vulnerability reporting"))
+        #expect(security.contains("Developer ID `.p12` files or passwords"))
+        #expect(security.contains("docs/privacy.md"))
+        #expect(!security.contains("info@etraininghq.com"))
     }
 
     @Test func marketingLaunchKitCoversDistributionMetadata() throws {
