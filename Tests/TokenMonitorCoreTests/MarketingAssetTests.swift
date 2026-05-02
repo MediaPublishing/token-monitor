@@ -87,4 +87,28 @@ struct MarketingAssetTests {
         #expect(releaseWorkflow.contains("package-release.sh"))
         #expect(releaseWorkflow.contains("dist/TokenMonitor-macOS.dmg"))
     }
+
+    @Test func appleDistributionReadinessDocCoversReleasePaths() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let readme = try String(
+            contentsOf: rootURL.appendingPathComponent("README.md"),
+            encoding: .utf8
+        )
+        let distributionDocURL = rootURL.appendingPathComponent("docs/apple-distribution-readiness.md")
+        let distributionDoc = try String(contentsOf: distributionDocURL, encoding: .utf8)
+
+        #expect(FileManager.default.fileExists(atPath: distributionDocURL.path))
+        #expect(readme.contains("docs/apple-distribution-readiness.md"))
+        #expect(distributionDoc.contains("Developer ID DMG"))
+        #expect(distributionDoc.contains("Mac App Store Feasibility"))
+        #expect(distributionDoc.contains("TOKEN_MONITOR_CODESIGN_IDENTITY"))
+        #expect(distributionDoc.contains("TOKEN_MONITOR_NOTARIZE"))
+        #expect(distributionDoc.contains("App Store Connect API"))
+        #expect(distributionDoc.contains("Marketing Setup"))
+        #expect(distributionDoc.contains("Ongoing Issue-Fixing Loop"))
+    }
 }
