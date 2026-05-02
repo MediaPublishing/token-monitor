@@ -31,7 +31,7 @@ Verified locally:
   - `dist/TokenMonitor-macOS.dmg`
   - `dist/appcast.xml`
   - `dist/updates/TokenMonitor-<version>-<build>-macOS.zip`
-- `.github/workflows/release.yml` already publishes release assets and deploys the Sparkle appcast to GitHub Pages.
+- `.github/workflows/release.yml` publishes release assets, deploys the Sparkle appcast to GitHub Pages, and can import Developer ID/notary credentials from GitHub Secrets when they are available.
 
 ## Recommended Distribution Path
 
@@ -52,6 +52,16 @@ Required human/account setup:
 - Developer ID Application certificate.
 - App-specific notary credentials stored locally with `xcrun notarytool store-credentials`.
 - Optional GitHub Actions secrets if release signing should move to CI.
+
+GitHub Actions secrets for signed/notarized releases:
+
+- `TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64`: base64-encoded `.p12` Developer ID Application certificate.
+- `TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_PASSWORD`: password for the `.p12` certificate.
+- `TOKEN_MONITOR_CODESIGN_IDENTITY`: exact certificate identity, for example `Developer ID Application: <Name> (<TEAMID>)`.
+- `TOKEN_MONITOR_RELEASE_KEYCHAIN_PASSWORD`: optional temporary CI keychain password.
+- `TOKEN_MONITOR_NOTARY_APPLE_ID`: Apple ID used for notarization.
+- `TOKEN_MONITOR_NOTARY_TEAM_ID`: Apple Developer Team ID.
+- `TOKEN_MONITOR_NOTARY_APP_PASSWORD`: app-specific password for notarization.
 
 Local release command once credentials exist:
 

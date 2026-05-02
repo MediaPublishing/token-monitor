@@ -23,6 +23,61 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
+      - name: Prepare Developer ID signing
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          CODESIGN_IDENTITY: ${{ secrets.TOKEN_MONITOR_CODESIGN_IDENTITY }}
+          KEYCHAIN_PASSWORD: ${{ secrets.TOKEN_MONITOR_RELEASE_KEYCHAIN_PASSWORD }}
+        run: |
+          if [[ -z "$CERTIFICATE_BASE64" || -z "$CERTIFICATE_PASSWORD" || -z "$CODESIGN_IDENTITY" ]]; then
+            echo "Developer ID signing secrets are not fully configured; producing an unsigned preview build."
+            exit 0
+          fi
+
+          KEYCHAIN_PATH="$RUNNER_TEMP/token-monitor-release.keychain-db"
+          CERTIFICATE_PATH="$RUNNER_TEMP/developer-id-certificate.p12"
+          KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
+
+          echo "$CERTIFICATE_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" \
+            -P "$CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed 's/[ "]//g')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "TOKEN_MONITOR_CODESIGN_IDENTITY=$CODESIGN_IDENTITY" >> "$GITHUB_ENV"
+
+      - name: Prepare notarization profile
+        env:
+          APPLE_ID: ${{ secrets.TOKEN_MONITOR_NOTARY_APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.TOKEN_MONITOR_NOTARY_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.TOKEN_MONITOR_NOTARY_APP_PASSWORD }}
+        run: |
+          if [[ -z "${TOKEN_MONITOR_CODESIGN_IDENTITY:-}" ]]; then
+            echo "Developer ID signing is not configured; skipping notarization."
+            exit 0
+          fi
+
+          if [[ -z "$APPLE_ID" || -z "$APPLE_TEAM_ID" || -z "$APPLE_APP_PASSWORD" ]]; then
+            echo "Notarization secrets are not fully configured; skipping notarization."
+            exit 0
+          fi
+
+          xcrun notarytool store-credentials token-monitor-notary-ci \
+            --apple-id "$APPLE_ID" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_APP_PASSWORD"
+
+          echo "TOKEN_MONITOR_NOTARIZE=1" >> "$GITHUB_ENV"
+          echo "TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary-ci" >> "$GITHUB_ENV"
+
       - name: Package app and appcast
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}

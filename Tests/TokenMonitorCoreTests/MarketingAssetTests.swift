@@ -86,6 +86,11 @@ struct MarketingAssetTests {
         #expect(!landingHTML.contains("How do updates work?"))
         #expect(releaseWorkflow.contains("package-release.sh"))
         #expect(releaseWorkflow.contains("dist/TokenMonitor-macOS.dmg"))
+        #expect(releaseWorkflow.contains("TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64"))
+        #expect(releaseWorkflow.contains("TOKEN_MONITOR_CODESIGN_IDENTITY"))
+        #expect(releaseWorkflow.contains("TOKEN_MONITOR_NOTARY_APP_PASSWORD"))
+        #expect(releaseWorkflow.contains("TOKEN_MONITOR_NOTARIZE=1"))
+        #expect(releaseWorkflow.contains("Developer ID signing is not configured; skipping notarization."))
     }
 
     @Test func appleDistributionReadinessDocCoversReleasePaths() throws {
@@ -112,6 +117,8 @@ struct MarketingAssetTests {
         #expect(distributionDoc.contains("Mac App Store Feasibility"))
         #expect(distributionDoc.contains("TOKEN_MONITOR_CODESIGN_IDENTITY"))
         #expect(distributionDoc.contains("TOKEN_MONITOR_NOTARIZE"))
+        #expect(distributionDoc.contains("TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64"))
+        #expect(distributionDoc.contains("TOKEN_MONITOR_NOTARY_APP_PASSWORD"))
         #expect(distributionDoc.contains("App Store Connect API"))
         #expect(distributionDoc.contains("Marketing Setup"))
         #expect(distributionDoc.contains("Ongoing Issue-Fixing Loop"))
