@@ -15,6 +15,9 @@ final class AppModel: ObservableObject {
     private enum Keys {
         static let launchAtLoginEnabled = "launchAtLoginEnabled"
         static let debugModeEnabled = "debugModeEnabled"
+        static let statusMenuUsesColor = "statusMenuUsesColor"
+        static let statusMenuShowsPercentages = "statusMenuShowsPercentages"
+        static let dashboardShowsProgressPercentages = "dashboardShowsProgressPercentages"
     }
 
     @Published private(set) var dashboardState: DashboardState
@@ -23,6 +26,9 @@ final class AppModel: ObservableObject {
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var automaticallyChecksForUpdates: Bool
     @Published private(set) var debugModeEnabled: Bool
+    @Published private(set) var statusMenuUsesColor: Bool
+    @Published private(set) var statusMenuShowsPercentages: Bool
+    @Published private(set) var dashboardShowsProgressPercentages: Bool
 
     let snapshotDirectoryURL: URL
     let diagnosticsDirectoryURL: URL
@@ -42,11 +48,17 @@ final class AppModel: ObservableObject {
         self.updateController = updateController
         UserDefaults.standard.register(defaults: [
             Keys.launchAtLoginEnabled: true,
-            Keys.debugModeEnabled: false
+            Keys.debugModeEnabled: false,
+            Keys.statusMenuUsesColor: true,
+            Keys.statusMenuShowsPercentages: false,
+            Keys.dashboardShowsProgressPercentages: true
         ])
         launchAtLoginEnabled = UserDefaults.standard.bool(forKey: Keys.launchAtLoginEnabled)
         let initialDebugModeEnabled = UserDefaults.standard.bool(forKey: Keys.debugModeEnabled)
         debugModeEnabled = initialDebugModeEnabled
+        statusMenuUsesColor = UserDefaults.standard.bool(forKey: Keys.statusMenuUsesColor)
+        statusMenuShowsPercentages = UserDefaults.standard.bool(forKey: Keys.statusMenuShowsPercentages)
+        dashboardShowsProgressPercentages = UserDefaults.standard.bool(forKey: Keys.dashboardShowsProgressPercentages)
         automaticallyChecksForUpdates = updateController.automaticallyChecksForUpdates
         let snapshots = (try? snapshotStore.loadSnapshots()) ?? [:]
         dashboardState = DashboardState.initial(lastSnapshots: snapshots)
@@ -222,6 +234,33 @@ final class AppModel: ObservableObject {
         debugModeEnabled = enabled
         diagnosticsStore.isEnabled = enabled
         UserDefaults.standard.set(enabled, forKey: Keys.debugModeEnabled)
+    }
+
+    func setStatusMenuUsesColor(_ enabled: Bool) {
+        guard statusMenuUsesColor != enabled else {
+            return
+        }
+
+        statusMenuUsesColor = enabled
+        UserDefaults.standard.set(enabled, forKey: Keys.statusMenuUsesColor)
+    }
+
+    func setStatusMenuShowsPercentages(_ enabled: Bool) {
+        guard statusMenuShowsPercentages != enabled else {
+            return
+        }
+
+        statusMenuShowsPercentages = enabled
+        UserDefaults.standard.set(enabled, forKey: Keys.statusMenuShowsPercentages)
+    }
+
+    func setDashboardShowsProgressPercentages(_ enabled: Bool) {
+        guard dashboardShowsProgressPercentages != enabled else {
+            return
+        }
+
+        dashboardShowsProgressPercentages = enabled
+        UserDefaults.standard.set(enabled, forKey: Keys.dashboardShowsProgressPercentages)
     }
 
     func checkForUpdates() {

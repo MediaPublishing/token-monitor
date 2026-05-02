@@ -53,13 +53,21 @@ struct AppSourceBehaviorTests {
             encoding: .utf8
         )
 
+        #expect(dashboardView.contains("if progress >= 0.75"))
         #expect(dashboardView.contains("if progress >= 0.5"))
         #expect(dashboardView.contains("if progress >= 0.25"))
         #expect(dashboardView.contains("return .red"))
         #expect(dashboardView.contains("1 - clamped"))
         #expect(dashboardView.contains("ProgressTrack(progress: progress, tint: tintColor, label:"))
-        #expect(dashboardView.contains("Text(label)"))
-        #expect(appDelegate.contains("if score >= 0.5 { return .systemGreen }"))
+        #expect(dashboardView.contains("guard showsProgressPercentage else"))
+        #expect(dashboardView.contains("monthly-limit-balance"))
+        #expect(dashboardView.contains("Monthly limit / Balance"))
+        #expect(appDelegate.contains("model.statusMenuUsesColor"))
+        #expect(appDelegate.contains("model.statusMenuShowsPercentages"))
+        #expect(appDelegate.contains("drawBarLabel(label, in: rect"))
+        #expect(appDelegate.contains("button.attributedTitle = NSAttributedString(string: \"\")"))
+        #expect(appDelegate.contains("if score >= 0.75 { return .systemGreen }"))
+        #expect(appDelegate.contains("if score >= 0.5 { return .systemMint }"))
         #expect(appDelegate.contains("if score >= 0.25 { return .systemOrange }"))
         #expect(!dashboardView.contains("localizedCaseInsensitiveContains(\"remaining\") {\n            return .green"))
     }
@@ -82,14 +90,26 @@ struct AppSourceBehaviorTests {
             contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/SettingsView.swift"),
             encoding: .utf8
         )
+        let appDelegate = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/AppDelegate.swift"),
+            encoding: .utf8
+        )
 
         #expect(appModel.contains("Keys.debugModeEnabled: false"))
+        #expect(appModel.contains("Keys.statusMenuUsesColor: true"))
+        #expect(appModel.contains("Keys.statusMenuShowsPercentages: false"))
+        #expect(appModel.contains("Keys.dashboardShowsProgressPercentages: true"))
         #expect(appModel.contains("openGitHubDebugReportDraft"))
         #expect(appModel.contains("openEmailDebugReportDraft"))
         #expect(diagnosticsStore.contains("guard isEnabled else"))
         #expect(settingsView.contains("Enable debug mode"))
+        #expect(settingsView.contains("Status menu"))
+        #expect(settingsView.contains("Use colored status bars"))
+        #expect(settingsView.contains("Show percentages in menu bar"))
+        #expect(settingsView.contains("Show percentages in dashboard bars"))
         #expect(settingsView.contains("GitHub Issue Draft"))
         #expect(settingsView.contains("Email Draft"))
+        #expect(appDelegate.contains("drawBarLabel"))
     }
 
     @Test func claudeExtractionHandlesEmptyAndLocalizedDomText() throws {

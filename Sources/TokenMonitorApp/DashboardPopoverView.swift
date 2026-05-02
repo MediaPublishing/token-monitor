@@ -61,7 +61,10 @@ private struct ServiceSectionView: View {
             if let snapshot = status.snapshot, !visibleMetrics(from: snapshot).isEmpty {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
                     ForEach(visibleMetrics(from: snapshot)) { metric in
-                        MetricCardView(metric: metric)
+                        MetricCardView(
+                            metric: metric,
+                            showsProgressPercentage: model.dashboardShowsProgressPercentages
+                        )
                     }
                 }
             } else {
@@ -101,9 +104,43 @@ private struct ServiceSectionView: View {
     }
 
     private func visibleMetrics(from snapshot: ServiceSnapshot) -> [UsageMetric] {
-        snapshot.metrics.filter { metric in
+        var metrics = snapshot.metrics.filter { metric in
             metric.key != "credits-remaining"
         }
+
+        guard snapshot.service == .claude,
+              let limitIndex = metrics.firstIndex(where: { $0.key == "monthly-spend-limit" }),
+              let balanceIndex = metrics.firstIndex(where: { $0.key == "current-balance" }) else {
+            return metrics
+        }
+
+        let limit = metrics[limitIndex]
+        let balance = metrics[balanceIndex]
+        let combined = UsageMetric(
+            key: "monthly-limit-balance",
+            title: "Monthly limit / Balance",
+            valueText: "\(compactMoneyText(limit.valueText)) / \(compactMoneyText(balance.valueText))",
+            subtitle: nil,
+            progress: nil,
+            style: .stat
+        )
+
+        metrics[limitIndex] = combined
+        metrics.remove(at: balanceIndex)
+        return metrics
+    }
+
+    private func compactMoneyText(_ value: String) -> String {
+        var compact = value
+            .replacingOccurrences(of: "$", with: "")
+            .replacingOccurrences(of: "€", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if compact.hasSuffix(".00") || compact.hasSuffix(",00") {
+            compact.removeLast(3)
+        }
+
+        return compact.isEmpty ? value : compact
     }
 }
 
@@ -152,6 +189,7 @@ private struct StateBadgeView: View {
 
 private struct MetricCardView: View {
     let metric: UsageMetric
+    let showsProgressPercentage: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -207,6 +245,8 @@ private struct MetricCardView: View {
             return "Design"
         case "extra-usage-spend":
             return "Extra usage"
+        case "monthly-limit-balance":
+            return "Monthly limit / Balance"
         case "monthly-spend-limit":
             return "Monthly limit"
         case "current-balance":
@@ -221,13 +261,16 @@ private struct MetricCardView: View {
             return .blue
         }
 
+        if progress >= 0.75 {
+            return Color(nsColor: .systemGreen)
+        }
         if progress >= 0.5 {
-            return .green
+            return Color(nsColor: .systemMint)
         }
         if progress >= 0.25 {
-            return .orange
+            return Color(nsColor: .systemOrange)
         }
-        return .red
+        return Color(nsColor: .systemRed)
     }
 
     private var availableProgress: Double? {
@@ -249,7 +292,11 @@ private struct MetricCardView: View {
     }
 
     private func progressLabel(for progress: Double) -> String {
-        "\(Int((max(0, min(progress, 1)) * 100).rounded()))%"
+        guard showsProgressPercentage else {
+            return ""
+        }
+
+        return "\(Int((max(0, min(progress, 1)) * 100).rounded()))%"
     }
 }
 
@@ -269,12 +316,14 @@ private struct ProgressTrack: View {
                     .fill(tint)
                     .frame(width: max(8, proxy.size.width * clamped))
 
-                Text(label)
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                if !label.isEmpty {
+                    Text(label)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
             }
         }
         .frame(height: 12)

@@ -10,8 +10,9 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: compact ? 14 : 20) {
-            PopoverHeaderView()
+        ScrollView {
+            VStack(alignment: .leading, spacing: compact ? 14 : 20) {
+                PopoverHeaderView()
 
             if compact {
                 HStack {
@@ -63,6 +64,52 @@ struct SettingsView: View {
                 .controlSize(compact ? .small : .regular)
             }
             .padding(.bottom, compact ? 2 : 4)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Status menu")
+                    .font(.headline)
+
+                Toggle(isOn: statusMenuColorBinding) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Use colored status bars")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Turn off for a black-and-white menu bar icon.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
+                .controlSize(compact ? .small : .regular)
+
+                Toggle(isOn: statusMenuPercentagesBinding) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Show percentages in menu bar")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Draws compact Claude and ChatGPT capacity values inside the status bars.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
+                .controlSize(compact ? .small : .regular)
+
+                Toggle(isOn: dashboardProgressPercentagesBinding) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Show percentages in dashboard bars")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Hide or show the number inside each usage bar.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .toggleStyle(.switch)
+                .controlSize(compact ? .small : .regular)
+            }
+            .padding(compact ? 10 : 14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(nsColor: .textBackgroundColor))
+            )
 
             #if MAS_BUILD
             VStack(alignment: .leading, spacing: 2) {
@@ -232,10 +279,12 @@ struct SettingsView: View {
                 }
             }
 
-            Spacer()
+                Spacer(minLength: 0)
+            }
+            .padding(compact ? 10 : 22)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .padding(compact ? 10 : 22)
-        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: compact ? 620 : 560, alignment: .topLeading)
+        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: compact ? 620 : 620, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
@@ -257,6 +306,27 @@ struct SettingsView: View {
         Binding(
             get: { model.debugModeEnabled },
             set: { model.setDebugModeEnabled($0) }
+        )
+    }
+
+    private var statusMenuColorBinding: Binding<Bool> {
+        Binding(
+            get: { model.statusMenuUsesColor },
+            set: { model.setStatusMenuUsesColor($0) }
+        )
+    }
+
+    private var statusMenuPercentagesBinding: Binding<Bool> {
+        Binding(
+            get: { model.statusMenuShowsPercentages },
+            set: { model.setStatusMenuShowsPercentages($0) }
+        )
+    }
+
+    private var dashboardProgressPercentagesBinding: Binding<Bool> {
+        Binding(
+            get: { model.dashboardShowsProgressPercentages },
+            set: { model.setDashboardShowsProgressPercentages($0) }
         )
     }
 }

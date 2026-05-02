@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var popover = NSPopover()
     private var dashboardSubscription: AnyCancellable?
     private var popoverScreenSubscription: AnyCancellable?
+    private var statusMenuSettingsSubscription: AnyCancellable?
     private var dashboardHostingController: NSHostingController<AnyView>?
     private var outsideClickMonitor: Any?
 
@@ -111,6 +112,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             .sink { [weak self] _ in
                 self?.updatePopoverSize()
             }
+
+        statusMenuSettingsSubscription = Publishers.CombineLatest(
+            model.$statusMenuUsesColor,
+            model.$statusMenuShowsPercentages
+        )
+        .sink { [weak self] _ in
+            self?.updateStatusItem()
+        }
     }
 
     private func updateStatusItem() {
@@ -124,7 +133,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func makeCapacityStatusImage() -> NSImage? {
-        let size = NSSize(width: 20, height: 16)
+        let width: CGFloat = model.statusMenuShowsPercentages ? 34 : 20
+        let size = NSSize(width: width, height: 16)
         let image = NSImage(size: size)
         image.lockFocus()
 
@@ -132,12 +142,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         NSBezierPath(rect: NSRect(origin: .zero, size: size)).fill()
 
         drawBar(
-            in: NSRect(x: 1, y: 9, width: 18, height: 5),
+            in: NSRect(x: 1, y: 9, width: width - 2, height: 6),
             score: model.capacityScore(for: .claude),
             status: model.dashboardState.service(.claude).connectionStatus
         )
         drawBar(
-            in: NSRect(x: 1, y: 2, width: 18, height: 5),
+            in: NSRect(x: 1, y: 1, width: width - 2, height: 6),
             score: model.capacityScore(for: .chatGPT),
             status: model.dashboardState.service(.chatGPT).connectionStatus
         )
@@ -157,6 +167,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             statusAccentColor(for: status).setStroke()
             outline.lineWidth = 1
             outline.stroke()
+            drawBarLabel("--", in: rect, color: .secondaryLabelColor)
             return
         }
 
@@ -165,9 +176,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let fillPath = NSBezierPath(roundedRect: fillRect, xRadius: 2.5, yRadius: 2.5)
         capacityColor(for: score, status: status).setFill()
         fillPath.fill()
+
+        if model.statusMenuShowsPercentages {
+            let label = "\(Int((max(0, min(score, 1)) * 100).rounded()))%"
+            let textColor: NSColor = model.statusMenuUsesColor ? .labelColor : .white
+            drawBarLabel(label, in: rect, color: textColor)
+        }
+    }
+
+    private func drawBarLabel(_ label: String, in rect: NSRect, color: NSColor) {
+        guard model.statusMenuShowsPercentages else {
+            return
+        }
+
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .center
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: 6.5, weight: .bold),
+            .foregroundColor: color,
+            .paragraphStyle: paragraph
+        ]
+        let textRect = rect.insetBy(dx: 1, dy: -1.5)
+        (label as NSString).draw(in: textRect, withAttributes: attributes)
     }
 
     private func statusAccentColor(for status: ServiceConnectionStatus) -> NSColor {
+        guard model.statusMenuUsesColor else {
+            return .secondaryLabelColor
+        }
+
         switch status {
         case .healthy:
             return .systemGreen
@@ -183,19 +220,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func capacityColor(for score: Double, status: ServiceConnectionStatus) -> NSColor {
+        guard model.statusMenuUsesColor else {
+            return .labelColor
+        }
+
         switch status {
         case .error:
             return .systemRed
         case .authRequired:
             return .systemYellow
         case .refreshing:
-            if score >= 0.5 { return .systemGreen }
+            if score >= 0.75 { return .systemGreen }
+            if score >= 0.5 { return .systemMint }
             if score >= 0.25 { return .systemOrange }
             return .systemRed
         case .stale:
             return score > 0.5 ? .systemOrange : .systemRed
         case .healthy:
-            if score >= 0.5 { return .systemGreen }
+            if score >= 0.75 { return .systemGreen }
+            if score >= 0.5 { return .systemMint }
             if score >= 0.25 { return .systemOrange }
             return .systemRed
         }
