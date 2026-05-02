@@ -191,6 +191,7 @@ Prepared and verified repo artifacts:
 - Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
 - Apple credential setup: `docs/apple-credential-runbook.md`.
 - Local signing/notarization verifier: `scripts/check-apple-distribution.sh`.
+- Public release verifier: `scripts/verify-public-release.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
 - Marketing and App Store draft metadata: `docs/marketing-launch-kit.md`.

@@ -62,10 +62,14 @@ struct MarketingAssetTests {
             contentsOf: rootURL.appendingPathComponent(".github/workflows/release.yml"),
             encoding: .utf8
         )
+        let publicReleaseVerifierURL = rootURL.appendingPathComponent("scripts/verify-public-release.sh")
+        let publicReleaseVerifier = try String(contentsOf: publicReleaseVerifierURL, encoding: .utf8)
 
         let dmgScriptURL = rootURL.appendingPathComponent("scripts/package-dmg.sh")
         #expect(FileManager.default.fileExists(atPath: dmgScriptURL.path))
         #expect(FileManager.default.isExecutableFile(atPath: dmgScriptURL.path))
+        #expect(FileManager.default.fileExists(atPath: publicReleaseVerifierURL.path))
+        #expect(FileManager.default.isExecutableFile(atPath: publicReleaseVerifierURL.path))
         #expect(readme.contains("TokenMonitor-macOS.dmg"))
         #expect(readme.contains("Gatekeeper"))
         #expect(readme.contains("notarized"))
@@ -91,6 +95,10 @@ struct MarketingAssetTests {
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_NOTARY_APP_PASSWORD"))
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_NOTARIZE=1"))
         #expect(releaseWorkflow.contains("Developer ID signing is not configured; skipping notarization."))
+        #expect(publicReleaseVerifier.contains("TokenMonitor-macOS.dmg"))
+        #expect(publicReleaseVerifier.contains("TokenMonitor-macOS.zip"))
+        #expect(publicReleaseVerifier.contains("appcast.xml"))
+        #expect(publicReleaseVerifier.contains("updates/$UPDATE_ZIP_NAME"))
     }
 
     @Test func appleDistributionReadinessDocCoversReleasePaths() throws {
@@ -123,6 +131,7 @@ struct MarketingAssetTests {
         #expect(distributionDoc.contains("docs/apple-credential-runbook.md"))
         #expect(distributionDoc.contains("docs/mac-app-store-feasibility.md"))
         #expect(distributionDoc.contains("scripts/check-apple-distribution.sh"))
+        #expect(distributionDoc.contains("scripts/verify-public-release.sh"))
         #expect(distributionDoc.contains("Developer ID DMG"))
         #expect(distributionDoc.contains("swift test` passes with 30 tests"))
         #expect(distributionDoc.contains("Mac App Store Feasibility"))
@@ -222,6 +231,7 @@ struct MarketingAssetTests {
         #expect(launchKit.contains("Review notes draft"))
         #expect(launchKit.contains("Screenshot Inventory"))
         #expect(launchKit.contains("Launch Checklist"))
+        #expect(launchKit.contains("./scripts/verify-public-release.sh <tag> <version> <build>"))
         #expect(launchKit.contains("Approval Gates"))
         #expect(launchKit.contains("https://mediapublishing.github.io/token-monitor/"))
         #expect(launchKit.contains("https://github.com/MediaPublishing/token-monitor/issues"))
