@@ -189,14 +189,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         case .authRequired:
             return .systemYellow
         case .refreshing:
-            if score >= 0.65 { return .systemGreen }
-            if score >= 0.35 { return .systemOrange }
+            if score >= 0.5 { return .systemGreen }
+            if score >= 0.25 { return .systemOrange }
             return .systemRed
         case .stale:
             return score > 0.5 ? .systemOrange : .systemRed
         case .healthy:
-            if score >= 0.65 { return .systemGreen }
-            if score >= 0.35 { return .systemOrange }
+            if score >= 0.5 { return .systemGreen }
+            if score >= 0.25 { return .systemOrange }
             return .systemRed
         }
     }

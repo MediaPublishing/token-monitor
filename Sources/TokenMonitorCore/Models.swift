@@ -116,7 +116,7 @@ public struct ServiceSnapshot: Codable, Equatable, Sendable {
         case .chatGPT:
             relevantKeys = ["five-hour-limit", "weekly-limit", "spark-five-hour-limit", "spark-weekly-limit"]
         case .claude:
-            relevantKeys = ["current-session", "weekly-all-models", "weekly-sonnet"]
+            relevantKeys = ["current-session", "weekly-all-models", "weekly-sonnet", "claude-design"]
         }
 
         let scores = relevantKeys.compactMap { key -> Double? in

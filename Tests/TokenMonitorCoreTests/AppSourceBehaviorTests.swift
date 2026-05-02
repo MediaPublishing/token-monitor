@@ -48,10 +48,19 @@ struct AppSourceBehaviorTests {
             contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/DashboardPopoverView.swift"),
             encoding: .utf8
         )
+        let appDelegate = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/AppDelegate.swift"),
+            encoding: .utf8
+        )
 
         #expect(dashboardView.contains("if progress >= 0.5"))
         #expect(dashboardView.contains("if progress >= 0.25"))
         #expect(dashboardView.contains("return .red"))
+        #expect(dashboardView.contains("1 - clamped"))
+        #expect(dashboardView.contains("ProgressTrack(progress: progress, tint: tintColor, label:"))
+        #expect(dashboardView.contains("Text(label)"))
+        #expect(appDelegate.contains("if score >= 0.5 { return .systemGreen }"))
+        #expect(appDelegate.contains("if score >= 0.25 { return .systemOrange }"))
         #expect(!dashboardView.contains("localizedCaseInsensitiveContains(\"remaining\") {\n            return .green"))
     }
 

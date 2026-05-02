@@ -164,8 +164,8 @@ private struct MetricCardView: View {
                 .font(.footnote.weight(.semibold))
                 .foregroundStyle(.primary)
 
-            if metric.style == .progress, let progress = metric.progress {
-                ProgressTrack(progress: progress, tint: tintColor)
+            if metric.style == .progress, let progress = availableProgress {
+                ProgressTrack(progress: progress, tint: tintColor, label: progressLabel(for: progress))
             }
 
             if let subtitle = metric.subtitle {
@@ -217,43 +217,66 @@ private struct MetricCardView: View {
     }
 
     private var tintColor: Color {
-        if metric.valueText.localizedCaseInsensitiveContains("remaining") {
-            guard let progress = metric.progress else {
-                return .green
-            }
-            if progress >= 0.5 {
-                return .green
-            }
-            if progress >= 0.25 {
-                return .orange
-            }
-            return .red
+        guard let progress = availableProgress else {
+            return .blue
         }
-        if let progress = metric.progress, progress >= 0.9 {
-            return .red
+
+        if progress >= 0.5 {
+            return .green
         }
-        if let progress = metric.progress, progress >= 0.75 {
+        if progress >= 0.25 {
             return .orange
         }
-        return .blue
+        return .red
+    }
+
+    private var availableProgress: Double? {
+        guard let progress = metric.progress else {
+            return nil
+        }
+
+        let clamped = max(0, min(progress, 1))
+        if metric.valueText.localizedCaseInsensitiveContains("used")
+            || metric.valueText.localizedCaseInsensitiveContains("spent")
+            || metric.valueText.localizedCaseInsensitiveContains("genutzt")
+            || metric.valueText.localizedCaseInsensitiveContains("verwendet")
+            || metric.valueText.localizedCaseInsensitiveContains("verbraucht")
+            || metric.valueText.localizedCaseInsensitiveContains("ausgegeben") {
+            return 1 - clamped
+        }
+
+        return clamped
+    }
+
+    private func progressLabel(for progress: Double) -> String {
+        "\(Int((max(0, min(progress, 1)) * 100).rounded()))%"
     }
 }
 
 private struct ProgressTrack: View {
     let progress: Double
     let tint: Color
+    let label: String
 
     var body: some View {
         GeometryReader { proxy in
+            let clamped = max(0, min(progress, 1))
             ZStack(alignment: .leading) {
                 Capsule()
                     .fill(Color.black.opacity(0.08))
 
                 Capsule()
                     .fill(tint)
-                    .frame(width: max(8, proxy.size.width * max(0, min(progress, 1))))
+                    .frame(width: max(8, proxy.size.width * clamped))
+
+                Text(label)
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
         }
-        .frame(height: 8)
+        .frame(height: 12)
     }
 }
