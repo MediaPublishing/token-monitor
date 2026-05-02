@@ -32,6 +32,7 @@ Verified locally:
   - `dist/appcast.xml`
   - `dist/updates/TokenMonitor-<version>-<build>-macOS.zip`
 - `.github/workflows/release.yml` publishes release assets, deploys the Sparkle appcast to GitHub Pages, and can import Developer ID/notary credentials from GitHub Secrets when they are available.
+- The release workflow can also be run manually with an existing tag through `workflow_dispatch` to rebuild and republish release assets, the appcast, and GitHub Pages without creating a new version.
 
 ## Recommended Distribution Path
 
