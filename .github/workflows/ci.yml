@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: token-monitor-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    runs-on: macos-15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: swift test
+
+      - name: Build direct DMG app candidate
+        run: ./scripts/build-app.sh
+
+      - name: Build MAS app candidate
+        run: ./scripts/build-mas-app.sh
+
+      - name: Verify MAS app candidate
+        run: ./scripts/verify-mas-build.sh
+
+      - name: Check MAS readiness
+        run: ./scripts/check-mas-readiness.sh
