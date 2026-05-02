@@ -189,8 +189,8 @@ Triage workflow:
 
 Prepared and verified repo artifacts:
 
-- Current public GitHub/Sparkle release: `v1.0.15` / build `16`.
-- Public release verification: `./scripts/verify-public-release.sh v1.0.15 1.0.15 16` passes for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
+- Current public GitHub/Sparkle release: `v1.0.16` / build `17`.
+- Public release verification: `./scripts/verify-public-release.sh v1.0.16 1.0.16 17` passes for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
 - Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
 - Apple credential setup: `docs/apple-credential-runbook.md`.
 - Local signing/notarization verifier: `scripts/check-apple-distribution.sh`.
@@ -208,7 +208,8 @@ Prepared and verified repo artifacts:
 - Public privacy summary: `docs/privacy.md`.
 - Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
 - Regression coverage: `swift test` passes with 31 tests.
-- Latest verified CI: `https://github.com/MediaPublishing/token-monitor/actions/runs/25257619010` passed for commit `3f36fe2`.
+- Latest verified CI: `https://github.com/MediaPublishing/token-monitor/actions/runs/25257992013` passed for commit `533ec8d`.
+- Latest verified release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25258059307` passed for `v1.0.16`.
 
 Current blockers:
 
