@@ -63,6 +63,8 @@ GitHub Actions secrets for signed/notarized releases:
 - `TOKEN_MONITOR_NOTARY_TEAM_ID`: Apple Developer Team ID.
 - `TOKEN_MONITOR_NOTARY_APP_PASSWORD`: app-specific password for notarization.
 
+Credential setup details live in `docs/apple-credential-runbook.md`.
+
 Local release command once credentials exist:
 
 ```bash

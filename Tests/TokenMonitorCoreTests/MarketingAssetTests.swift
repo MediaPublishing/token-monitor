@@ -105,13 +105,18 @@ struct MarketingAssetTests {
         )
         let distributionDocURL = rootURL.appendingPathComponent("docs/apple-distribution-readiness.md")
         let distributionDoc = try String(contentsOf: distributionDocURL, encoding: .utf8)
+        let credentialRunbookURL = rootURL.appendingPathComponent("docs/apple-credential-runbook.md")
+        let credentialRunbook = try String(contentsOf: credentialRunbookURL, encoding: .utf8)
         let readinessScriptURL = rootURL.appendingPathComponent("scripts/check-apple-distribution.sh")
         let readinessScript = try String(contentsOf: readinessScriptURL, encoding: .utf8)
 
         #expect(FileManager.default.fileExists(atPath: distributionDocURL.path))
+        #expect(FileManager.default.fileExists(atPath: credentialRunbookURL.path))
         #expect(FileManager.default.fileExists(atPath: readinessScriptURL.path))
         #expect(FileManager.default.isExecutableFile(atPath: readinessScriptURL.path))
         #expect(readme.contains("docs/apple-distribution-readiness.md"))
+        #expect(readme.contains("docs/apple-credential-runbook.md"))
+        #expect(distributionDoc.contains("docs/apple-credential-runbook.md"))
         #expect(distributionDoc.contains("scripts/check-apple-distribution.sh"))
         #expect(distributionDoc.contains("Developer ID DMG"))
         #expect(distributionDoc.contains("Mac App Store Feasibility"))
@@ -126,6 +131,12 @@ struct MarketingAssetTests {
         #expect(readinessScript.contains("stapler"))
         #expect(readinessScript.contains("Developer ID Application"))
         #expect(readinessScript.contains("TOKEN_MONITOR_NOTARY_PROFILE"))
+        #expect(credentialRunbook.contains("Do not share Apple ID passwords"))
+        #expect(credentialRunbook.contains("base64 -i /path/to/DeveloperIDApplication.p12"))
+        #expect(credentialRunbook.contains("TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64"))
+        #expect(credentialRunbook.contains("TOKEN_MONITOR_NOTARY_APP_PASSWORD"))
+        #expect(credentialRunbook.contains("SPARKLE_PRIVATE_KEY"))
+        #expect(credentialRunbook.contains("xcrun notarytool store-credentials token-monitor-notary"))
     }
 
     @Test func publicIssueTemplatesProtectPrivateDebugData() throws {
