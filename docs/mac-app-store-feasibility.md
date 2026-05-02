@@ -8,6 +8,12 @@ Mac App Store distribution is not ready as-is.
 
 The direct Developer ID DMG remains the primary path. A Mac App Store build is feasible only as a separate build track after Sparkle is removed or disabled, App Sandbox is enabled, and App Review risks around embedded provider login pages are accepted.
 
+Run the advisory checker:
+
+```bash
+./scripts/check-mas-readiness.sh
+```
+
 ## Current Code Evidence
 
 Sparkle updater:
