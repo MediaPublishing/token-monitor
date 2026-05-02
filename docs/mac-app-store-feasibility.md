@@ -35,7 +35,7 @@ Launch at login:
 
 Entitlements:
 
-- No MAS-specific entitlements file is present yet.
+- A draft MAS entitlements file exists at `packaging/TokenMonitorMAS.entitlements`.
 - No App Sandbox build path exists yet.
 
 ## Required MAS Build Changes
@@ -99,7 +99,7 @@ Keep Developer ID DMG only if any are true:
 After Developer ID distribution is working, revisit MAS with a small proof-of-concept branch:
 
 1. Add `scripts/build-mas-app.sh`.
-2. Add `Sources/TokenMonitorApp/Resources/TokenMonitorMAS.entitlements`.
+2. Use `packaging/TokenMonitorMAS.entitlements`.
 3. Compile a MAS build without Sparkle.
 4. Run a sandbox smoke test for login, refresh, snapshots, and Login Items.
 5. Decide whether to continue toward App Store Connect submission.

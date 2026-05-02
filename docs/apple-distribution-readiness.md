@@ -195,6 +195,7 @@ Prepared and verified repo artifacts:
 - Public release verifier: `scripts/verify-public-release.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
+- Draft MAS entitlements: `packaging/TokenMonitorMAS.entitlements`.
 - Marketing and App Store draft metadata: `docs/marketing-launch-kit.md`.
 - Publication/legal checklist: `docs/publication-legal-checklist.md`.
 - Public privacy summary: `docs/privacy.md`.
