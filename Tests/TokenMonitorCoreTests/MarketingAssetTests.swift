@@ -100,9 +100,14 @@ struct MarketingAssetTests {
         )
         let distributionDocURL = rootURL.appendingPathComponent("docs/apple-distribution-readiness.md")
         let distributionDoc = try String(contentsOf: distributionDocURL, encoding: .utf8)
+        let readinessScriptURL = rootURL.appendingPathComponent("scripts/check-apple-distribution.sh")
+        let readinessScript = try String(contentsOf: readinessScriptURL, encoding: .utf8)
 
         #expect(FileManager.default.fileExists(atPath: distributionDocURL.path))
+        #expect(FileManager.default.fileExists(atPath: readinessScriptURL.path))
+        #expect(FileManager.default.isExecutableFile(atPath: readinessScriptURL.path))
         #expect(readme.contains("docs/apple-distribution-readiness.md"))
+        #expect(distributionDoc.contains("scripts/check-apple-distribution.sh"))
         #expect(distributionDoc.contains("Developer ID DMG"))
         #expect(distributionDoc.contains("Mac App Store Feasibility"))
         #expect(distributionDoc.contains("TOKEN_MONITOR_CODESIGN_IDENTITY"))
@@ -110,5 +115,9 @@ struct MarketingAssetTests {
         #expect(distributionDoc.contains("App Store Connect API"))
         #expect(distributionDoc.contains("Marketing Setup"))
         #expect(distributionDoc.contains("Ongoing Issue-Fixing Loop"))
+        #expect(readinessScript.contains("notarytool"))
+        #expect(readinessScript.contains("stapler"))
+        #expect(readinessScript.contains("Developer ID Application"))
+        #expect(readinessScript.contains("TOKEN_MONITOR_NOTARY_PROFILE"))
     }
 }

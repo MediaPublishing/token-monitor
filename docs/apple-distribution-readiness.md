@@ -65,6 +65,17 @@ TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 \
 ./scripts/package-release.sh
 ```
 
+Local readiness check:
+
+```bash
+./scripts/check-apple-distribution.sh
+
+TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary \
+./scripts/check-apple-distribution.sh
+```
+
+The readiness check is advisory. It reports missing certificates, missing notary credentials, ad hoc signatures, and unstapled DMGs as warnings so the repo remains usable before Apple Developer access exists.
+
 Acceptance checks:
 
 ```bash
