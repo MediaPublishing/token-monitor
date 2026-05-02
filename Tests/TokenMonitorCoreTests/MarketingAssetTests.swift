@@ -99,6 +99,10 @@ struct MarketingAssetTests {
         #expect(publicReleaseVerifier.contains("TokenMonitor-macOS.zip"))
         #expect(publicReleaseVerifier.contains("appcast.xml"))
         #expect(publicReleaseVerifier.contains("updates/$UPDATE_ZIP_NAME"))
+        #expect(publicReleaseVerifier.contains("TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1"))
+        #expect(publicReleaseVerifier.contains("spctl --assess --type open"))
+        #expect(publicReleaseVerifier.contains("xcrun stapler validate"))
+        #expect(publicReleaseVerifier.contains("dist/public-release-verification"))
     }
 
     @Test func appleDistributionReadinessDocCoversReleasePaths() throws {
@@ -232,6 +236,7 @@ struct MarketingAssetTests {
         #expect(launchKit.contains("Screenshot Inventory"))
         #expect(launchKit.contains("Launch Checklist"))
         #expect(launchKit.contains("./scripts/verify-public-release.sh <tag> <version> <build>"))
+        #expect(launchKit.contains("TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1"))
         #expect(launchKit.contains("Approval Gates"))
         #expect(launchKit.contains("https://mediapublishing.github.io/token-monitor/"))
         #expect(launchKit.contains("https://github.com/MediaPublishing/token-monitor/issues"))

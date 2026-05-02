@@ -176,7 +176,8 @@ Before public direct-DMG launch:
 7. Verify `xcrun stapler validate dist/TokenMonitor-macOS.dmg`.
 8. Publish GitHub Release assets.
 9. Run `./scripts/verify-public-release.sh <tag> <version> <build>` to verify GitHub Release assets, GitHub Pages, `appcast.xml`, and update ZIP are live.
-10. Smoke-test install, launch at login, Claude login, ChatGPT login, and Sparkle update check.
+10. Run `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>` after Developer ID signing is configured to verify the published DMG with Gatekeeper and stapler.
+11. Smoke-test install, launch at login, Claude login, ChatGPT login, and Sparkle update check.
 
 Before Mac App Store submission:
 
