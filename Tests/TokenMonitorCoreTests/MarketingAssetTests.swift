@@ -169,7 +169,7 @@ struct MarketingAssetTests {
         #expect(distributionDoc.contains("scripts/verify-public-release.sh"))
         #expect(distributionDoc.contains("scripts/check-mas-readiness.sh"))
         #expect(distributionDoc.contains("Developer ID DMG"))
-        #expect(distributionDoc.contains("swift test` passes with 31 tests"))
+        #expect(distributionDoc.contains("swift test` passes with 33 tests"))
         #expect(distributionDoc.contains("Mac App Store Feasibility"))
         #expect(distributionDoc.contains("TOKEN_MONITOR_CODESIGN_IDENTITY"))
         #expect(distributionDoc.contains("TOKEN_MONITOR_NOTARIZE"))

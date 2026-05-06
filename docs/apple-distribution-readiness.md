@@ -1,6 +1,6 @@
 # Apple Distribution Readiness
 
-Last reviewed: 2026-05-02
+Last reviewed: 2026-05-06
 
 ## Objective
 
@@ -18,9 +18,9 @@ Success means:
 
 Verified locally:
 
-- `swift test` passes with 31 tests.
+- `swift test` passes with 33 tests.
 - `scripts/build-app.sh` builds `dist/TokenMonitor.app`.
-- Current local build is ad hoc signed when no `TOKEN_MONITOR_CODESIGN_IDENTITY` is provided.
+- Current local direct-DMG build is `1.0.19` build `20` and is ad hoc signed when no `TOKEN_MONITOR_CODESIGN_IDENTITY` is provided.
 - `spctl --assess --type execute --verbose=4 dist/TokenMonitor.app` rejects the ad hoc build, as expected.
 - `scripts/package-dmg.sh` already supports Developer ID signing and notarization through:
   - `TOKEN_MONITOR_CODESIGN_IDENTITY`
@@ -34,6 +34,8 @@ Verified locally:
 - `scripts/preflight-release.sh` runs the local release readiness checks in operator order before publishing or republishing assets.
 - `.github/workflows/release.yml` publishes release assets, deploys the Sparkle appcast to GitHub Pages, and can import Developer ID/notary credentials from GitHub Secrets when they are available.
 - The release workflow can also be run manually with an existing tag through `workflow_dispatch` to rebuild and republish release assets, the appcast, and GitHub Pages without creating a new version.
+- `scripts/build-mas-app.sh` produces a separate `1.0.19` build `20` MAS candidate.
+- `scripts/verify-mas-build.sh` verifies the MAS candidate has no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and a valid local signature.
 
 ## Recommended Distribution Path
 
@@ -191,8 +193,8 @@ Triage workflow:
 
 Prepared and verified repo artifacts:
 
-- Current public GitHub/Sparkle release: `v1.0.18` / build `19`.
-- Public release verification: `./scripts/verify-public-release.sh v1.0.18 1.0.18 19` passes for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
+- Current public GitHub/Sparkle release: `v1.0.19` / build `20`.
+- Public release verification: `./scripts/verify-public-release.sh v1.0.19 1.0.19 20` passes for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
 - Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
 - Apple credential setup: `docs/apple-credential-runbook.md`.
 - Local signing/notarization verifier: `scripts/check-apple-distribution.sh`.
@@ -212,17 +214,17 @@ Prepared and verified repo artifacts:
 - Publication/legal checklist: `docs/publication-legal-checklist.md`.
 - Public privacy summary: `docs/privacy.md`.
 - Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
-- Regression coverage: `swift test` passes with 31 tests.
-- Verified CI for the current app-release commit: `https://github.com/MediaPublishing/token-monitor/actions/runs/25259520650` passed for commit `fbab578`.
+- Regression coverage: `swift test` passes with 33 tests.
+- Verified CI for the current app-release commit: `https://github.com/MediaPublishing/token-monitor/actions/runs/25463820890` passed for commit `4764cf8`.
 - Verified CI for the current workflow-hardening commit: `https://github.com/MediaPublishing/token-monitor/actions/runs/25259793656` passed for commit `8c2448e`.
-- Latest verified release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25259525409` passed for `v1.0.18`.
+- Latest verified release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25463825488` passed for `v1.0.19`.
 
 Current blockers:
 
 - No Developer ID Application certificate is installed locally.
 - No Apple Distribution certificate is installed locally.
 - No local `TOKEN_MONITOR_NOTARY_PROFILE` is configured.
-- The current `dist/TokenMonitor.app` is version `1.0.18` build `19` and ad hoc signed.
+- The current `dist/TokenMonitor.app` is version `1.0.19` build `20` and ad hoc signed.
 - Gatekeeper rejects the current local app and DMG.
 - The current DMG has no stapled notarization ticket.
 - GitHub has `SPARKLE_PRIVATE_KEY` configured, but Developer ID signing/notarization secrets are not configured with real Apple credentials.
