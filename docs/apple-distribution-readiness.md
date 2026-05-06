@@ -196,6 +196,7 @@ Prepared and verified repo artifacts:
 - Current public GitHub/Sparkle release: `v1.0.19` / build `20`.
 - Public release verification: `./scripts/verify-public-release.sh v1.0.19 1.0.19 20` passes for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
 - Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
+- Prompt-to-artifact completion audit: `docs/apple-distribution-completion-audit.md`.
 - Apple credential setup: `docs/apple-credential-runbook.md`.
 - Local signing/notarization verifier: `scripts/check-apple-distribution.sh`.
 - GitHub release secret verifier: `scripts/check-github-release-secrets.sh`.
