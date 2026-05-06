@@ -365,6 +365,20 @@ final class AppModel: ObservableObject {
         return snapshot.capacityScore
     }
 
+    func statusMenuTotalScore(for service: ServiceKind) -> Double? {
+        guard let snapshot = dashboardState.service(service).snapshot else {
+            return nil
+        }
+        return snapshot.statusMenuTotalScore
+    }
+
+    func statusMenuSessionScore(for service: ServiceKind) -> Double? {
+        guard let snapshot = dashboardState.service(service).snapshot else {
+            return nil
+        }
+        return snapshot.statusMenuSessionScore
+    }
+
     private func persistSnapshots() {
         let snapshots = Dictionary(
             uniqueKeysWithValues: dashboardState.services.compactMap { status in

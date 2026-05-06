@@ -133,7 +133,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func makeCapacityStatusImage(for appearance: NSAppearance?) -> NSImage? {
-        let width: CGFloat = model.statusMenuShowsPercentages ? 58 : 20
+        let width: CGFloat = model.statusMenuShowsPercentages ? 84 : 20
         let size = NSSize(width: width, height: 16)
         let image = NSImage(size: size)
         let foregroundColor = statusBarForegroundColor(for: appearance)
@@ -144,29 +144,46 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         NSBezierPath(rect: NSRect(origin: .zero, size: size)).fill()
 
         if model.statusMenuShowsPercentages {
+            let claudeTotalScore = model.statusMenuTotalScore(for: .claude)
+            let claudeSessionScore = model.statusMenuSessionScore(for: .claude)
+            let chatGPTTotalScore = model.statusMenuTotalScore(for: .chatGPT)
+            let chatGPTSessionScore = model.statusMenuSessionScore(for: .chatGPT)
+
             drawStatusValue(
-                for: model.capacityScore(for: .claude),
-                in: NSRect(x: 0, y: 8, width: 28, height: 8),
+                for: claudeTotalScore,
+                in: NSRect(x: 0, y: 8, width: 25, height: 8),
                 foregroundColor: foregroundColor
             )
             drawStatusValue(
-                for: model.capacityScore(for: .chatGPT),
-                in: NSRect(x: 0, y: 0, width: 28, height: 8),
+                for: chatGPTTotalScore,
+                in: NSRect(x: 0, y: 0, width: 25, height: 8),
                 foregroundColor: foregroundColor
             )
             drawBar(
-                in: NSRect(x: 32, y: 9, width: 24, height: 6),
-                score: model.capacityScore(for: .claude),
+                in: NSRect(x: 29, y: 9, width: 24, height: 6),
+                score: claudeTotalScore,
                 status: model.dashboardState.service(.claude).connectionStatus,
                 foregroundColor: foregroundColor,
                 trackColor: trackColor
             )
             drawBar(
-                in: NSRect(x: 32, y: 1, width: 24, height: 6),
-                score: model.capacityScore(for: .chatGPT),
+                in: NSRect(x: 29, y: 1, width: 24, height: 6),
+                score: chatGPTTotalScore,
                 status: model.dashboardState.service(.chatGPT).connectionStatus,
                 foregroundColor: foregroundColor,
                 trackColor: trackColor
+            )
+            drawStatusValue(
+                for: claudeSessionScore,
+                in: NSRect(x: 57, y: 8, width: 27, height: 8),
+                alignment: .left,
+                foregroundColor: foregroundColor
+            )
+            drawStatusValue(
+                for: chatGPTSessionScore,
+                in: NSRect(x: 57, y: 0, width: 27, height: 8),
+                alignment: .left,
+                foregroundColor: foregroundColor
             )
         } else {
             drawBar(
@@ -217,10 +234,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     }
 
-    private func drawStatusValue(for score: Double?, in rect: NSRect, foregroundColor: NSColor) {
+    private func drawStatusValue(
+        for score: Double?,
+        in rect: NSRect,
+        alignment: NSTextAlignment = .right,
+        foregroundColor: NSColor
+    ) {
         let label = score.map { "\(Int((max(0, min($0, 1)) * 100).rounded()))%" } ?? "--"
         let paragraph = NSMutableParagraphStyle()
-        paragraph.alignment = .right
+        paragraph.alignment = alignment
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.monospacedDigitSystemFont(ofSize: 7, weight: .semibold),
             .foregroundColor: foregroundColor,

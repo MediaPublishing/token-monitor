@@ -59,4 +59,39 @@ struct PresentationHeuristicsTests {
 
         #expect(snapshot.capacityScore == 0.96)
     }
+
+    @Test func statusMenuSeparatesTotalAndSessionScoresForClaude() {
+        let snapshot = ServiceSnapshot(
+            service: .claude,
+            capturedAt: .now,
+            pageTitle: "Claude",
+            url: "https://claude.ai/settings/usage",
+            metrics: [
+                UsageMetric(key: "current-session", title: "Current session", valueText: "94% remaining", subtitle: nil, progress: 0.94, style: .progress),
+                UsageMetric(key: "weekly-all-models", title: "All models", valueText: "100% remaining", subtitle: nil, progress: 1, style: .progress),
+                UsageMetric(key: "weekly-sonnet", title: "Sonnet only", valueText: "100% remaining", subtitle: nil, progress: 1, style: .progress)
+            ]
+        )
+
+        #expect(snapshot.statusMenuTotalScore == 1)
+        #expect(snapshot.statusMenuSessionScore == 0.94)
+    }
+
+    @Test func statusMenuSeparatesWeeklyAndFiveHourScoresForChatGPT() {
+        let snapshot = ServiceSnapshot(
+            service: .chatGPT,
+            capturedAt: .now,
+            pageTitle: "Codex",
+            url: "https://chatgpt.com/codex/cloud/settings/usage",
+            metrics: [
+                UsageMetric(key: "five-hour-limit", title: "5 hour usage limit", valueText: "55% remaining", subtitle: nil, progress: 0.55, style: .progress),
+                UsageMetric(key: "weekly-limit", title: "Weekly usage limit", valueText: "67% remaining", subtitle: nil, progress: 0.67, style: .progress),
+                UsageMetric(key: "spark-five-hour-limit", title: "GPT-5.3-Codex-Spark 5 hour usage limit", valueText: "100% remaining", subtitle: nil, progress: 1, style: .progress),
+                UsageMetric(key: "spark-weekly-limit", title: "GPT-5.3-Codex-Spark Weekly usage limit", valueText: "100% remaining", subtitle: nil, progress: 1, style: .progress)
+            ]
+        )
+
+        #expect(snapshot.statusMenuTotalScore == 0.67)
+        #expect(snapshot.statusMenuSessionScore == 0.55)
+    }
 }

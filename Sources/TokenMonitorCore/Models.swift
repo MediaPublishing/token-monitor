@@ -110,6 +110,24 @@ public struct ServiceSnapshot: Codable, Equatable, Sendable {
         metrics.first(where: { $0.key == key })
     }
 
+    public var statusMenuTotalScore: Double? {
+        switch service {
+        case .chatGPT:
+            return remainingScore(for: "weekly-limit") ?? remainingScore(for: "spark-weekly-limit") ?? capacityScore
+        case .claude:
+            return remainingScore(for: "weekly-all-models") ?? capacityScore
+        }
+    }
+
+    public var statusMenuSessionScore: Double? {
+        switch service {
+        case .chatGPT:
+            return remainingScore(for: "five-hour-limit") ?? remainingScore(for: "spark-five-hour-limit") ?? capacityScore
+        case .claude:
+            return remainingScore(for: "current-session") ?? capacityScore
+        }
+    }
+
     public var capacityScore: Double? {
         let relevantKeys: [String]
         switch service {
@@ -140,6 +158,22 @@ public struct ServiceSnapshot: Codable, Equatable, Sendable {
         }
 
         return scores.min()
+    }
+
+    private func remainingScore(for key: String) -> Double? {
+        guard let metric = metric(for: key), let progress = metric.progress else {
+            return nil
+        }
+
+        if metric.valueText.localizedCaseInsensitiveContains("remaining") {
+            return progress
+        }
+
+        if metric.valueText.localizedCaseInsensitiveContains("used") {
+            return max(0, 1 - progress)
+        }
+
+        return progress
     }
 }
 
