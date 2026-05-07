@@ -23,9 +23,9 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Notarize and staple DMG | `TOKEN_MONITOR_NOTARIZE=1 TOKEN_MONITOR_NOTARY_PROFILE=... ./scripts/package-release.sh` | Script path exists, but no local `TOKEN_MONITOR_NOTARY_PROFILE` is configured. | Blocked |
 | Verify Gatekeeper acceptance | `spctl --assess --type execute --verbose=4 dist/TokenMonitor.app` and `xcrun stapler validate dist/TokenMonitor-macOS.dmg` | Current ad hoc app and DMG are rejected and the DMG has no stapled ticket, as expected before credentials. | Blocked |
 | Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | `SPARKLE_PRIVATE_KEY` exists; Developer ID and notary secrets are missing. | Partially prepared |
-| Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | `v1.0.19` release workflow passed; public release verifier passed for `v1.0.19 1.0.19 20`. | Prepared |
+| Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | `v1.0.20` release workflow passed; public release verifier passed for `v1.0.20 1.0.20 21`. | Prepared |
 | Assess Mac App Store feasibility | `docs/mac-app-store-feasibility.md` | Documents MAS as a separate track with Sparkle removed and App Review risks called out. | Prepared |
-| Build a MAS candidate | `./scripts/build-mas-app.sh` | Local MAS candidate builds as `1.0.19` build `20`. | Prepared |
+| Build a MAS candidate | `./scripts/build-mas-app.sh` | Local MAS candidate builds as `1.0.20` build `21`. | Prepared |
 | Verify MAS candidate shape | `./scripts/verify-mas-build.sh` | Verifies no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and valid local signature. | Prepared |
 | Check MAS static readiness | `./scripts/check-mas-readiness.sh` | Reports zero static blockers and warns that WebKit sessions and Login Items need smoke testing. | Prepared with warnings |
 | Sign MAS build for App Store | `TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: ..." ./scripts/build-mas-app.sh` | No Apple Distribution certificate is installed locally. | Blocked |
@@ -35,8 +35,8 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Preserve legal/privacy gates | `docs/publication-legal-checklist.md`, `docs/privacy.md` | License, privacy policy, privacy labels, and public claims remain human approval gates. | Prepared with human gates |
 | Route support safely | `SUPPORT.md`, `SECURITY.md` | Public support and private vulnerability routes exist and warn against posting secrets/debug dumps. | Prepared |
 | Keep issue fixing safe | `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`, `docs/apple-distribution-readiness.md` | Parser issue template warns that GitHub Issues are public and blocks raw debug dump sharing. | Prepared |
-| Maintain regression coverage | `swift test` | Local and CI tests pass with 33 tests. | Prepared |
-| Verify latest CI | GitHub Actions CI | Run `25464057692` passed tests, direct build, MAS build, MAS verification, and MAS readiness. | Prepared |
+| Maintain regression coverage | `swift test` | Local and CI tests pass with 34 tests. | Prepared |
+| Verify latest CI | GitHub Actions CI | Run `25496427624` passed tests, direct build, MAS build, MAS verification, and MAS readiness. | Prepared |
 
 ## Current Verified Commands
 
@@ -49,7 +49,7 @@ swift test
 ./scripts/build-mas-app.sh
 ./scripts/verify-mas-build.sh
 ./scripts/check-mas-readiness.sh
-./scripts/verify-public-release.sh v1.0.19 1.0.19 20
+./scripts/verify-public-release.sh v1.0.20 1.0.20 21
 ```
 
 ## Missing Inputs
@@ -118,4 +118,3 @@ Do not mark the Apple distribution objective complete until all of these are tru
 4. GitHub release assets and the Sparkle appcast are live and verified.
 5. If Mac App Store submission is pursued, the MAS binary is Apple Distribution signed, sandbox smoke-tested, and explicitly approved by the Account Holder.
 6. Legal/privacy/license and public marketing claims have received required human approval.
-
