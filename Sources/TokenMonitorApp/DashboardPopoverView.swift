@@ -202,7 +202,7 @@ private struct MetricCardView: View {
                 ProgressTrack(progress: progress, tint: tintColor)
             }
 
-            if let subtitle = metric.subtitle {
+            if let subtitle = metric.displaySubtitle {
                 Text(subtitle)
                     .font(.caption2)
                     .foregroundStyle(.secondary)

@@ -94,4 +94,35 @@ struct PresentationHeuristicsTests {
         #expect(snapshot.statusMenuTotalScore == 0.67)
         #expect(snapshot.statusMenuSessionScore == 0.55)
     }
+
+    @Test func displaySubtitleUsesCompactTwentyFourHourResetTimes() {
+        let shortReset = UsageMetric(
+            key: "five-hour-limit",
+            title: "5 hour usage limit",
+            valueText: "100% remaining",
+            subtitle: "Resets 5:55 PM",
+            progress: 1,
+            style: .progress
+        )
+        let longReset = UsageMetric(
+            key: "weekly-limit",
+            title: "Weekly usage limit",
+            valueText: "52% remaining",
+            subtitle: "Resets May 11, 2026 6:30 PM",
+            progress: 0.52,
+            style: .progress
+        )
+        let noonReset = UsageMetric(
+            key: "weekly-all-models",
+            title: "All models",
+            valueText: "95% remaining",
+            subtitle: "Resets Fri 12:00 PM",
+            progress: 0.95,
+            style: .progress
+        )
+
+        #expect(shortReset.displaySubtitle == "Reset 17:55")
+        #expect(longReset.displaySubtitle == "Reset May 11 18:30")
+        #expect(noonReset.displaySubtitle == "Reset Fri 12:00")
+    }
 }

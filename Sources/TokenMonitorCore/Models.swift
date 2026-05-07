@@ -89,6 +89,64 @@ public struct UsageMetric: Codable, Equatable, Identifiable, Sendable {
     }
 
     public var id: String { key }
+
+    public var displaySubtitle: String? {
+        guard let subtitle else {
+            return nil
+        }
+        return compactResetText(subtitle)
+    }
+
+    private func compactResetText(_ text: String) -> String {
+        let withoutLongYear = text.replacingOccurrences(
+            of: #",\s*\d{4}"#,
+            with: "",
+            options: .regularExpression
+        )
+        let shortenedPrefix = withoutLongYear.replacingOccurrences(
+            of: #"^Resets\b"#,
+            with: "Reset",
+            options: [.regularExpression, .caseInsensitive]
+        )
+
+        return Self.convertingMeridiemTimesToTwentyFourHour(shortenedPrefix)
+    }
+
+    private static func convertingMeridiemTimesToTwentyFourHour(_ text: String) -> String {
+        let pattern = #"\b(\d{1,2}):(\d{2})\s*([AP]M)\b"#
+        guard let expression = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+            return text
+        }
+
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        let matches = expression.matches(in: text, options: [], range: range).reversed()
+        var result = text
+
+        for match in matches {
+            guard
+                let fullRange = Range(match.range(at: 0), in: result),
+                let hourRange = Range(match.range(at: 1), in: result),
+                let minuteRange = Range(match.range(at: 2), in: result),
+                let meridiemRange = Range(match.range(at: 3), in: result),
+                let hour = Int(result[hourRange])
+            else {
+                continue
+            }
+
+            let minute = result[minuteRange]
+            let meridiem = result[meridiemRange].uppercased()
+            let convertedHour: Int
+            if meridiem == "AM" {
+                convertedHour = hour == 12 ? 0 : hour
+            } else {
+                convertedHour = hour == 12 ? 12 : hour + 12
+            }
+
+            result.replaceSubrange(fullRange, with: String(format: "%02d:%@", convertedHour, String(minute)))
+        }
+
+        return result
+    }
 }
 
 public struct ServiceSnapshot: Codable, Equatable, Sendable {
