@@ -98,7 +98,7 @@ Recent previously verified commands:
 - `./scripts/audit-apple-distribution.sh --require-complete` is available as the final non-uploading completion audit, includes App Store metadata validation, and is expected to fail until real credentials and approvals exist.
 - `./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting` passes after private vulnerability reporting was enabled on GitHub.
 - `./scripts/check-public-distribution-urls.sh` verifies public Support, Marketing, Privacy, Release, DMG, and security-reporting URLs.
-- GitHub CI run `25791039031` passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness for commit `f3995d7`.
+- Current CI evidence comes from `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1`; do not treat a stale run ID as proof for a newer commit.
 - `./scripts/build-mas-app.sh` passed for the MAS candidate.
 - `./scripts/verify-mas-build.sh` passed for the MAS candidate.
 - `./scripts/check-mas-readiness.sh` reported zero static blockers, with manual smoke-test warnings.

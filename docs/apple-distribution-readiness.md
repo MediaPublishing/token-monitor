@@ -249,7 +249,7 @@ Prepared and verified repo artifacts:
 - Public install/update issue form with Apple credential and debug dump warnings: `.github/ISSUE_TEMPLATE/install-update-bug.yml`.
 - Regression coverage: `swift test` passes with 35 tests.
 - Earlier release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25496438297` passed for `v1.0.20`.
-- Current CI evidence: run `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` and confirm the latest `main` run passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness. Latest verified run: `25791039031` for commit `f3995d7`.
+- Current CI evidence: run `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` and confirm the latest `main` run passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness.
 
 Current blockers:
 
