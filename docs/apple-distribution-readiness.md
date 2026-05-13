@@ -222,6 +222,7 @@ Prepared and verified repo artifacts:
 - MAS candidate build path: `scripts/build-mas-app.sh`.
 - MAS build verifier: `scripts/verify-mas-build.sh`.
 - MAS submission preflight: `scripts/preflight-mas-submission.sh`.
+- MAS sandbox smoke test checklist: `docs/mas-sandbox-smoke-test.md`.
 - MAS readiness checker: `scripts/check-mas-readiness.sh`.
 - Draft MAS entitlements: `packaging/TokenMonitorMAS.entitlements`.
 - Marketing and App Store draft metadata: `docs/marketing-launch-kit.md`.

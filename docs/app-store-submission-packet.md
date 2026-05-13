@@ -18,7 +18,7 @@ Do not submit until all are true:
 4. `scripts/build-mas-app.sh` builds the submitted binary.
 5. `scripts/verify-mas-build.sh --require-apple-distribution` passes for the submitted binary.
 6. `scripts/check-mas-readiness.sh` reports zero blockers.
-7. A sandbox smoke test passes for login, refresh, local snapshots, diagnostics, and Launch at Login.
+7. The sandbox smoke test in `docs/mas-sandbox-smoke-test.md` passes for login, refresh, local snapshots, diagnostics, and Launch at Login.
 8. Screenshots are captured from the submitted binary and contain no private account data.
 9. Privacy labels and the privacy policy receive final human/legal approval.
 10. Reviewer notes and test accounts are approved by the Account Holder.
@@ -164,7 +164,7 @@ Do not include:
 
 ## Sandbox Smoke Test
 
-Before submission, run the MAS binary and verify:
+Before submission, run the MAS binary through `docs/mas-sandbox-smoke-test.md` and verify:
 
 - WebKit login sessions persist across app relaunch.
 - Manual refresh works for connected providers.
