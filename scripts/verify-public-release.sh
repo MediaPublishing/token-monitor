@@ -83,7 +83,7 @@ If dist/TokenMonitor.app exists, version and build default to its Info.plist.
 Optional signed-release verification:
   TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>
 
-This downloads and verifies both the public DMG and the Sparkle update ZIP.
+This downloads and verifies the public DMG, GitHub ZIP, and Sparkle update ZIP.
 EOF
   exit 1
 fi
