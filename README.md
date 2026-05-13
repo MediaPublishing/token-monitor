@@ -101,6 +101,10 @@ macOS stores this exception for Token Monitor, so future launches should open no
 
 Token Monitor tries to register itself as a login item when **Launch at login** is enabled in Settings. macOS requires apps that use Apple's ServiceManagement login-item API to be code signed, so ad-hoc preview builds may not appear under **System Settings > General > Login Items**. Move `TokenMonitor.app` to **Applications**, open it once, then use **Settings > Launch at login** inside Token Monitor. If macOS still requires approval, open **Login Items** from Token Monitor Settings and allow Token Monitor there.
 
+#### Updates
+
+Token Monitor checks for updates only when you click **Check for Updates...** in Settings. Automatic update checks are off by default from version `1.0.22`. If you enable **Automatically check for updates**, macOS may show an update prompt later without you clicking the manual update button.
+
 ### Build From Source
 
 ```bash
@@ -197,6 +201,10 @@ macOS speichert diese Ausnahme für Token Monitor, danach sollte die App normal 
 #### Beim Login starten
 
 Token Monitor versucht, sich als Login Item zu registrieren, wenn **Launch at login** in den Settings aktiv ist. macOS verlangt für Apps mit Apples ServiceManagement-Login-Item-API eine Code-Signatur, deshalb erscheinen ad-hoc signierte Preview-Builds möglicherweise nicht unter **Systemeinstellungen > Allgemein > Anmeldeobjekte**. Verschiebe `TokenMonitor.app` nach **Applications**, öffne die App einmal und nutze danach **Settings > Launch at login** in Token Monitor. Wenn macOS weiterhin eine Freigabe verlangt, öffne **Anmeldeobjekte** aus den Token-Monitor-Settings und erlaube Token Monitor dort.
+
+#### Updates
+
+Token Monitor sucht nur dann nach Updates, wenn du in den Settings **Check for Updates...** klickst. Automatische Update-Prüfungen sind ab Version `1.0.22` standardmäßig aus. Wenn du **Automatically check for updates** aktivierst, kann macOS später ein Update-Fenster anzeigen, ohne dass du den manuellen Update-Button geklickt hast.
 
 ### Aus dem Source Code bauen
 

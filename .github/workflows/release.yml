@@ -47,10 +47,11 @@ jobs:
         with:
           ref: ${{ env.RELEASE_TAG }}
 
-      - name: Restore current release tooling
+      - name: Restore current release tooling and site
         run: |
           git fetch origin main:refs/remotes/origin/main
           git checkout origin/main -- \
+            landing/index.html \
             scripts/check-github-release-channel.sh \
             scripts/package-release.sh
 
