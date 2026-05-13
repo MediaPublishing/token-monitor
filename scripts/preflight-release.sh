@@ -60,7 +60,7 @@ run_step "Verify MAS app candidate" ./scripts/verify-mas-build.sh
 run_step "Check MAS readiness" ./scripts/check-mas-readiness.sh
 
 if [[ "$REQUIRE_SIGNING_SECRETS" == "1" ]]; then
-  run_step "Check GitHub release secrets" env TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 ./scripts/check-github-release-secrets.sh
+  run_step "Check GitHub release secrets" ./scripts/check-github-release-secrets.sh --require-signing-secrets
 else
   run_step "Check GitHub release secrets" ./scripts/check-github-release-secrets.sh
 fi

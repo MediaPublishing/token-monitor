@@ -4,6 +4,36 @@ set -euo pipefail
 REPO="${TOKEN_MONITOR_GITHUB_REPO:-${GITHUB_REPOSITORY:-MediaPublishing/token-monitor}}"
 REQUIRE_SIGNING_SECRETS="${TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS:-0}"
 
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/check-github-release-secrets.sh [--require-signing-secrets]
+
+Checks GitHub Actions secrets needed for Token Monitor releases.
+
+Options:
+  --require-signing-secrets  Exit non-zero if Developer ID signing/notary secrets are missing.
+  -h, --help                 Show this help.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --require-signing-secrets)
+      REQUIRE_SIGNING_SECRETS=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown option: %s\n\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
+
 required_preview_secrets=(
   SPARKLE_PRIVATE_KEY
 )
@@ -94,7 +124,7 @@ if [[ "$missing_signing" -gt 0 ]]; then
   fi
 
   warn "Developer ID signing/notarization is not ready yet"
-  printf '\nSet TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 to fail when Developer ID secrets are missing.\n'
+  printf '\nRun ./scripts/check-github-release-secrets.sh --require-signing-secrets to fail when Developer ID secrets are missing.\n'
 else
   pass "Developer ID signing/notarization secrets are present"
 fi

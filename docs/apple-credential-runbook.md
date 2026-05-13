@@ -79,7 +79,7 @@ Verify the repository secret names without exposing any secret values:
 After Developer ID access exists, make the check fail if signing or notarization secrets are missing:
 
 ```bash
-TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 ./scripts/check-github-release-secrets.sh
+./scripts/check-github-release-secrets.sh --require-signing-secrets
 ```
 
 ## After Credentials Are Ready
@@ -87,7 +87,7 @@ TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 ./scripts/check-github-release-secrets.s
 Use this operator sequence after the Apple Developer certificate, notary credentials, and GitHub secrets exist:
 
 ```bash
-TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 ./scripts/check-github-release-secrets.sh
+./scripts/check-github-release-secrets.sh --require-signing-secrets
 
 xcrun notarytool store-credentials token-monitor-notary
 

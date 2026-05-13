@@ -92,7 +92,7 @@ Required before Mac App Store submission can be completed:
 After Apple credentials are available:
 
 ```bash
-TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 ./scripts/check-github-release-secrets.sh
+./scripts/check-github-release-secrets.sh --require-signing-secrets
 
 xcrun notarytool store-credentials token-monitor-notary
 
