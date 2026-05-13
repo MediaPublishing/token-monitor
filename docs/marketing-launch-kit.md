@@ -180,7 +180,8 @@ Before public direct-DMG launch:
 6. Publish GitHub Release assets.
 7. Run `./scripts/verify-public-release.sh <tag> <version> <build>` to verify GitHub Release assets, GitHub Pages, `appcast.xml`, and update ZIP are live.
 8. Run `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>` after Developer ID signing is configured to verify the published DMG, GitHub release ZIP, and Sparkle update ZIP.
-9. Smoke-test install, launch at login, Claude login, ChatGPT login, and Sparkle update check.
+9. Run `./scripts/check-release-recovery-readiness.sh --require-ready`.
+10. Smoke-test install, launch at login, Claude login, ChatGPT login, and Sparkle update check.
 
 Before Mac App Store submission:
 

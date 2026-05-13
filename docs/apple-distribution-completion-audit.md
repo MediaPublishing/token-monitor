@@ -29,6 +29,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | CI covers release script smoke checks; the release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
 | Smoke-check release scripts in CI | `.github/workflows/ci.yml` | CI now runs shell syntax checks, release/distribution script `--help` checks, and the expected `package-mas-pkg.sh` no-identity failure path. | Prepared |
 | Verify public and Sparkle ZIP paths | `./scripts/package-release.sh --require-distribution-ready`, `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>` | Strict local release verifies both the GitHub release ZIP and the versioned Sparkle update ZIP; public signed-release verification downloads and checks both published ZIPs. | Prepared |
+| Prepare release recovery path | `docs/release-recovery-runbook.md`, `./scripts/check-release-recovery-readiness.sh --require-ready` | Documents first response, hotfix release, appcast rollback, Mac App Store recovery, credential exposure handling, support triage, and prohibited recovery actions. Checker verifies that the workflow, verifier, and runbook cover the recovery path. | Prepared |
 | Keep the repository publicly reachable | GitHub repository settings | Verified 2026-05-12: `MediaPublishing/token-monitor` is public and uses `main` as the default branch. | Prepared |
 | Assess Mac App Store feasibility | `docs/mac-app-store-feasibility.md` | Documents MAS as a separate track with Sparkle removed and App Review risks called out. | Prepared |
 | Build a MAS candidate | `./scripts/build-mas-app.sh` | Local MAS candidate builds as `1.0.20` build `21`. | Prepared |
@@ -65,6 +66,8 @@ Last verified on 2026-05-13:
 ./scripts/check-app-store-metadata.sh
 ./scripts/check-app-store-identity.sh
 ./scripts/check-app-store-identity.sh --require-ready
+./scripts/check-release-recovery-readiness.sh
+./scripts/check-release-recovery-readiness.sh --require-ready
 ./scripts/audit-apple-distribution.sh --help
 ./scripts/package-mas-pkg.sh --help
 ./scripts/check-app-store-upload-readiness.sh --help

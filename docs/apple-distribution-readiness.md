@@ -237,6 +237,8 @@ Prepared and verified repo artifacts:
 - MAS human/App Store Connect gate checker: `scripts/check-app-store-submission-gates.sh`.
 - MAS sandbox smoke test checklist: `docs/mas-sandbox-smoke-test.md`.
 - MAS readiness checker: `scripts/check-mas-readiness.sh`.
+- Release recovery runbook: `docs/release-recovery-runbook.md`.
+- Release recovery checker: `scripts/check-release-recovery-readiness.sh`.
 - Draft MAS entitlements: `packaging/TokenMonitorMAS.entitlements`.
 - Marketing and App Store draft metadata: `docs/marketing-launch-kit.md`.
 - Publication/legal checklist: `docs/publication-legal-checklist.md`.
