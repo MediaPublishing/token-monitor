@@ -44,7 +44,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Prepare marketing setup | `docs/marketing-launch-kit.md`, `landing/index.html`, `README.md` | Direct distribution copy, App Store draft metadata, screenshot inventory, launch checklist, and approval gates exist. | Prepared |
 | Preserve legal/privacy gates | `docs/publication-legal-checklist.md`, `docs/privacy.md` | License, privacy policy, privacy labels, and public claims remain human approval gates. | Prepared with human gates |
 | Route support safely | `SUPPORT.md`, `SECURITY.md` | Public support and private vulnerability routes exist and warn against posting secrets/debug dumps. | Prepared |
-| Keep issue fixing safe | `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`, `docs/apple-distribution-readiness.md` | Parser issue template warns that GitHub Issues are public and blocks raw debug dump sharing. | Prepared |
+| Keep issue fixing safe | `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`, `.github/ISSUE_TEMPLATE/install-update-bug.yml`, `docs/apple-distribution-readiness.md` | Parser and install/update issue templates warn that GitHub Issues are public and block raw debug dumps, private account data, Apple credentials, certificates, private keys, and GitHub Secrets. | Prepared |
 | Maintain regression coverage | `swift test` | Local and CI tests pass with 34 tests. | Prepared |
 | Verify current CI | `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` | Current-state CI must pass release script smoke checks, tests, direct build, MAS build, MAS verification, and MAS readiness. | Prepared when current run is green |
 

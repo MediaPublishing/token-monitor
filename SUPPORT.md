@@ -18,6 +18,12 @@ For installation and Gatekeeper questions:
 4. Describe where the install flow stopped.
 5. Redact screenshots before posting.
 
+Use the install/update issue form:
+
+```text
+https://github.com/MediaPublishing/token-monitor/issues/new?template=install-update-bug.yml
+```
+
 Preview builds can show Apple's warning until a Developer ID signed and notarized build is published.
 
 ## Claude, ChatGPT, Or Codex Parser Bugs
