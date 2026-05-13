@@ -150,6 +150,10 @@ Use test accounts created specifically for review. Do not use personal accounts.
 
 Capture screenshots from the exact submitted MAS binary.
 
+Detailed capture requirements live in `docs/app-store-screenshot-checklist.md`.
+
+For Mac apps, App Store Connect currently accepts 1 to 10 screenshots in `.png`, `.jpg`, or `.jpeg` format, 16:10 aspect ratio, at one of Apple's Mac screenshot sizes such as `1280 x 800`, `1440 x 900`, `2560 x 1600`, or `2880 x 1800`.
+
 Required screenshots:
 
 - Main dashboard with sanitized Claude and ChatGPT data.

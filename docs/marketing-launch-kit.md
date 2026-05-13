@@ -162,6 +162,7 @@ Current repo assets:
 Before App Store submission:
 
 - Capture App Store-sized screenshots from a signed or MAS-specific build.
+- Use `docs/app-store-screenshot-checklist.md` for dimensions, privacy checks, and approval gates.
 - Avoid private account names, chat titles, balances, or unreleased UI.
 - Confirm the screenshots match the currently submitted binary.
 
