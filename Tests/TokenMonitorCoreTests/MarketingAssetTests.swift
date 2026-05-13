@@ -125,6 +125,7 @@ struct MarketingAssetTests {
         #expect(releaseWorkflow.contains("./scripts/check-public-repo-hygiene.sh"))
         #expect(ciWorkflow.contains("Check release scripts"))
         #expect(ciWorkflow.contains("bash -n scripts/*.sh"))
+        #expect(ciWorkflow.contains("./scripts/check-apple-access-handoff.sh --help"))
         #expect(ciWorkflow.contains("./scripts/check-app-store-metadata.sh --help"))
         #expect(ciWorkflow.contains("./scripts/check-app-store-screenshots.sh --help"))
         #expect(ciWorkflow.contains("./scripts/check-app-store-identity.sh --help"))
@@ -184,6 +185,7 @@ struct MarketingAssetTests {
             "docs/app-store-screenshot-checklist.md",
             "docs/mas-sandbox-smoke-test.md",
             "docs/mas-sandbox-smoke-test-receipt.md",
+            "scripts/check-apple-access-handoff.sh",
             "scripts/check-apple-distribution.sh",
             "scripts/check-github-release-secrets.sh",
             "scripts/check-github-security-reporting.sh",
@@ -239,6 +241,7 @@ struct MarketingAssetTests {
                 "App Store Connect API",
                 "SPARKLE_PRIVATE_KEY",
                 "Public distribution URL checker",
+                "Apple access handoff checker",
                 "Marketing Setup",
                 "Ongoing Issue-Fixing Loop",
                 "Completion Audit",
@@ -254,6 +257,7 @@ struct MarketingAssetTests {
                 "./scripts/check-public-repo-hygiene.sh",
                 "./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting",
                 "./scripts/check-public-distribution-urls.sh",
+                "./scripts/check-apple-access-handoff.sh",
                 "Not complete.",
                 "Do not mark the Apple distribution objective complete",
                 "Apple Distribution certificate",
@@ -263,6 +267,7 @@ struct MarketingAssetTests {
                 "./scripts/check-publication-legal-gates.sh --require-legal-gates"
             ]),
             ("docs/apple-credential-runbook.md", [
+                "./scripts/check-apple-access-handoff.sh --require-direct-dmg-access",
                 "TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64",
                 "TOKEN_MONITOR_NOTARY_APP_PASSWORD",
                 "SPARKLE_PRIVATE_KEY",
@@ -310,6 +315,7 @@ struct MarketingAssetTests {
             ]),
             ("scripts/audit-apple-distribution.sh", [
                 "--require-complete",
+                "./scripts/check-apple-access-handoff.sh",
                 "./scripts/check-release-version-consistency.sh",
                 "./scripts/check-public-repo-hygiene.sh",
                 "./scripts/check-github-security-reporting.sh",

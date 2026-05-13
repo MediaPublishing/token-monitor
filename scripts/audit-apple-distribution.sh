@@ -93,6 +93,7 @@ run_required_step "Check shell script syntax" bash -n scripts/*.sh
 run_required_step "Check release version consistency" ./scripts/check-release-version-consistency.sh
 run_required_step "Check public repository hygiene" ./scripts/check-public-repo-hygiene.sh
 run_required_step "Check App Store metadata limits" ./scripts/check-app-store-metadata.sh
+run_step "Check Apple access handoff" ./scripts/check-apple-access-handoff.sh
 
 if [[ "$RUN_TESTS" == "1" ]]; then
   run_required_step "Run Swift test suite" swift test
@@ -114,6 +115,7 @@ else
 fi
 
 if [[ "$REQUIRE_COMPLETE" == "1" ]]; then
+  run_step "Check Apple access handoff strictly" ./scripts/check-apple-access-handoff.sh --require-direct-dmg-access
   run_step "Check GitHub release secrets strictly" ./scripts/check-github-release-secrets.sh --require-signing-secrets
   run_step "Check local Apple distribution strictly" ./scripts/check-apple-distribution.sh --require-ready
   run_step "Check App Store screenshots strictly" ./scripts/check-app-store-screenshots.sh --require-ready

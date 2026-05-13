@@ -24,6 +24,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Verify local Apple signing identities | `./scripts/check-apple-distribution.sh` | Reports Developer ID Application, Apple Distribution, and Mac App Store installer distribution identities separately. Current machine has none installed. | Blocked |
 | Verify Gatekeeper acceptance | `./scripts/check-apple-distribution.sh --require-ready` | Current ad hoc app and DMG are rejected and the DMG has no stapled ticket, as expected before credentials. Strict mode fails until credentials exist. | Blocked |
 | Document Apple access handoff | `docs/apple-access-handoff.md` | Documents minimum practical roles, invitation checklist, safe-to-share values, blocked secrets, and revocation steps. | Prepared |
+| Check Apple access handoff | `./scripts/check-apple-access-handoff.sh --require-direct-dmg-access` | Verifies non-secret Apple Team ID shape and explicit acknowledgement of Developer Program, access model, direct DMG path, Developer ID certificate, notary credentials, and GitHub release-secret setup before real Apple signing work starts. | Prepared with human gates |
 | Run consolidated completion audit | `./scripts/audit-apple-distribution.sh --require-complete` | Script path exists and runs the repo, CI, App Store metadata, screenshot, App Store Connect identity, secret, Developer ID, MAS upload, App Store human gate, and publication/legal gate checks in one safe non-uploading audit. Strict mode fails until Apple credentials and approvals exist. | Prepared |
 | Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-13: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. GitHub secret values cannot be read locally, so the Release workflow validates the Developer ID identity class at runtime. | Partially prepared |
 | Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | CI covers release script smoke checks; the release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
@@ -77,6 +78,7 @@ Last verified on 2026-05-13:
 ./scripts/check-public-repo-hygiene.sh
 ./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting
 ./scripts/check-public-distribution-urls.sh
+./scripts/check-apple-access-handoff.sh
 ./scripts/audit-apple-distribution.sh --help
 ./scripts/package-mas-pkg.sh --help
 ./scripts/check-app-store-upload-readiness.sh --help
@@ -98,6 +100,7 @@ Recent previously verified commands:
 - `./scripts/audit-apple-distribution.sh --require-complete` is available as the final non-uploading completion audit, includes App Store metadata validation, and is expected to fail until real credentials and approvals exist.
 - `./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting` passes after private vulnerability reporting was enabled on GitHub.
 - `./scripts/check-public-distribution-urls.sh` verifies public Support, Marketing, Privacy, Release, DMG, and security-reporting URLs.
+- `./scripts/check-apple-access-handoff.sh` verifies non-secret Apple access acknowledgements without reading or printing secret values.
 - Current CI evidence comes from `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1`; do not treat a stale run ID as proof for a newer commit.
 - `./scripts/build-mas-app.sh` passed for the MAS candidate.
 - `./scripts/verify-mas-build.sh` passed for the MAS candidate.
@@ -115,6 +118,7 @@ Recent previously verified commands:
 Required before Developer ID distribution can be completed:
 
 - Active Apple Developer Program membership.
+- Non-secret Apple access handoff acknowledged through `./scripts/check-apple-access-handoff.sh --require-direct-dmg-access`.
 - `Developer ID Application` certificate installed locally or exported as a protected `.p12` for CI.
 - Local `notarytool` profile, for example `token-monitor-notary`.
 - GitHub repository secrets:

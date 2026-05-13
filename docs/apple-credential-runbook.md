@@ -138,6 +138,15 @@ The readiness check does not upload anything.
 Use this operator sequence after the Apple Developer certificate, notary credentials, and GitHub secrets exist:
 
 ```bash
+TOKEN_MONITOR_APPLE_TEAM_ID="<TEAMID>" \
+TOKEN_MONITOR_APPLE_DEVELOPER_PROGRAM_READY=1 \
+TOKEN_MONITOR_APPLE_ACCESS_MODEL_APPROVED=1 \
+TOKEN_MONITOR_DIRECT_DMG_APPROVED=1 \
+TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_APPROVED=1 \
+TOKEN_MONITOR_NOTARY_CREDENTIALS_APPROVED=1 \
+TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED=1 \
+./scripts/check-apple-access-handoff.sh --require-direct-dmg-access
+
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 
 ./scripts/audit-apple-distribution.sh --require-complete --run-tests

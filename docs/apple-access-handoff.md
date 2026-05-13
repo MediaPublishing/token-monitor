@@ -44,6 +44,19 @@ Before inviting anyone:
 
 If only direct Developer ID DMG distribution is needed:
 
+- Confirm the non-secret access handoff:
+
+```bash
+TOKEN_MONITOR_APPLE_TEAM_ID="<TEAMID>" \
+TOKEN_MONITOR_APPLE_DEVELOPER_PROGRAM_READY=1 \
+TOKEN_MONITOR_APPLE_ACCESS_MODEL_APPROVED=1 \
+TOKEN_MONITOR_DIRECT_DMG_APPROVED=1 \
+TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_APPROVED=1 \
+TOKEN_MONITOR_NOTARY_CREDENTIALS_APPROVED=1 \
+TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED=1 \
+./scripts/check-apple-access-handoff.sh --require-direct-dmg-access
+```
+
 - Account Holder creates or approves the Developer ID Application certificate.
 - Account Holder or approved operator exports the `.p12` on the release Mac.
 - Add the GitHub secrets listed in `docs/apple-credential-runbook.md`.
@@ -51,6 +64,18 @@ If only direct Developer ID DMG distribution is needed:
 - Run `./scripts/preflight-release.sh --require-signing-secrets`.
 
 If Mac App Store submission is pursued:
+
+- Confirm the Mac App Store access handoff:
+
+```bash
+TOKEN_MONITOR_APPLE_TEAM_ID="<TEAMID>" \
+TOKEN_MONITOR_MAS_TRACK_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_CONNECT_READY=1 \
+TOKEN_MONITOR_APP_STORE_CERTIFICATES_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_UPLOAD_AUTH_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_REVIEWER_PLAN_APPROVED=1 \
+./scripts/check-apple-access-handoff.sh --require-mas-access
+```
 
 - Create the App Store Connect app record.
 - Assign app-specific access for Token Monitor where possible.

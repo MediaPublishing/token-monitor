@@ -27,6 +27,7 @@ jobs:
         run: |
           bash -n scripts/*.sh
           ./scripts/check-apple-distribution.sh --help
+          ./scripts/check-apple-access-handoff.sh --help
           ./scripts/check-app-store-submission-gates.sh --help
           ./scripts/check-publication-legal-gates.sh --help
           ./scripts/check-github-release-secrets.sh --help

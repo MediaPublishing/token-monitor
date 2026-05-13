@@ -223,6 +223,7 @@ Prepared and verified repo artifacts:
 - Release version consistency checker: `scripts/check-release-version-consistency.sh`.
 - Public release verifier: `scripts/verify-public-release.sh`.
 - Public distribution URL checker: `scripts/check-public-distribution-urls.sh`.
+- Apple access handoff checker: `scripts/check-apple-access-handoff.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - Consolidated Apple distribution audit: `scripts/audit-apple-distribution.sh`.
 - Current GitHub release: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.20`.
@@ -254,6 +255,7 @@ Prepared and verified repo artifacts:
 Current blockers:
 
 - No Developer ID Application certificate is installed locally.
+- No Apple access handoff has been acknowledged with `scripts/check-apple-access-handoff.sh --require-direct-dmg-access`.
 - No Apple Distribution certificate is installed locally.
 - No Mac App Store installer distribution certificate is installed locally.
 - No local `TOKEN_MONITOR_NOTARY_PROFILE` is configured.
