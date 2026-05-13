@@ -94,6 +94,8 @@ struct MarketingAssetTests {
         #expect(!landingHTML.contains("How do updates work?"))
         let dmgScript = try String(contentsOf: dmgScriptURL, encoding: .utf8)
         #expect(dmgScript.contains("Notarization requires a signed Developer ID build."))
+        #expect(dmgScript.contains("Notarization requires a Developer ID Application identity."))
+        #expect(dmgScript.contains("Developer\\ ID\\ Application:*"))
         #expect(dmgScript.contains("TOKEN_MONITOR_CODESIGN_IDENTITY"))
         #expect(dmgScript.contains("codesign --verify --strict \"$DMG_PATH\""))
         #expect(dmgScript.contains("xcrun stapler validate \"$DMG_PATH\""))

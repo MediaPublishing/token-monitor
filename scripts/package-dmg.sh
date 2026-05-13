@@ -19,6 +19,14 @@ EOF
   exit 1
 fi
 
+if [[ "${TOKEN_MONITOR_NOTARIZE:-}" == "1" && "$CODESIGN_IDENTITY" != Developer\ ID\ Application:* ]]; then
+  cat >&2 <<EOF
+Notarization requires a Developer ID Application identity.
+Current TOKEN_MONITOR_CODESIGN_IDENTITY: $CODESIGN_IDENTITY
+EOF
+  exit 1
+fi
+
 if [[ "${TOKEN_MONITOR_SKIP_BUILD:-}" != "1" ]]; then
   "$ROOT_DIR/scripts/build-app.sh"
 fi
