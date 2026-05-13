@@ -47,6 +47,13 @@ else
   blockers=$((blockers + 1))
 fi
 
+if has_text "$ROOT_DIR/Sources/TokenMonitorApp/Resources/Info.plist" "LSApplicationCategoryType"; then
+  pass "Info.plist declares an App Store category"
+else
+  warn "Info.plist is missing LSApplicationCategoryType"
+  blockers=$((blockers + 1))
+fi
+
 if has_text "$ROOT_DIR/Package.swift" "TOKEN_MONITOR_MAS_BUILD" && has_text "$ROOT_DIR/Package.swift" "MAS_BUILD"; then
   pass "Package.swift has a TOKEN_MONITOR_MAS_BUILD path for a no-Sparkle app target"
 elif has_text "$ROOT_DIR/Package.swift" "Sparkle"; then

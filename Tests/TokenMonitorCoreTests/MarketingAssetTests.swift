@@ -397,6 +397,8 @@ struct MarketingAssetTests {
         #expect(preflightScript.contains("./scripts/check-apple-distribution.sh --require-ready"))
         #expect(masReadinessScript.contains("Mac App Store readiness"))
         #expect(masReadinessScript.contains("TOKEN_MONITOR_MAS_BUILD"))
+        #expect(masReadinessScript.contains("LSApplicationCategoryType"))
+        #expect(masReadinessScript.contains("Info.plist declares an App Store category"))
         #expect(masReadinessScript.contains("MAS build script exists: scripts/build-mas-app.sh"))
         #expect(masReadinessScript.contains("SMAppService login items"))
         #expect(masReadinessScript.contains("Mac App Store static readiness has blockers"))
