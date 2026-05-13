@@ -35,6 +35,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Run MAS submission technical preflight | `TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: ..." ./scripts/preflight-mas-submission.sh` | Script path exists and requires Apple Distribution signing before verifying the submitted MAS binary. | Blocked until credentials |
 | Sign MAS build for App Store | `TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: ..." ./scripts/build-mas-app.sh` | No Apple Distribution certificate is installed locally. | Blocked |
 | Package MAS upload pkg | `TOKEN_MONITOR_MAS_INSTALLER_IDENTITY="3rd Party Mac Developer Installer: ..." ./scripts/package-mas-pkg.sh` | Script path exists, verifies the app with `--require-apple-distribution`, and produces `dist/mas/TokenMonitor-macOS-AppStore.pkg`; no installer distribution certificate is installed locally. | Blocked |
+| Check MAS upload handoff | `./scripts/check-app-store-upload-readiness.sh --require-ready` | Script path exists and checks the signed MAS pkg, local upload tool availability, and approved upload authentication inputs without uploading anything. Current machine has no MAS pkg or upload credentials. | Blocked |
 | Smoke-test sandboxed MAS behavior | `docs/mas-sandbox-smoke-test.md` | Checklist exists for login, refresh, snapshots, diagnostics, Launch at Login, evidence capture, and fail conditions. Execution is not possible without reviewer/test accounts and App Store Connect context. | Blocked |
 | Prepare App Store submission material | `docs/app-store-submission-packet.md` | Draft metadata, privacy labels, reviewer notes, screenshots, and test plan are documented. | Prepared |
 | Gate App Store human approvals | `./scripts/check-app-store-submission-gates.sh --require-human-gates` | Script exists and fails strict mode until Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, final URLs, and sandbox smoke test are explicitly acknowledged. | Prepared with human gates |
@@ -55,6 +56,7 @@ Last verified on 2026-05-13:
 ./scripts/check-app-store-submission-gates.sh
 ./scripts/check-app-store-submission-gates.sh --require-human-gates
 ./scripts/package-mas-pkg.sh --help
+./scripts/check-app-store-upload-readiness.sh --help
 ./scripts/verify-public-release.sh --help
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 ./scripts/check-apple-distribution.sh --require-ready
@@ -77,6 +79,7 @@ Recent previously verified commands:
 - `./scripts/check-github-release-secrets.sh --require-signing-secrets` fails as expected until Developer ID and notary secrets exist.
 - `./scripts/check-app-store-submission-gates.sh --require-human-gates` fails as expected until all human/App Store Connect acknowledgements are set.
 - `./scripts/package-mas-pkg.sh` fails as expected until Apple Distribution and installer distribution identities are available.
+- `./scripts/check-app-store-upload-readiness.sh` reports missing MAS upload package, upload tool, and upload authentication until the final upload machine is prepared.
 - `./scripts/check-apple-distribution.sh` reports missing Mac App Store installer distribution identity as App Store upload-package readiness context.
 - `./scripts/check-apple-distribution.sh --require-ready` fails as expected until a signed/notarized/stapled release exists.
 
@@ -101,6 +104,7 @@ Required before Mac App Store submission can be completed:
 - Apple Distribution certificate.
 - Mac App Store installer distribution certificate.
 - App Store Connect app record.
+- App Store Connect upload tool and approved upload authentication method on the upload machine.
 - Agreements, tax, and banking completed by the Account Holder.
 - Final privacy policy and App Privacy labels approved by a human/legal reviewer.
 - Reviewer test accounts or approved review plan.
@@ -148,6 +152,8 @@ TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: <Name> (<TEAMID>)" \
 TOKEN_MONITOR_MAS_INSTALLER_IDENTITY="3rd Party Mac Developer Installer: <Name> (<TEAMID>)" \
 ./scripts/preflight-mas-submission.sh
 
+./scripts/check-app-store-upload-readiness.sh --require-ready
+
 TOKEN_MONITOR_APP_STORE_ACCOUNT_HOLDER_APPROVED=1 \
 TOKEN_MONITOR_APP_STORE_CONNECT_READY=1 \
 TOKEN_MONITOR_APP_STORE_PRIVACY_APPROVED=1 \
@@ -167,5 +173,5 @@ Do not mark the Apple distribution objective complete until all of these are tru
 3. The DMG has a stapled notarization ticket.
 4. The strict package step verifies both ZIP artifacts contain a signed `TokenMonitor.app` with the expected version/build.
 5. GitHub release assets, the Sparkle appcast, the public GitHub release ZIP, and the public Sparkle update ZIP are live and verified.
-6. If Mac App Store submission is pursued, the MAS binary is Apple Distribution signed, `dist/mas/TokenMonitor-macOS-AppStore.pkg` is signed with a Mac App Store installer distribution identity, sandbox smoke-tested, and `./scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit human/App Store Connect acknowledgements.
+6. If Mac App Store submission is pursued, the MAS binary is Apple Distribution signed, `dist/mas/TokenMonitor-macOS-AppStore.pkg` is signed with a Mac App Store installer distribution identity, the upload handoff passes `./scripts/check-app-store-upload-readiness.sh --require-ready`, the binary is sandbox smoke-tested, and `./scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit human/App Store Connect acknowledgements.
 7. Legal/privacy/license and public marketing claims have received required human approval.

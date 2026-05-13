@@ -32,6 +32,7 @@ jobs:
           ./scripts/package-mas-pkg.sh --help
           ./scripts/preflight-release.sh --help
           ./scripts/preflight-mas-submission.sh --help
+          ./scripts/check-app-store-upload-readiness.sh --help
           ./scripts/verify-public-release.sh --help
 
           if ./scripts/package-mas-pkg.sh >/tmp/token-monitor-mas-pkg.out 2>&1; then

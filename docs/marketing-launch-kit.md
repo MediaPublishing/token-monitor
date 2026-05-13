@@ -1,6 +1,6 @@
 # Token Monitor Marketing Launch Kit
 
-Last reviewed: 2026-05-02
+Last reviewed: 2026-05-13
 
 ## Purpose
 
@@ -189,8 +189,9 @@ Before Mac App Store submission:
 6. Complete privacy labels with final legal/human approval.
 7. Attach screenshots captured from the submitted binary.
 8. Add reviewer notes and a test-account plan.
-9. Run `./scripts/check-app-store-submission-gates.sh --require-human-gates`.
-10. Submit only after Account Holder approval.
+9. Run `./scripts/check-app-store-upload-readiness.sh --require-ready` on the upload machine, or confirm the Account Holder will upload manually through App Store Connect, Xcode, or Transporter.
+10. Run `./scripts/check-app-store-submission-gates.sh --require-human-gates`.
+11. Submit only after Account Holder approval.
 
 ## Approval Gates
 

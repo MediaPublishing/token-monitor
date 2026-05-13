@@ -45,6 +45,7 @@ Verified locally:
 - `scripts/build-mas-app.sh` produces a separate `1.0.20` build `21` MAS candidate.
 - `scripts/verify-mas-build.sh` verifies the MAS candidate has no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and a valid local signature. Use `--require-apple-distribution` before App Store submission.
 - `scripts/package-mas-pkg.sh` packages the Apple Distribution signed MAS app as `dist/mas/TokenMonitor-macOS-AppStore.pkg` with a Mac App Store installer distribution identity.
+- `scripts/check-app-store-upload-readiness.sh` checks the final upload handoff without uploading anything: signed package presence, local upload tool availability, and approved upload authentication inputs.
 
 ## Recommended Distribution Path
 
@@ -137,6 +138,7 @@ Mac App Store prep tasks:
   - storage access limited to app container defaults where possible.
 - Verify whether `SMAppService` launch-at-login works as expected under sandbox and App Review expectations.
 - Prepare App Store metadata, privacy labels, screenshots, support URL, marketing URL, and review notes.
+- Prepare the upload machine with Xcode, altool, or Transporter and approved App Store Connect upload authentication.
 - Create a reviewer demo plan that does not require sharing private Claude or ChatGPT credentials.
 - Use `docs/app-store-submission-packet.md` for the draft metadata, privacy label notes, reviewer notes, screenshot requirements, and reviewer test plan.
 
@@ -224,6 +226,7 @@ Prepared and verified repo artifacts:
 - MAS candidate build path: `scripts/build-mas-app.sh`.
 - MAS build verifier: `scripts/verify-mas-build.sh`.
 - MAS upload package builder: `scripts/package-mas-pkg.sh`.
+- MAS upload handoff checker: `scripts/check-app-store-upload-readiness.sh`.
 - MAS submission preflight: `scripts/preflight-mas-submission.sh`.
 - MAS human/App Store Connect gate checker: `scripts/check-app-store-submission-gates.sh`.
 - MAS sandbox smoke test checklist: `docs/mas-sandbox-smoke-test.md`.
@@ -250,6 +253,7 @@ Current blockers:
 - Mac App Store submission remains a separate, not-ready track until Apple Distribution signing, App Store Connect setup, sandbox smoke testing, reviewer accounts, screenshots, and final approvals are complete.
 - The MAS candidate build removes Sparkle and passes local verification, but it has not been signed with an Apple Distribution certificate or smoke-tested with real reviewer accounts under App Sandbox.
 - The MAS upload package path exists, but it has not been signed with a Mac App Store installer distribution identity.
+- The MAS upload handoff is not ready because no submitted package, App Store Connect upload tool, or upload authentication has been configured on this machine.
 - Repository license and final legal/privacy approvals remain human approval gates before broad promotion or App Store submission.
 
 Conclusion:
@@ -263,3 +267,4 @@ Conclusion:
 - Apple notarization docs: https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution
 - Apple App Review Guidelines: https://developer.apple.com/app-store/review/guidelines/
 - App Store Connect API: https://developer.apple.com/help/app-store-connect/get-started/app-store-connect-api/
+- App Store Connect build uploads: https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/

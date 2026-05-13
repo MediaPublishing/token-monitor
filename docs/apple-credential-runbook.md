@@ -1,6 +1,6 @@
 # Apple Credential Runbook
 
-Last reviewed: 2026-05-02
+Last reviewed: 2026-05-13
 
 This runbook explains how to prepare Token Monitor for Developer ID signing and notarization without putting Apple credentials into chat, source files, or release artifacts.
 
@@ -102,6 +102,34 @@ The MAS package script writes:
 ```text
 dist/mas/TokenMonitor-macOS-AppStore.pkg
 ```
+
+## App Store Connect Upload Credentials
+
+Do not store App Store Connect API private keys, Apple ID passwords, app-specific passwords, or Transporter credentials in the repository.
+
+For a command-line upload handoff, prepare one approved authentication path on the upload machine:
+
+- App Store Connect API key ID, issuer ID, and private key file for Transporter-based upload authentication.
+- Or an Apple ID plus app-specific password for an altool fallback path where available.
+
+Token Monitor only checks the presence of these inputs:
+
+```bash
+TOKEN_MONITOR_APP_STORE_CONNECT_API_KEY_ID="<key-id>" \
+TOKEN_MONITOR_APP_STORE_CONNECT_API_ISSUER_ID="<issuer-id>" \
+TOKEN_MONITOR_APP_STORE_CONNECT_API_PRIVATE_KEY_PATH="/secure/path/AuthKey_<key-id>.p8" \
+./scripts/check-app-store-upload-readiness.sh
+```
+
+or:
+
+```bash
+TOKEN_MONITOR_APP_STORE_USERNAME="<apple-id>" \
+TOKEN_MONITOR_APP_STORE_APP_PASSWORD="<app-specific-password>" \
+./scripts/check-app-store-upload-readiness.sh
+```
+
+The readiness check does not upload anything.
 
 ## After Credentials Are Ready
 

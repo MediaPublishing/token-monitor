@@ -1,6 +1,6 @@
 # Token Monitor App Store Submission Packet
 
-Last reviewed: 2026-05-02
+Last reviewed: 2026-05-13
 
 ## Purpose
 
@@ -24,6 +24,7 @@ Do not submit until all are true:
 10. Privacy labels and the privacy policy receive final human/legal approval.
 11. Reviewer notes and test accounts are approved by the Account Holder.
 12. `scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit acknowledgements for Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, support URLs, and sandbox smoke testing.
+13. `scripts/check-app-store-upload-readiness.sh --require-ready` passes on the upload machine, or the Account Holder confirms upload will happen manually through App Store Connect, Xcode, or Transporter.
 
 ## App Metadata Draft
 
@@ -203,6 +204,20 @@ The preflight runs:
 - `./scripts/package-mas-pkg.sh`
 
 It does not replace Account Holder approval, App Store Connect setup, privacy-label review, reviewer-account approval, submitted-binary screenshots, or sandbox smoke testing.
+
+Check the upload handoff without uploading anything:
+
+```bash
+./scripts/check-app-store-upload-readiness.sh
+```
+
+Use strict mode only after the signed MAS package, upload tool, and upload credentials are available on the upload machine:
+
+```bash
+./scripts/check-app-store-upload-readiness.sh --require-ready
+```
+
+Apple supports uploading builds with Xcode, altool, or Transporter. App Store Connect API keys can be used with Transporter for upload authentication, but the App Store Connect API does not replace the binary upload tool itself.
 
 Run the human gate check before upload:
 

@@ -1,6 +1,6 @@
 # Mac App Store Feasibility Audit
 
-Last reviewed: 2026-05-02
+Last reviewed: 2026-05-13
 
 ## Decision
 
@@ -53,14 +53,15 @@ Before submitting to the Mac App Store:
 3. Verify `SUFeedURL` and Sparkle update UI are absent from the MAS build.
 4. Sign with an Apple Distribution certificate once App Store Connect access exists.
 5. Package the signed app with `scripts/package-mas-pkg.sh` and a Mac App Store installer distribution identity.
-6. Keep App Sandbox entitlements enabled.
-7. Include at least:
+6. Check the upload handoff with `scripts/check-app-store-upload-readiness.sh` on the upload machine, or confirm a manual upload path through App Store Connect, Xcode, or Transporter.
+7. Keep App Sandbox entitlements enabled.
+8. Include at least:
    - `com.apple.security.app-sandbox`
    - `com.apple.security.network.client`
-8. Verify Application Support and WebKit storage work inside the app container.
-9. Verify `SMAppService` launch-at-login behavior under sandbox.
-10. Prepare reviewer notes explaining embedded WebKit sessions and local-only storage.
-11. Provide reviewer accounts or a reviewer test plan.
+9. Verify Application Support and WebKit storage work inside the app container.
+10. Verify `SMAppService` launch-at-login behavior under sandbox.
+11. Prepare reviewer notes explaining embedded WebKit sessions and local-only storage.
+12. Provide reviewer accounts or a reviewer test plan.
 
 ## App Review Risks
 
@@ -109,5 +110,6 @@ After Developer ID distribution is working, continue MAS validation with the cur
 1. Run `scripts/build-mas-app.sh`.
 2. Inspect the built app for Sparkle references and `SU*` Info.plist keys.
 3. Package the MAS upload package with `scripts/package-mas-pkg.sh` once Apple signing identities exist.
-4. Run a sandbox smoke test for login, refresh, snapshots, and Login Items.
-5. Decide whether to continue toward App Store Connect submission.
+4. Check the upload handoff with `scripts/check-app-store-upload-readiness.sh` on the upload machine.
+5. Run a sandbox smoke test for login, refresh, snapshots, and Login Items.
+6. Decide whether to continue toward App Store Connect submission.
