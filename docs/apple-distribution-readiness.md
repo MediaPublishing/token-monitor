@@ -42,6 +42,7 @@ Verified locally:
 - The release workflow refuses to upload a signed non-notarized release if Developer ID signing secrets exist but notary secrets are incomplete.
 - `scripts/package-release.sh --require-distribution-ready` verifies the final app, DMG, notarization ticket, GitHub release ZIP, and versioned Sparkle update ZIP before upload.
 - `scripts/verify-public-release.sh` can verify the public DMG, GitHub release ZIP, and public Sparkle update ZIP together when `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1` is set.
+- `scripts/audit-apple-distribution.sh` provides a safe consolidated audit command; use `--require-complete --run-tests` only after Apple credentials and human approvals exist.
 - `scripts/build-mas-app.sh` produces a separate `1.0.20` build `21` MAS candidate.
 - `scripts/verify-mas-build.sh` verifies the MAS candidate has no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and a valid local signature. Use `--require-apple-distribution` before App Store submission.
 - `scripts/package-mas-pkg.sh` packages the Apple Distribution signed MAS app as `dist/mas/TokenMonitor-macOS-AppStore.pkg` with a Mac App Store installer distribution identity.
@@ -220,6 +221,7 @@ Prepared and verified repo artifacts:
 - Local release preflight: `scripts/preflight-release.sh`.
 - Public release verifier: `scripts/verify-public-release.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
+- Consolidated Apple distribution audit: `scripts/audit-apple-distribution.sh`.
 - Current GitHub release: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.20`.
 - GitHub CI workflow: `.github/workflows/ci.yml` runs release script smoke checks, tests, direct app build, MAS build, MAS build verification, and MAS readiness checks.
 - GitHub workflows use Node-24-compatible action pins where available and set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`.

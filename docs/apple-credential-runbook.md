@@ -140,6 +140,8 @@ Use this operator sequence after the Apple Developer certificate, notary credent
 ```bash
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 
+./scripts/audit-apple-distribution.sh --require-complete --run-tests
+
 xcrun notarytool store-credentials token-monitor-notary
 
 ./scripts/preflight-release.sh --require-signing-secrets
@@ -152,6 +154,12 @@ TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 \
 
 TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 \
 ./scripts/verify-public-release.sh <tag> <version> <build>
+```
+
+Run the consolidated audit again after publishing and after any App Store Connect handoff changes:
+
+```bash
+./scripts/audit-apple-distribution.sh --require-complete --run-tests
 ```
 
 For a GitHub Actions rebuild of an existing release, run the `Release` workflow manually with the existing tag after the required repository secrets pass the strict check. Enable the `require_developer_id` workflow option so the job fails before upload if signing, notarization, or Gatekeeper/stapler verification is incomplete.

@@ -24,6 +24,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Verify local Apple signing identities | `./scripts/check-apple-distribution.sh` | Reports Developer ID Application, Apple Distribution, and Mac App Store installer distribution identities separately. Current machine has none installed. | Blocked |
 | Verify Gatekeeper acceptance | `./scripts/check-apple-distribution.sh --require-ready` | Current ad hoc app and DMG are rejected and the DMG has no stapled ticket, as expected before credentials. Strict mode fails until credentials exist. | Blocked |
 | Document Apple access handoff | `docs/apple-access-handoff.md` | Documents minimum practical roles, invitation checklist, safe-to-share values, blocked secrets, and revocation steps. | Prepared |
+| Run consolidated completion audit | `./scripts/audit-apple-distribution.sh --require-complete` | Script path exists and runs the repo, CI, secret, Developer ID, MAS upload, and human gate checks in one safe non-uploading audit. Strict mode fails until Apple credentials and approvals exist. | Prepared |
 | Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-13: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. GitHub secret values cannot be read locally, so the Release workflow validates the Developer ID identity class at runtime. | Partially prepared |
 | Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | CI covers release script smoke checks; the release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
 | Smoke-check release scripts in CI | `.github/workflows/ci.yml` | CI now runs shell syntax checks, release/distribution script `--help` checks, and the expected `package-mas-pkg.sh` no-identity failure path. | Prepared |
@@ -56,6 +57,7 @@ Last verified on 2026-05-13:
 ./scripts/check-github-release-secrets.sh
 ./scripts/check-app-store-submission-gates.sh
 ./scripts/check-app-store-submission-gates.sh --require-human-gates
+./scripts/audit-apple-distribution.sh --help
 ./scripts/package-mas-pkg.sh --help
 ./scripts/check-app-store-upload-readiness.sh --help
 ./scripts/verify-public-release.sh --help
@@ -73,6 +75,7 @@ Recent previously verified commands:
 
 - `swift test` passed with 34 tests for the current `1.0.20` release line.
 - Shell syntax checks and release/distribution script help checks pass locally and are covered by CI.
+- `./scripts/audit-apple-distribution.sh --require-complete` is available as the final non-uploading completion audit and is expected to fail until real credentials and approvals exist.
 - `./scripts/build-mas-app.sh` passed for the MAS candidate.
 - `./scripts/verify-mas-build.sh` passed for the MAS candidate.
 - `./scripts/check-mas-readiness.sh` reported zero static blockers, with manual smoke-test warnings.
@@ -163,6 +166,8 @@ TOKEN_MONITOR_APP_STORE_SCREENSHOTS_APPROVED=1 \
 TOKEN_MONITOR_APP_STORE_SUPPORT_URL_APPROVED=1 \
 TOKEN_MONITOR_APP_STORE_SANDBOX_SMOKE_TEST_PASSED=1 \
 ./scripts/check-app-store-submission-gates.sh --require-human-gates
+
+./scripts/audit-apple-distribution.sh --require-complete --run-tests
 ```
 
 ## Completion Criteria
