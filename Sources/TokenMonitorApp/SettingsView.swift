@@ -113,7 +113,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Automatically check for updates")
                         .font(.subheadline.weight(.semibold))
-                    Text("Use Sparkle to watch the GitHub release feed and offer new versions.")
+                    Text("When enabled, Token Monitor can show update prompts without you clicking Check for Updates.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

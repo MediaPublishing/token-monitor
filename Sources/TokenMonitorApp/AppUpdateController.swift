@@ -28,6 +28,8 @@ import Sparkle
 final class AppUpdateController: NSObject, ObservableObject {
     static let shared = AppUpdateController()
 
+    private static let automaticUpdateChecksConfiguredKey = "automaticUpdateChecksConfigured"
+
     private let updaterController: SPUStandardUpdaterController
 
     private override init() {
@@ -37,6 +39,10 @@ final class AppUpdateController: NSObject, ObservableObject {
             userDriverDelegate: nil
         )
         super.init()
+
+        if !UserDefaults.standard.bool(forKey: Self.automaticUpdateChecksConfiguredKey) {
+            updaterController.updater.automaticallyChecksForUpdates = false
+        }
     }
 
     var automaticallyChecksForUpdates: Bool {
@@ -44,6 +50,7 @@ final class AppUpdateController: NSObject, ObservableObject {
             updaterController.updater.automaticallyChecksForUpdates
         }
         set {
+            UserDefaults.standard.set(true, forKey: Self.automaticUpdateChecksConfiguredKey)
             updaterController.updater.automaticallyChecksForUpdates = newValue
         }
     }
