@@ -28,6 +28,12 @@ Do not submit until all are true:
 
 ## App Metadata Draft
 
+Validate these draft limits before submission:
+
+```bash
+./scripts/check-app-store-metadata.sh
+```
+
 App name:
 
 ```text
@@ -59,7 +65,7 @@ Token Monitor is an independent utility and is not affiliated with Anthropic, Op
 Keywords:
 
 ```text
-Claude,ChatGPT,Codex,AI,usage,quota,monitor,menubar
+Claude,ChatGPT,Codex,AI tools,usage,quota,monitor,menubar
 ```
 
 Support URL:

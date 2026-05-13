@@ -29,6 +29,7 @@ jobs:
           ./scripts/check-apple-distribution.sh --help
           ./scripts/check-app-store-submission-gates.sh --help
           ./scripts/check-github-release-secrets.sh --help
+          ./scripts/check-app-store-metadata.sh --help
           ./scripts/audit-apple-distribution.sh --help
           ./scripts/package-mas-pkg.sh --help
           ./scripts/preflight-release.sh --help
@@ -41,6 +42,7 @@ jobs:
             exit 1
           fi
           grep -Fq "Missing TOKEN_MONITOR_MAS_CODESIGN_IDENTITY" /tmp/token-monitor-mas-pkg.out
+          ./scripts/check-app-store-metadata.sh
 
       - name: Run tests
         run: swift test

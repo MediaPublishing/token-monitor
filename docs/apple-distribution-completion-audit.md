@@ -40,6 +40,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Check MAS upload handoff | `./scripts/check-app-store-upload-readiness.sh --require-ready` | Script path exists and checks the signed MAS pkg, local upload tool availability, and approved upload authentication inputs without uploading anything. Current machine has no MAS pkg or upload credentials. | Blocked |
 | Smoke-test sandboxed MAS behavior | `docs/mas-sandbox-smoke-test.md` | Checklist exists for login, refresh, snapshots, diagnostics, Launch at Login, evidence capture, and fail conditions. Execution is not possible without reviewer/test accounts and App Store Connect context. | Blocked |
 | Prepare App Store submission material | `docs/app-store-submission-packet.md` | Draft metadata, privacy labels, reviewer notes, screenshots, and test plan are documented. | Prepared |
+| Validate App Store metadata limits | `./scripts/check-app-store-metadata.sh` | Script path exists and checks app name, subtitle, promotional text, description, keyword byte limit, keyword minimum length, and HTTPS URLs against the draft submission packet. | Prepared |
 | Prepare App Store privacy labels | `docs/app-store-privacy-labels.md` | Documents draft App Store Connect answers, no-collection rationale, tracking answer, privacy URL, change triggers, and the privacy approval gate. Final approval remains a human/legal gate. | Prepared with human gate |
 | Prepare App Store screenshots | `docs/app-store-screenshot-checklist.md` | Documents Mac screenshot counts, formats, dimensions, sanitized capture set, filename convention, and screenshot approval gate. Actual screenshots remain blocked until the submitted MAS binary exists. | Prepared with human gate |
 | Gate App Store human approvals | `./scripts/check-app-store-submission-gates.sh --require-human-gates` | Script exists and fails strict mode until Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, final URLs, and sandbox smoke test are explicitly acknowledged. | Prepared with human gates |
@@ -59,6 +60,7 @@ Last verified on 2026-05-13:
 ./scripts/check-github-release-secrets.sh
 ./scripts/check-app-store-submission-gates.sh
 ./scripts/check-app-store-submission-gates.sh --require-human-gates
+./scripts/check-app-store-metadata.sh
 ./scripts/audit-apple-distribution.sh --help
 ./scripts/package-mas-pkg.sh --help
 ./scripts/check-app-store-upload-readiness.sh --help
