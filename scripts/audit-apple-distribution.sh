@@ -91,6 +91,7 @@ printf 'GitHub repository: %s\n' "$REPO"
 run_step "Check worktree status" check_worktree_status
 run_required_step "Check shell script syntax" bash -n scripts/*.sh
 run_required_step "Check release version consistency" ./scripts/check-release-version-consistency.sh
+run_required_step "Check public repository hygiene" ./scripts/check-public-repo-hygiene.sh
 run_required_step "Check App Store metadata limits" ./scripts/check-app-store-metadata.sh
 
 if [[ "$RUN_TESTS" == "1" ]]; then

@@ -35,7 +35,9 @@ jobs:
           ./scripts/check-app-store-identity.sh --help
           ./scripts/check-release-recovery-readiness.sh --help
           ./scripts/check-release-version-consistency.sh --help
+          ./scripts/check-public-repo-hygiene.sh --help
           ./scripts/check-release-version-consistency.sh
+          ./scripts/check-public-repo-hygiene.sh
           ./scripts/audit-apple-distribution.sh --help
           ./scripts/package-mas-pkg.sh --help
           ./scripts/preflight-release.sh --help

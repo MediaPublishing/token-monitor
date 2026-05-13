@@ -12,6 +12,7 @@ Run the executable gate before broad promotion or App Store submission:
 ./scripts/check-publication-legal-gates.sh --require-legal-gates
 ```
 
+- Run `./scripts/check-public-repo-hygiene.sh` before broad public promotion to catch tracked private key files, provisioning files, `.env` files, and obvious token patterns.
 - No repository license is published yet.
 - No formal App Store privacy policy has been legally approved yet.
 - `docs/privacy.md` is a product privacy summary, not a legal policy.
