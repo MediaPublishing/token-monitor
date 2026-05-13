@@ -217,7 +217,7 @@ Prepared and verified repo artifacts:
 - Public release verifier: `scripts/verify-public-release.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - Current GitHub release: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.20`.
-- GitHub CI workflow: `.github/workflows/ci.yml` runs tests, direct app build, MAS build, MAS build verification, and MAS readiness checks.
+- GitHub CI workflow: `.github/workflows/ci.yml` runs release script smoke checks, tests, direct app build, MAS build, MAS build verification, and MAS readiness checks.
 - GitHub workflows use Node-24-compatible action pins where available and set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`.
 - Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
 - App Store submission packet: `docs/app-store-submission-packet.md`.
@@ -235,7 +235,7 @@ Prepared and verified repo artifacts:
 - Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
 - Regression coverage: `swift test` passes with 34 tests.
 - Earlier release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25496438297` passed for `v1.0.20`.
-- Recent verified CI evidence: `https://github.com/MediaPublishing/token-monitor/actions/runs/25780615011` passed tests, direct app build, MAS build, MAS verification, and MAS readiness.
+- Recent verified CI evidence: `https://github.com/MediaPublishing/token-monitor/actions/runs/25781373677` passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness.
 
 Current blockers:
 
