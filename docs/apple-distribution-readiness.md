@@ -235,7 +235,7 @@ Prepared and verified repo artifacts:
 - Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
 - Regression coverage: `swift test` passes with 34 tests.
 - Earlier release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25496438297` passed for `v1.0.20`.
-- Recent verified CI evidence: `https://github.com/MediaPublishing/token-monitor/actions/runs/25781373677` passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness.
+- Current CI evidence: run `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` and confirm the latest `main` run passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness.
 
 Current blockers:
 

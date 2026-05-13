@@ -24,7 +24,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Verify local Apple signing identities | `./scripts/check-apple-distribution.sh` | Reports Developer ID Application, Apple Distribution, and Mac App Store installer distribution identities separately. Current machine has none installed. | Blocked |
 | Verify Gatekeeper acceptance | `./scripts/check-apple-distribution.sh --require-ready` | Current ad hoc app and DMG are rejected and the DMG has no stapled ticket, as expected before credentials. Strict mode fails until credentials exist. | Blocked |
 | Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-13: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. GitHub secret values cannot be read locally, so the Release workflow validates the Developer ID identity class at runtime. | Partially prepared |
-| Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | Recent CI run `25781373677` passed; release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
+| Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | CI covers release script smoke checks; the release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
 | Smoke-check release scripts in CI | `.github/workflows/ci.yml` | CI now runs shell syntax checks, release/distribution script `--help` checks, and the expected `package-mas-pkg.sh` no-identity failure path. | Prepared |
 | Verify public and Sparkle ZIP paths | `./scripts/package-release.sh --require-distribution-ready`, `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>` | Strict local release verifies both the GitHub release ZIP and the versioned Sparkle update ZIP; public signed-release verification downloads and checks both published ZIPs. | Prepared |
 | Keep the repository publicly reachable | GitHub repository settings | Verified 2026-05-12: `MediaPublishing/token-monitor` is public and uses `main` as the default branch. | Prepared |
@@ -43,7 +43,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Route support safely | `SUPPORT.md`, `SECURITY.md` | Public support and private vulnerability routes exist and warn against posting secrets/debug dumps. | Prepared |
 | Keep issue fixing safe | `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`, `docs/apple-distribution-readiness.md` | Parser issue template warns that GitHub Issues are public and blocks raw debug dump sharing. | Prepared |
 | Maintain regression coverage | `swift test` | Local and CI tests pass with 34 tests. | Prepared |
-| Verify latest CI | GitHub Actions CI | Run `25781373677` passed release script smoke checks, tests, direct build, MAS build, MAS verification, and MAS readiness. | Prepared |
+| Verify current CI | `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` | Current-state CI must pass release script smoke checks, tests, direct build, MAS build, MAS verification, and MAS readiness. | Prepared when current run is green |
 
 ## Current Verified Commands
 
@@ -63,12 +63,13 @@ gh pr list --repo MediaPublishing/token-monitor --state open --json number,title
 gh issue list --repo MediaPublishing/token-monitor --state open --json number,title,labels,updatedAt,url
 gh release view v1.0.20 --repo MediaPublishing/token-monitor --json tagName,name,isDraft,isPrerelease,publishedAt,url,assets
 gh repo view MediaPublishing/token-monitor --json visibility,url,defaultBranchRef
+gh run list --repo MediaPublishing/token-monitor --branch main --limit 1
 ```
 
 Recent previously verified commands:
 
 - `swift test` passed with 34 tests for the current `1.0.20` release line.
-- Shell syntax checks and release/distribution script help checks pass locally and in CI.
+- Shell syntax checks and release/distribution script help checks pass locally and are covered by CI.
 - `./scripts/build-mas-app.sh` passed for the MAS candidate.
 - `./scripts/verify-mas-build.sh` passed for the MAS candidate.
 - `./scripts/check-mas-readiness.sh` reported zero static blockers, with manual smoke-test warnings.

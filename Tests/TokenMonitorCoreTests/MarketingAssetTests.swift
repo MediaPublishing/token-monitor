@@ -264,7 +264,7 @@ struct MarketingAssetTests {
         #expect(completionAudit.contains("docs/mas-sandbox-smoke-test.md"))
         #expect(completionAudit.contains("./scripts/check-app-store-submission-gates.sh --require-human-gates"))
         #expect(completionAudit.contains("human/App Store Connect acknowledgements"))
-        #expect(completionAudit.contains("25781373677"))
+        #expect(completionAudit.contains("gh run list --repo MediaPublishing/token-monitor --branch main --limit 1"))
         #expect(completionAudit.contains("release script smoke checks"))
         #expect(readinessScript.contains("notarytool"))
         #expect(readinessScript.contains("stapler"))
