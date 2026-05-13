@@ -94,8 +94,10 @@ fi
 
 if command -v security >/dev/null 2>&1; then
   identities="$(security find-identity -v -p codesigning 2>/dev/null || true)"
+  all_identities="$(security find-identity -v 2>/dev/null || true)"
   developer_id_identities="$(printf '%s\n' "$identities" | grep 'Developer ID Application' || true)"
   apple_distribution_identities="$(printf '%s\n' "$identities" | grep 'Apple Distribution' || true)"
+  installer_distribution_identities="$(printf '%s\n' "$all_identities" | grep -E '3rd Party Mac Developer Installer|Mac Installer Distribution' || true)"
 
   if [[ -n "$developer_id_identities" ]]; then
     pass "Developer ID Application signing identity found"
@@ -109,6 +111,13 @@ if command -v security >/dev/null 2>&1; then
     printf '%s\n' "$apple_distribution_identities" | sed 's/^/  /'
   else
     info "No Apple Distribution identity found; only needed for a future Mac App Store track"
+  fi
+
+  if [[ -n "$installer_distribution_identities" ]]; then
+    pass "Mac App Store installer distribution identity found"
+    printf '%s\n' "$installer_distribution_identities" | sed 's/^/  /'
+  else
+    info "No Mac App Store installer distribution identity found; only needed for a future Mac App Store upload package"
   fi
 else
   warn "security command is missing; cannot inspect code-signing identities"

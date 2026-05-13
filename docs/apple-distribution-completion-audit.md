@@ -21,6 +21,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Assess direct Apple distribution | `docs/apple-distribution-readiness.md` | Documents Developer ID DMG as the primary path and lists acceptance checks. | Prepared |
 | Produce signed Developer ID app | `TOKEN_MONITOR_CODESIGN_IDENTITY=... ./scripts/package-release.sh --require-distribution-ready` | Script path exists, but no `Developer ID Application` identity is installed locally. | Blocked |
 | Notarize and staple DMG | `TOKEN_MONITOR_NOTARIZE=1 TOKEN_MONITOR_NOTARY_PROFILE=... ./scripts/package-release.sh --require-distribution-ready` | Script path exists, but no local `TOKEN_MONITOR_NOTARY_PROFILE` is configured. | Blocked |
+| Verify local Apple signing identities | `./scripts/check-apple-distribution.sh` | Reports Developer ID Application, Apple Distribution, and Mac App Store installer distribution identities separately. Current machine has none installed. | Blocked |
 | Verify Gatekeeper acceptance | `./scripts/check-apple-distribution.sh --require-ready` | Current ad hoc app and DMG are rejected and the DMG has no stapled ticket, as expected before credentials. Strict mode fails until credentials exist. | Blocked |
 | Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-13: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. GitHub secret values cannot be read locally, so the Release workflow validates the Developer ID identity class at runtime. | Partially prepared |
 | Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | Recent CI run `25781373677` passed; release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
@@ -75,6 +76,7 @@ Recent previously verified commands:
 - `./scripts/check-github-release-secrets.sh --require-signing-secrets` fails as expected until Developer ID and notary secrets exist.
 - `./scripts/check-app-store-submission-gates.sh --require-human-gates` fails as expected until all human/App Store Connect acknowledgements are set.
 - `./scripts/package-mas-pkg.sh` fails as expected until Apple Distribution and installer distribution identities are available.
+- `./scripts/check-apple-distribution.sh` reports missing Mac App Store installer distribution identity as App Store upload-package readiness context.
 - `./scripts/check-apple-distribution.sh --require-ready` fails as expected until a signed/notarized/stapled release exists.
 
 ## Missing Inputs

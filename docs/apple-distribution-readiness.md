@@ -211,7 +211,7 @@ Prepared and verified repo artifacts:
 - Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
 - Prompt-to-artifact completion audit: `docs/apple-distribution-completion-audit.md`.
 - Apple credential setup: `docs/apple-credential-runbook.md`.
-- Local signing/notarization verifier: `scripts/check-apple-distribution.sh`.
+- Local signing/notarization verifier: `scripts/check-apple-distribution.sh`; it reports Developer ID, Apple Distribution, and Mac App Store installer distribution identities separately.
 - GitHub release secret verifier: `scripts/check-github-release-secrets.sh`.
 - Local release preflight: `scripts/preflight-release.sh`.
 - Public release verifier: `scripts/verify-public-release.sh`.
