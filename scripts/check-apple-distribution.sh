@@ -68,6 +68,19 @@ print_command_result() {
   fi
 }
 
+check_developer_id_authority() {
+  local label="$1"
+  local path="$2"
+  local signature_details
+
+  signature_details="$(codesign -dv --verbose=4 "$path" 2>&1 || true)"
+  if grep -Fq "Authority=Developer ID Application:" <<< "$signature_details"; then
+    pass "$label is signed with a Developer ID Application authority"
+  else
+    warn "$label is not signed with a Developer ID Application authority"
+  fi
+}
+
 printf 'Token Monitor Apple distribution readiness\n'
 printf 'Repo: %s\n\n' "$ROOT_DIR"
 
@@ -120,6 +133,7 @@ if [[ -d "$APP_DIR" ]]; then
   fi
 
   print_command_result "App code signature verifies" codesign --verify --deep --strict "$APP_DIR"
+  check_developer_id_authority "App bundle" "$APP_DIR"
 
   signature_details="$(codesign -dv --verbose=4 "$APP_DIR" 2>&1 || true)"
   signature_type="$(printf '%s\n' "$signature_details" | awk -F= '/Signature=/ {print $2; exit}')"
@@ -142,6 +156,8 @@ fi
 
 if [[ -f "$DMG_PATH" ]]; then
   pass "DMG exists: $DMG_PATH"
+  print_command_result "DMG code signature verifies" codesign --verify --strict "$DMG_PATH"
+  check_developer_id_authority "DMG" "$DMG_PATH"
   print_command_result \
     "Gatekeeper DMG signature assessment" \
     spctl --assess --type open --context context:primary-signature --verbose=4 "$DMG_PATH"
