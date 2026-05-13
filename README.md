@@ -254,6 +254,7 @@ token-monitor/
 - [Current screenshot](docs/token-monitor-screenshot.png)
 - [Support](SUPPORT.md)
 - [Security policy](SECURITY.md)
+- [Apple access handoff](docs/apple-access-handoff.md)
 - [Apple distribution readiness](docs/apple-distribution-readiness.md)
 - [Apple credential runbook](docs/apple-credential-runbook.md)
 - [Mac App Store feasibility audit](docs/mac-app-store-feasibility.md)

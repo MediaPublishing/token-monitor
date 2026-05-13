@@ -4,6 +4,8 @@ Last reviewed: 2026-05-13
 
 This runbook explains how to prepare Token Monitor for Developer ID signing and notarization without putting Apple credentials into chat, source files, or release artifacts.
 
+Access role and invitation guidance lives in `docs/apple-access-handoff.md`.
+
 ## Required Access
 
 Human account holder or admin setup:

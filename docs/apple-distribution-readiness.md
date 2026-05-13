@@ -146,6 +146,8 @@ Mac App Store prep tasks:
 
 Do not share a personal Apple ID password in chat.
 
+Detailed invitation and revocation guidance lives in `docs/apple-access-handoff.md`.
+
 Preferred access model:
 
 - Create a dedicated Apple ID for release operations, or invite the operator account to App Store Connect.
@@ -268,3 +270,4 @@ Conclusion:
 - Apple App Review Guidelines: https://developer.apple.com/app-store/review/guidelines/
 - App Store Connect API: https://developer.apple.com/help/app-store-connect/get-started/app-store-connect-api/
 - App Store Connect build uploads: https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/
+- App Store Connect role permissions: https://developer.apple.com/help/app-store-connect/reference/role-permissions
