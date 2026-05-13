@@ -119,15 +119,19 @@ else
 fi
 
 if [[ "$VERIFY_DMG_SIGNATURE" == "1" ]]; then
+  require_command codesign
+  require_command ditto
   require_command spctl
   require_command xcrun
 
   release_download_dir="$DOWNLOAD_DIR/$TAG"
   downloaded_dmg="$release_download_dir/TokenMonitor-macOS.dmg"
+  downloaded_zip="$release_download_dir/TokenMonitor-macOS.zip"
   downloaded_update_zip="$release_download_dir/$UPDATE_ZIP_NAME"
+  zip_extract_dir="$release_download_dir/release-zip"
   update_extract_dir="$release_download_dir/update-zip"
   mkdir -p "$release_download_dir"
-  rm -rf "$update_extract_dir"
+  rm -rf "$zip_extract_dir" "$update_extract_dir"
 
   info "Downloading DMG for local signature verification"
   info "$downloaded_dmg"
@@ -141,30 +145,44 @@ if [[ "$VERIFY_DMG_SIGNATURE" == "1" ]]; then
     "Downloaded DMG has a stapled notarization ticket" \
     xcrun stapler validate "$downloaded_dmg"
 
-  info "Downloading Sparkle update ZIP for local signature verification"
-  info "$downloaded_update_zip"
-  curl -fL --retry 2 --retry-delay 1 "$UPDATE_ZIP_URL" -o "$downloaded_update_zip"
+  verify_downloaded_zip() {
+    local label="$1"
+    local zip_url="$2"
+    local zip_path="$3"
+    local extract_dir="$4"
 
-  mkdir -p "$update_extract_dir"
-  ditto -x -k "$downloaded_update_zip" "$update_extract_dir"
-  extracted_app="$update_extract_dir/TokenMonitor.app"
-  if [[ ! -d "$extracted_app" ]]; then
-    fail "Downloaded Sparkle update ZIP did not contain TokenMonitor.app: $downloaded_update_zip"
-  fi
+    info "Downloading $label for local signature verification"
+    info "$zip_path"
+    curl -fL --retry 2 --retry-delay 1 "$zip_url" -o "$zip_path"
 
-  check_command \
-    "Downloaded Sparkle update app code signature verifies" \
-    codesign --verify --deep --strict "$extracted_app"
+    mkdir -p "$extract_dir"
+    ditto -x -k "$zip_path" "$extract_dir"
 
-  extracted_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$extracted_app/Contents/Info.plist")"
-  extracted_build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$extracted_app/Contents/Info.plist")"
-  if [[ "$extracted_version" == "$VERSION" && "$extracted_build" == "$BUILD_NUMBER" ]]; then
-    pass "Downloaded Sparkle update app version matches $VERSION ($BUILD_NUMBER)"
-  else
-    fail "Downloaded Sparkle update app version mismatch: expected $VERSION ($BUILD_NUMBER), found $extracted_version ($extracted_build)"
-  fi
+    local extracted_app="$extract_dir/TokenMonitor.app"
+    if [[ ! -d "$extracted_app" ]]; then
+      fail "Downloaded $label did not contain TokenMonitor.app: $zip_path"
+    fi
+
+    check_command \
+      "Downloaded $label app code signature verifies" \
+      codesign --verify --deep --strict "$extracted_app"
+
+    local extracted_version
+    local extracted_build
+    extracted_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$extracted_app/Contents/Info.plist")"
+    extracted_build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$extracted_app/Contents/Info.plist")"
+    if [[ "$extracted_version" == "$VERSION" && "$extracted_build" == "$BUILD_NUMBER" ]]; then
+      pass "Downloaded $label app version matches $VERSION ($BUILD_NUMBER)"
+    else
+      fail "Downloaded $label app version mismatch: expected $VERSION ($BUILD_NUMBER), found $extracted_version ($extracted_build)"
+    fi
+  }
+
+  verify_downloaded_zip "GitHub ZIP" "$ZIP_URL" "$downloaded_zip" "$zip_extract_dir"
+  verify_downloaded_zip "Sparkle update ZIP" "$UPDATE_ZIP_URL" "$downloaded_update_zip" "$update_extract_dir"
+
 else
-  info "Set TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 to download the DMG and Sparkle update ZIP for local signature verification."
+  info "Set TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 to download the DMG, GitHub ZIP, and Sparkle update ZIP for local signature verification."
 fi
 
 printf '\nPublic release verification complete.\n'
