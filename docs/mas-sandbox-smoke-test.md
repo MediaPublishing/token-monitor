@@ -60,7 +60,7 @@ Do not upload the MAS build if any of these occur:
 
 ## Completion Record
 
-Record the final result before upload:
+Copy `docs/mas-sandbox-smoke-test-receipt.md` for the final test run and record the result before upload:
 
 ```text
 Build:
