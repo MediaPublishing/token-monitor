@@ -12,6 +12,28 @@ TAG="${1:-}"
 VERSION="${2:-}"
 BUILD_NUMBER="${3:-}"
 
+usage() {
+  cat <<'EOF'
+Usage:
+  ./scripts/verify-public-release.sh <tag> <version> <build>
+
+Example:
+  ./scripts/verify-public-release.sh v1.0.14 1.0.14 15
+
+If dist/TokenMonitor.app exists, version and build default to its Info.plist.
+
+Optional signed-release verification:
+  TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>
+
+This downloads and verifies the public DMG, GitHub ZIP, and Sparkle update ZIP.
+EOF
+}
+
+if [[ "$TAG" == "-h" || "$TAG" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
 pass() {
   printf '[OK] %s\n' "$1"
 }
@@ -71,20 +93,7 @@ if [[ -z "$TAG" && -n "$VERSION" ]]; then
 fi
 
 if [[ -z "$TAG" || -z "$VERSION" || -z "$BUILD_NUMBER" ]]; then
-  cat >&2 <<'EOF'
-Usage:
-  ./scripts/verify-public-release.sh <tag> <version> <build>
-
-Example:
-  ./scripts/verify-public-release.sh v1.0.14 1.0.14 15
-
-If dist/TokenMonitor.app exists, version and build default to its Info.plist.
-
-Optional signed-release verification:
-  TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>
-
-This downloads and verifies the public DMG, GitHub ZIP, and Sparkle update ZIP.
-EOF
+  usage >&2
   exit 1
 fi
 

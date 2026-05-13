@@ -62,6 +62,10 @@ struct MarketingAssetTests {
             contentsOf: rootURL.appendingPathComponent(".github/workflows/release.yml"),
             encoding: .utf8
         )
+        let ciWorkflow = try String(
+            contentsOf: rootURL.appendingPathComponent(".github/workflows/ci.yml"),
+            encoding: .utf8
+        )
         let publicReleaseVerifierURL = rootURL.appendingPathComponent("scripts/verify-public-release.sh")
         let publicReleaseVerifier = try String(contentsOf: publicReleaseVerifierURL, encoding: .utf8)
 
@@ -115,9 +119,14 @@ struct MarketingAssetTests {
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_NOTARIZE=1"))
         #expect(releaseWorkflow.contains("Developer ID signing is not configured; skipping notarization."))
         #expect(releaseWorkflow.contains("Refusing to upload a signed non-notarized release."))
+        #expect(ciWorkflow.contains("Check release scripts"))
+        #expect(ciWorkflow.contains("bash -n scripts/*.sh"))
+        #expect(ciWorkflow.contains("./scripts/package-mas-pkg.sh --help"))
+        #expect(ciWorkflow.contains("Missing TOKEN_MONITOR_MAS_CODESIGN_IDENTITY"))
         #expect(publicReleaseVerifier.contains("TokenMonitor-macOS.dmg"))
         #expect(publicReleaseVerifier.contains("TokenMonitor-macOS.zip"))
         #expect(publicReleaseVerifier.contains("appcast.xml"))
+        #expect(publicReleaseVerifier.contains("TAG\" == \"-h\" || \"$TAG\" == \"--help\""))
         #expect(publicReleaseVerifier.contains("updates/$UPDATE_ZIP_NAME"))
         #expect(publicReleaseVerifier.contains("TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1"))
         #expect(publicReleaseVerifier.contains("public DMG, GitHub ZIP, and Sparkle update ZIP"))

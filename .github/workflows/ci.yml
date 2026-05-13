@@ -23,6 +23,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
 
+      - name: Check release scripts
+        run: |
+          bash -n scripts/*.sh
+          ./scripts/check-apple-distribution.sh --help
+          ./scripts/check-app-store-submission-gates.sh --help
+          ./scripts/check-github-release-secrets.sh --help
+          ./scripts/package-mas-pkg.sh --help
+          ./scripts/preflight-release.sh --help
+          ./scripts/preflight-mas-submission.sh --help
+          ./scripts/verify-public-release.sh --help
+
+          if ./scripts/package-mas-pkg.sh >/tmp/token-monitor-mas-pkg.out 2>&1; then
+            echo "package-mas-pkg.sh unexpectedly passed without signing identities" >&2
+            exit 1
+          fi
+          grep -Fq "Missing TOKEN_MONITOR_MAS_CODESIGN_IDENTITY" /tmp/token-monitor-mas-pkg.out
+
       - name: Run tests
         run: swift test
 
