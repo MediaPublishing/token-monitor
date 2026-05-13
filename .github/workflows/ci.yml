@@ -37,6 +37,7 @@ jobs:
           ./scripts/check-release-version-consistency.sh --help
           ./scripts/check-public-repo-hygiene.sh --help
           ./scripts/check-github-security-reporting.sh --help
+          ./scripts/check-public-distribution-urls.sh --help
           ./scripts/check-release-version-consistency.sh
           ./scripts/check-public-repo-hygiene.sh
           ./scripts/audit-apple-distribution.sh --help

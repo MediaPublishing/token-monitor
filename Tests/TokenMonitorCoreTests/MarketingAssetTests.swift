@@ -169,489 +169,221 @@ struct MarketingAssetTests {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
 
-        let readme = try String(
-            contentsOf: rootURL.appendingPathComponent("README.md"),
+        let requiredFiles = [
+            "docs/apple-distribution-readiness.md",
+            "docs/apple-access-handoff.md",
+            "docs/apple-distribution-completion-audit.md",
+            "docs/apple-credential-runbook.md",
+            "docs/mac-app-store-feasibility.md",
+            "packaging/TokenMonitorMAS.entitlements",
+            "docs/app-store-connect-identity.md",
+            "docs/release-recovery-runbook.md",
+            "docs/publication-legal-checklist.md",
+            "docs/app-store-submission-packet.md",
+            "docs/app-store-privacy-labels.md",
+            "docs/app-store-screenshot-checklist.md",
+            "docs/mas-sandbox-smoke-test.md",
+            "docs/mas-sandbox-smoke-test-receipt.md",
+            "scripts/check-apple-distribution.sh",
+            "scripts/check-github-release-secrets.sh",
+            "scripts/check-github-security-reporting.sh",
+            "scripts/check-app-store-metadata.sh",
+            "scripts/check-app-store-screenshots.sh",
+            "scripts/check-app-store-identity.sh",
+            "scripts/check-release-recovery-readiness.sh",
+            "scripts/check-release-version-consistency.sh",
+            "scripts/audit-apple-distribution.sh",
+            "scripts/preflight-release.sh",
+            "scripts/check-mas-readiness.sh",
+            "scripts/verify-mas-build.sh",
+            "scripts/package-mas-pkg.sh",
+            "scripts/preflight-mas-submission.sh",
+            "scripts/check-app-store-upload-readiness.sh",
+            "scripts/check-app-store-submission-gates.sh",
+            "scripts/check-publication-legal-gates.sh",
+            "scripts/check-public-repo-hygiene.sh",
+            "Sources/TokenMonitorApp/SettingsView.swift",
+            "Sources/TokenMonitorApp/AppUpdateController.swift"
+        ]
+        let missingFiles = requiredFiles.filter { path in
+            !FileManager.default.fileExists(atPath: rootURL.appendingPathComponent(path).path)
+        }
+        #expect(missingFiles.isEmpty, "Missing distribution readiness files: \(missingFiles)")
+
+        let executableScripts = requiredFiles.filter { $0.hasPrefix("scripts/") }
+        let nonExecutableScripts = executableScripts.filter { path in
+            !FileManager.default.isExecutableFile(atPath: rootURL.appendingPathComponent(path).path)
+        }
+        #expect(nonExecutableScripts.isEmpty, "Distribution scripts are not executable: \(nonExecutableScripts)")
+
+        let coverage: [(String, [String])] = [
+            ("README.md", [
+                "docs/apple-distribution-readiness.md",
+                "docs/apple-access-handoff.md",
+                "docs/apple-credential-runbook.md",
+                "docs/mac-app-store-feasibility.md",
+                "docs/app-store-submission-packet.md",
+                "docs/app-store-connect-identity.md",
+                "docs/app-store-privacy-labels.md",
+                "docs/app-store-screenshot-checklist.md",
+                "docs/release-recovery-runbook.md",
+                "docs/publication-legal-checklist.md"
+            ]),
+            ("docs/apple-distribution-readiness.md", [
+                "Developer ID DMG",
+                "Mac App Store Feasibility",
+                "TOKEN_MONITOR_CODESIGN_IDENTITY",
+                "TOKEN_MONITOR_NOTARIZE",
+                "TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64",
+                "TOKEN_MONITOR_NOTARY_APP_PASSWORD",
+                "App Store Connect API",
+                "SPARKLE_PRIVATE_KEY",
+                "Marketing Setup",
+                "Ongoing Issue-Fixing Loop",
+                "Completion Audit",
+                "not complete until a signed, notarized, stapled Developer ID release is produced"
+            ]),
+            ("docs/apple-distribution-completion-audit.md", [
+                "Prompt-To-Artifact Checklist",
+                "./scripts/audit-apple-distribution.sh --require-complete",
+                "./scripts/check-app-store-metadata.sh",
+                "./scripts/check-app-store-identity.sh --require-ready",
+                "./scripts/check-release-recovery-readiness.sh --require-ready",
+                "./scripts/check-release-version-consistency.sh",
+                "./scripts/check-public-repo-hygiene.sh",
+                "./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting",
+                "Not complete.",
+                "Do not mark the Apple distribution objective complete",
+                "Apple Distribution certificate",
+                "Mac App Store installer distribution certificate",
+                "dist/mas/TokenMonitor-macOS-AppStore.pkg",
+                "./scripts/check-app-store-upload-readiness.sh --require-ready",
+                "./scripts/check-publication-legal-gates.sh --require-legal-gates"
+            ]),
+            ("docs/apple-credential-runbook.md", [
+                "TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64",
+                "TOKEN_MONITOR_NOTARY_APP_PASSWORD",
+                "SPARKLE_PRIVATE_KEY",
+                "./scripts/audit-apple-distribution.sh --require-complete --run-tests",
+                "./scripts/package-release.sh --require-distribution-ready",
+                "TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1",
+                "Mac App Store Certificates",
+                "App Store Connect Upload Credentials"
+            ]),
+            ("docs/mac-app-store-feasibility.md", [
+                "Mac App Store distribution is not ready as-is.",
+                "./scripts/check-mas-readiness.sh",
+                "scripts/check-app-store-identity.sh --require-ready",
+                "scripts/package-mas-pkg.sh",
+                "scripts/check-app-store-upload-readiness.sh",
+                "com.apple.security.app-sandbox"
+            ]),
+            ("docs/app-store-submission-packet.md", [
+                "Reviewer Notes Draft",
+                "Reviewer Test Plan",
+                "Privacy Label Draft",
+                "./scripts/check-app-store-metadata.sh",
+                "./scripts/check-app-store-screenshots.sh --require-ready",
+                "scripts/check-app-store-submission-gates.sh --require-human-gates",
+                "No Sparkle framework or `SU*` Info.plist keys"
+            ]),
+            ("docs/app-store-privacy-labels.md", [
+                "No, Token Monitor does not collect data from this app.",
+                "No, Token Monitor does not track users across apps or websites.",
+                "TOKEN_MONITOR_APP_STORE_PRIVACY_APPROVED=1"
+            ]),
+            ("docs/app-store-screenshot-checklist.md", [
+                "1 to 10 screenshots",
+                "16:10 aspect ratio",
+                "1280 x 800",
+                "2880 x 1800",
+                "TOKEN_MONITOR_APP_STORE_SCREENSHOTS_APPROVED=1"
+            ]),
+            ("docs/mas-sandbox-smoke-test.md", [
+                "Pass Criteria",
+                "Fail Conditions",
+                "Launch at Login",
+                "Debug GitHub draft",
+                "Debug email draft"
+            ]),
+            ("scripts/audit-apple-distribution.sh", [
+                "--require-complete",
+                "./scripts/check-release-version-consistency.sh",
+                "./scripts/check-public-repo-hygiene.sh",
+                "./scripts/check-github-security-reporting.sh",
+                "./scripts/check-app-store-metadata.sh",
+                "./scripts/check-app-store-screenshots.sh --require-ready",
+                "./scripts/check-app-store-identity.sh --require-ready",
+                "./scripts/check-github-release-secrets.sh --require-signing-secrets",
+                "./scripts/check-apple-distribution.sh --require-ready",
+                "./scripts/check-app-store-upload-readiness.sh --require-ready",
+                "./scripts/check-app-store-submission-gates.sh --require-human-gates",
+                "./scripts/check-publication-legal-gates.sh --require-legal-gates",
+                "./scripts/check-release-recovery-readiness.sh --require-ready"
+            ]),
+            ("scripts/preflight-release.sh", [
+                "swift test",
+                "./scripts/check-release-version-consistency.sh",
+                "./scripts/check-public-repo-hygiene.sh",
+                "./scripts/check-github-release-secrets.sh --require-signing-secrets",
+                "./scripts/check-apple-distribution.sh --require-ready"
+            ]),
+            ("scripts/package-mas-pkg.sh", [
+                "TOKEN_MONITOR_MAS_INSTALLER_IDENTITY",
+                "productbuild",
+                "TokenMonitor-macOS-AppStore.pkg",
+                "verify-mas-build.sh\" --require-apple-distribution"
+            ]),
+            ("scripts/preflight-mas-submission.sh", [
+                "TOKEN_MONITOR_MAS_CODESIGN_IDENTITY",
+                "TOKEN_MONITOR_MAS_INSTALLER_IDENTITY",
+                "./scripts/check-app-store-identity.sh --require-ready",
+                "./scripts/verify-mas-build.sh --require-apple-distribution",
+                "./scripts/package-mas-pkg.sh"
+            ])
+        ]
+
+        let missingCoverage = try coverage.flatMap { path, needles -> [String] in
+            let text = try String(contentsOf: rootURL.appendingPathComponent(path), encoding: .utf8)
+            return needles.filter { !text.contains($0) }.map { "\(path): \($0)" }
+        }
+        #expect(missingCoverage.isEmpty, "Missing distribution readiness coverage: \(missingCoverage)")
+    }
+
+    @Test func publicDistributionURLChecksAreCovered() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let publicDistributionURLsScriptURL = rootURL.appendingPathComponent("scripts/check-public-distribution-urls.sh")
+        let publicDistributionURLsScript = try String(contentsOf: publicDistributionURLsScriptURL, encoding: .utf8)
+        let distributionAuditScript = try String(
+            contentsOf: rootURL.appendingPathComponent("scripts/audit-apple-distribution.sh"),
             encoding: .utf8
         )
-        let distributionDocURL = rootURL.appendingPathComponent("docs/apple-distribution-readiness.md")
-        let distributionDoc = try String(contentsOf: distributionDocURL, encoding: .utf8)
-        let accessHandoffURL = rootURL.appendingPathComponent("docs/apple-access-handoff.md")
-        let accessHandoff = try String(contentsOf: accessHandoffURL, encoding: .utf8)
-        let completionAuditURL = rootURL.appendingPathComponent("docs/apple-distribution-completion-audit.md")
-        let completionAudit = try String(contentsOf: completionAuditURL, encoding: .utf8)
-        let credentialRunbookURL = rootURL.appendingPathComponent("docs/apple-credential-runbook.md")
-        let credentialRunbook = try String(contentsOf: credentialRunbookURL, encoding: .utf8)
-        let masFeasibilityURL = rootURL.appendingPathComponent("docs/mac-app-store-feasibility.md")
-        let masFeasibility = try String(contentsOf: masFeasibilityURL, encoding: .utf8)
-        let masEntitlementsURL = rootURL.appendingPathComponent("packaging/TokenMonitorMAS.entitlements")
-        let masEntitlements = try String(contentsOf: masEntitlementsURL, encoding: .utf8)
-        let appStoreIdentityURL = rootURL.appendingPathComponent("docs/app-store-connect-identity.md")
-        let appStoreIdentity = try String(contentsOf: appStoreIdentityURL, encoding: .utf8)
-        let releaseRecoveryRunbookURL = rootURL.appendingPathComponent("docs/release-recovery-runbook.md")
-        let releaseRecoveryRunbook = try String(contentsOf: releaseRecoveryRunbookURL, encoding: .utf8)
-        let legalChecklistURL = rootURL.appendingPathComponent("docs/publication-legal-checklist.md")
-        let legalChecklist = try String(contentsOf: legalChecklistURL, encoding: .utf8)
-        let appStorePacketURL = rootURL.appendingPathComponent("docs/app-store-submission-packet.md")
-        let appStorePacket = try String(contentsOf: appStorePacketURL, encoding: .utf8)
-        let appStorePrivacyLabelsURL = rootURL.appendingPathComponent("docs/app-store-privacy-labels.md")
-        let appStorePrivacyLabels = try String(contentsOf: appStorePrivacyLabelsURL, encoding: .utf8)
-        let appStoreScreenshotChecklistURL = rootURL.appendingPathComponent("docs/app-store-screenshot-checklist.md")
-        let appStoreScreenshotChecklist = try String(contentsOf: appStoreScreenshotChecklistURL, encoding: .utf8)
-        let masSmokeTestURL = rootURL.appendingPathComponent("docs/mas-sandbox-smoke-test.md")
-        let masSmokeTest = try String(contentsOf: masSmokeTestURL, encoding: .utf8)
-        let masSmokeTestReceiptURL = rootURL.appendingPathComponent("docs/mas-sandbox-smoke-test-receipt.md")
-        let masSmokeTestReceipt = try String(contentsOf: masSmokeTestReceiptURL, encoding: .utf8)
-        let readinessScriptURL = rootURL.appendingPathComponent("scripts/check-apple-distribution.sh")
-        let readinessScript = try String(contentsOf: readinessScriptURL, encoding: .utf8)
-        let githubSecretsScriptURL = rootURL.appendingPathComponent("scripts/check-github-release-secrets.sh")
-        let githubSecretsScript = try String(contentsOf: githubSecretsScriptURL, encoding: .utf8)
-        let githubSecurityReportingScriptURL = rootURL.appendingPathComponent("scripts/check-github-security-reporting.sh")
-        let githubSecurityReportingScript = try String(contentsOf: githubSecurityReportingScriptURL, encoding: .utf8)
-        let appStoreMetadataScriptURL = rootURL.appendingPathComponent("scripts/check-app-store-metadata.sh")
-        let appStoreMetadataScript = try String(contentsOf: appStoreMetadataScriptURL, encoding: .utf8)
-        let appStoreScreenshotScriptURL = rootURL.appendingPathComponent("scripts/check-app-store-screenshots.sh")
-        let appStoreScreenshotScript = try String(contentsOf: appStoreScreenshotScriptURL, encoding: .utf8)
-        let appStoreIdentityScriptURL = rootURL.appendingPathComponent("scripts/check-app-store-identity.sh")
-        let appStoreIdentityScript = try String(contentsOf: appStoreIdentityScriptURL, encoding: .utf8)
-        let releaseRecoveryScriptURL = rootURL.appendingPathComponent("scripts/check-release-recovery-readiness.sh")
-        let releaseRecoveryScript = try String(contentsOf: releaseRecoveryScriptURL, encoding: .utf8)
-        let releaseVersionScriptURL = rootURL.appendingPathComponent("scripts/check-release-version-consistency.sh")
-        let releaseVersionScript = try String(contentsOf: releaseVersionScriptURL, encoding: .utf8)
-        let distributionAuditScriptURL = rootURL.appendingPathComponent("scripts/audit-apple-distribution.sh")
-        let distributionAuditScript = try String(contentsOf: distributionAuditScriptURL, encoding: .utf8)
-        let preflightScriptURL = rootURL.appendingPathComponent("scripts/preflight-release.sh")
-        let preflightScript = try String(contentsOf: preflightScriptURL, encoding: .utf8)
-        let masReadinessScriptURL = rootURL.appendingPathComponent("scripts/check-mas-readiness.sh")
-        let masReadinessScript = try String(contentsOf: masReadinessScriptURL, encoding: .utf8)
-        let masVerifierScriptURL = rootURL.appendingPathComponent("scripts/verify-mas-build.sh")
-        let masVerifierScript = try String(contentsOf: masVerifierScriptURL, encoding: .utf8)
-        let masPackageScriptURL = rootURL.appendingPathComponent("scripts/package-mas-pkg.sh")
-        let masPackageScript = try String(contentsOf: masPackageScriptURL, encoding: .utf8)
-        let masPreflightScriptURL = rootURL.appendingPathComponent("scripts/preflight-mas-submission.sh")
-        let masPreflightScript = try String(contentsOf: masPreflightScriptURL, encoding: .utf8)
-        let appStoreUploadScriptURL = rootURL.appendingPathComponent("scripts/check-app-store-upload-readiness.sh")
-        let appStoreUploadScript = try String(contentsOf: appStoreUploadScriptURL, encoding: .utf8)
-        let appStoreGateScriptURL = rootURL.appendingPathComponent("scripts/check-app-store-submission-gates.sh")
-        let appStoreGateScript = try String(contentsOf: appStoreGateScriptURL, encoding: .utf8)
-        let publicationLegalGateScriptURL = rootURL.appendingPathComponent("scripts/check-publication-legal-gates.sh")
-        let publicationLegalGateScript = try String(contentsOf: publicationLegalGateScriptURL, encoding: .utf8)
-        let publicRepoHygieneScriptURL = rootURL.appendingPathComponent("scripts/check-public-repo-hygiene.sh")
-        let publicRepoHygieneScript = try String(contentsOf: publicRepoHygieneScriptURL, encoding: .utf8)
-        let settingsViewURL = rootURL.appendingPathComponent("Sources/TokenMonitorApp/SettingsView.swift")
-        let settingsView = try String(contentsOf: settingsViewURL, encoding: .utf8)
-        let appUpdateControllerURL = rootURL.appendingPathComponent("Sources/TokenMonitorApp/AppUpdateController.swift")
-        let appUpdateController = try String(contentsOf: appUpdateControllerURL, encoding: .utf8)
+        let completionAudit = try String(
+            contentsOf: rootURL.appendingPathComponent("docs/apple-distribution-completion-audit.md"),
+            encoding: .utf8
+        )
+        let launchKit = try String(
+            contentsOf: rootURL.appendingPathComponent("docs/marketing-launch-kit.md"),
+            encoding: .utf8
+        )
 
-        #expect(FileManager.default.fileExists(atPath: distributionDocURL.path))
-        #expect(FileManager.default.fileExists(atPath: accessHandoffURL.path))
-        #expect(FileManager.default.fileExists(atPath: completionAuditURL.path))
-        #expect(FileManager.default.fileExists(atPath: credentialRunbookURL.path))
-        #expect(FileManager.default.fileExists(atPath: masFeasibilityURL.path))
-        #expect(FileManager.default.fileExists(atPath: masEntitlementsURL.path))
-        #expect(FileManager.default.fileExists(atPath: appStoreIdentityURL.path))
-        #expect(FileManager.default.fileExists(atPath: releaseRecoveryRunbookURL.path))
-        #expect(FileManager.default.fileExists(atPath: legalChecklistURL.path))
-        #expect(FileManager.default.fileExists(atPath: appStorePacketURL.path))
-        #expect(FileManager.default.fileExists(atPath: appStorePrivacyLabelsURL.path))
-        #expect(FileManager.default.fileExists(atPath: appStoreScreenshotChecklistURL.path))
-        #expect(FileManager.default.fileExists(atPath: masSmokeTestURL.path))
-        #expect(FileManager.default.fileExists(atPath: masSmokeTestReceiptURL.path))
-        #expect(FileManager.default.fileExists(atPath: readinessScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: readinessScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: githubSecretsScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: githubSecretsScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: githubSecurityReportingScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: githubSecurityReportingScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: appStoreMetadataScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: appStoreMetadataScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: appStoreScreenshotScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: appStoreScreenshotScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: appStoreIdentityScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: appStoreIdentityScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: releaseRecoveryScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: releaseRecoveryScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: releaseVersionScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: releaseVersionScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: distributionAuditScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: distributionAuditScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: preflightScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: preflightScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: masReadinessScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: masReadinessScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: masVerifierScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: masVerifierScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: masPackageScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: masPackageScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: masPreflightScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: masPreflightScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: appStoreUploadScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: appStoreUploadScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: appStoreGateScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: appStoreGateScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: publicationLegalGateScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: publicationLegalGateScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: publicRepoHygieneScriptURL.path))
-        #expect(FileManager.default.isExecutableFile(atPath: publicRepoHygieneScriptURL.path))
-        #expect(FileManager.default.fileExists(atPath: settingsViewURL.path))
-        #expect(FileManager.default.fileExists(atPath: appUpdateControllerURL.path))
-        #expect(readme.contains("docs/apple-distribution-readiness.md"))
-        #expect(readme.contains("docs/apple-access-handoff.md"))
-        #expect(readme.contains("docs/apple-credential-runbook.md"))
-        #expect(readme.contains("docs/mac-app-store-feasibility.md"))
-        #expect(readme.contains("docs/app-store-submission-packet.md"))
-        #expect(readme.contains("docs/app-store-connect-identity.md"))
-        #expect(readme.contains("docs/app-store-privacy-labels.md"))
-        #expect(readme.contains("docs/app-store-screenshot-checklist.md"))
-        #expect(readme.contains("docs/release-recovery-runbook.md"))
-        #expect(readme.contains("docs/publication-legal-checklist.md"))
-        #expect(distributionDoc.contains("docs/apple-credential-runbook.md"))
-        #expect(distributionDoc.contains("docs/apple-access-handoff.md"))
-        #expect(distributionDoc.contains("docs/apple-distribution-completion-audit.md"))
-        #expect(distributionDoc.contains("docs/mac-app-store-feasibility.md"))
-        #expect(distributionDoc.contains("docs/app-store-submission-packet.md"))
-        #expect(distributionDoc.contains("docs/app-store-connect-identity.md"))
-        #expect(distributionDoc.contains("packaging/TokenMonitorMAS.entitlements"))
-        #expect(distributionDoc.contains("docs/publication-legal-checklist.md"))
-        #expect(distributionDoc.contains("scripts/check-apple-distribution.sh"))
-        #expect(distributionDoc.contains("scripts/check-github-release-secrets.sh"))
-        #expect(distributionDoc.contains("scripts/audit-apple-distribution.sh"))
-        #expect(distributionDoc.contains("scripts/preflight-release.sh"))
-        #expect(distributionDoc.contains("scripts/verify-public-release.sh"))
-        #expect(distributionDoc.contains("scripts/check-mas-readiness.sh"))
-        #expect(distributionDoc.contains("scripts/check-app-store-submission-gates.sh"))
-        #expect(distributionDoc.contains("scripts/package-mas-pkg.sh"))
-        #expect(distributionDoc.contains("scripts/check-app-store-upload-readiness.sh"))
-        #expect(distributionDoc.contains("docs/release-recovery-runbook.md"))
-        #expect(distributionDoc.contains("scripts/check-release-recovery-readiness.sh"))
-        #expect(distributionDoc.contains("docs/mas-sandbox-smoke-test.md"))
-        #expect(distributionDoc.contains("Developer ID DMG"))
-        #expect(distributionDoc.contains("swift test` passes with 34 tests"))
-        #expect(distributionDoc.contains("Mac App Store Feasibility"))
-        #expect(distributionDoc.contains("TOKEN_MONITOR_CODESIGN_IDENTITY"))
-        #expect(distributionDoc.contains("TOKEN_MONITOR_NOTARIZE"))
-        #expect(distributionDoc.contains("TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64"))
-        #expect(distributionDoc.contains("TOKEN_MONITOR_NOTARY_APP_PASSWORD"))
-        #expect(distributionDoc.contains("App Store Connect API"))
-        #expect(distributionDoc.contains("SPARKLE_PRIVATE_KEY"))
-        #expect(distributionDoc.contains("Marketing Setup"))
-        #expect(distributionDoc.contains("Ongoing Issue-Fixing Loop"))
-        #expect(distributionDoc.contains("Completion Audit"))
-        #expect(distributionDoc.contains("The repository is prepared for Apple Developer access."))
-        #expect(distributionDoc.contains("No Developer ID Application certificate is installed locally."))
-        #expect(distributionDoc.contains("Gatekeeper rejects the current local app and DMG."))
-        #expect(distributionDoc.contains("not complete until a signed, notarized, stapled Developer ID release is produced"))
-        #expect(distributionDoc.contains("Repository license and final legal/privacy approvals remain human approval gates"))
-        #expect(accessHandoff.contains("Do not paste Apple ID passwords"))
-        #expect(accessHandoff.contains("Role Matrix"))
-        #expect(accessHandoff.contains("Create Developer ID certificates"))
-        #expect(accessHandoff.contains("Account Holder"))
-        #expect(accessHandoff.contains("App Manager"))
-        #expect(accessHandoff.contains("Revocation Checklist"))
-        #expect(accessHandoff.contains("docs/apple-credential-runbook.md"))
-        #expect(accessHandoff.contains("docs/app-store-connect-identity.md"))
-        #expect(accessHandoff.contains("./scripts/check-app-store-identity.sh --require-ready"))
-        #expect(accessHandoff.contains("./scripts/check-app-store-upload-readiness.sh --require-ready"))
-        #expect(completionAudit.contains("Prompt-To-Artifact Checklist"))
-        #expect(completionAudit.contains("Document Apple access handoff"))
-        #expect(completionAudit.contains("Run consolidated completion audit"))
-        #expect(completionAudit.contains("./scripts/audit-apple-distribution.sh --require-complete"))
-        #expect(completionAudit.contains("Validate App Store metadata limits"))
-        #expect(completionAudit.contains("./scripts/check-app-store-metadata.sh"))
-        #expect(completionAudit.contains("Check App Store Connect identity"))
-        #expect(completionAudit.contains("./scripts/check-app-store-identity.sh --require-ready"))
-        #expect(completionAudit.contains("Prepare release recovery path"))
-        #expect(completionAudit.contains("./scripts/check-release-recovery-readiness.sh --require-ready"))
-        #expect(completionAudit.contains("Gate release version consistency"))
-        #expect(completionAudit.contains("./scripts/check-release-version-consistency.sh"))
-        #expect(completionAudit.contains("Check public repository hygiene"))
-        #expect(completionAudit.contains("./scripts/check-public-repo-hygiene.sh"))
-        #expect(completionAudit.contains("Check GitHub security reporting"))
-        #expect(completionAudit.contains("./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting"))
-        #expect(completionAudit.contains("Not complete."))
-        #expect(completionAudit.contains("./scripts/check-github-release-secrets.sh --require-signing-secrets"))
-        #expect(completionAudit.contains("enable `require_developer_id`"))
-        #expect(completionAudit.contains("spctl --assess --type execute --verbose=4"))
-        #expect(completionAudit.contains("Do not mark the Apple distribution objective complete"))
-        #expect(completionAudit.contains("Apple Distribution certificate"))
-        #expect(completionAudit.contains("Keep MAS update UI App Store-safe"))
-        #expect(completionAudit.contains("Mac App Store installer distribution certificate"))
-        #expect(completionAudit.contains("Mac App Store installer distribution identities separately"))
-        #expect(completionAudit.contains("dist/mas/TokenMonitor-macOS-AppStore.pkg"))
-        #expect(completionAudit.contains("./scripts/check-app-store-upload-readiness.sh --require-ready"))
-        #expect(completionAudit.contains("./scripts/check-app-store-screenshots.sh --require-ready"))
-        #expect(completionAudit.contains("Sandbox smoke test"))
-        #expect(completionAudit.contains("docs/mas-sandbox-smoke-test.md"))
-        #expect(completionAudit.contains("docs/mas-sandbox-smoke-test-receipt.md"))
-        #expect(completionAudit.contains("./scripts/check-app-store-submission-gates.sh --require-human-gates"))
-        #expect(completionAudit.contains("./scripts/check-publication-legal-gates.sh --require-legal-gates"))
-        #expect(completionAudit.contains("human/App Store Connect acknowledgements"))
-        #expect(completionAudit.contains("gh run list --repo MediaPublishing/token-monitor --branch main --limit 1"))
-        #expect(completionAudit.contains("release script smoke checks"))
-        #expect(readinessScript.contains("notarytool"))
-        #expect(readinessScript.contains("stapler"))
-        #expect(readinessScript.contains("Developer ID Application"))
-        #expect(readinessScript.contains("Mac App Store installer distribution identity"))
-        #expect(readinessScript.contains("3rd Party Mac Developer Installer|Mac Installer Distribution"))
-        #expect(readinessScript.contains("Authority=Developer ID Application:"))
-        #expect(readinessScript.contains("is signed with a Developer ID Application authority"))
-        #expect(readinessScript.contains("is not signed with a Developer ID Application authority"))
-        #expect(readinessScript.contains("DMG code signature verifies"))
-        #expect(readinessScript.contains("TOKEN_MONITOR_NOTARY_PROFILE"))
-        #expect(readinessScript.contains("--require-ready"))
-        #expect(readinessScript.contains("TOKEN_MONITOR_REQUIRE_DISTRIBUTION_READY"))
-        #expect(readinessScript.contains("Apple distribution readiness is strict-clean"))
-        #expect(githubSecretsScript.contains("TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS"))
-        #expect(githubSecretsScript.contains("--require-signing-secrets"))
-        #expect(githubSecretsScript.contains("TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64"))
-        #expect(githubSecretsScript.contains("SPARKLE_PRIVATE_KEY"))
-        #expect(githubSecretsScript.contains("GitHub secret values are not readable via gh"))
-        #expect(githubSecretsScript.contains("confirm names only"))
-        #expect(githubSecretsScript.contains("Local TOKEN_MONITOR_CODESIGN_IDENTITY must start with 'Developer ID Application:'"))
-        #expect(githubSecretsScript.contains("Release workflow validates the GitHub secret value at runtime"))
-        #expect(githubSecurityReportingScript.contains("--require-private-vulnerability-reporting"))
-        #expect(githubSecurityReportingScript.contains("private-vulnerability-reporting"))
-        #expect(githubSecurityReportingScript.contains("Private vulnerability reporting is enabled"))
-        #expect(githubSecurityReportingScript.contains("GitHub Issues are enabled"))
-        #expect(appStoreMetadataScript.contains("App name"))
-        #expect(appStoreMetadataScript.contains("Promotional text"))
-        #expect(appStoreMetadataScript.contains("Keywords are"))
-        #expect(appStoreMetadataScript.contains("not longer than two characters"))
-        #expect(appStoreMetadataScript.contains("Privacy URL"))
-        #expect(appStoreScreenshotScript.contains("--require-ready"))
-        #expect(appStoreScreenshotScript.contains("TOKEN_MONITOR_APP_STORE_SCREENSHOT_DIR"))
-        #expect(appStoreScreenshotScript.contains("Screenshot count must be between 1 and 10"))
-        #expect(appStoreScreenshotScript.contains("1280 x 800"))
-        #expect(appStoreScreenshotScript.contains("2880 x 1800"))
-        #expect(appStoreScreenshotScript.contains("Manual screenshot gate"))
-        #expect(appStoreIdentityScript.contains("TOKEN_MONITOR_APP_STORE_TEAM_ID"))
-        #expect(appStoreIdentityScript.contains("TOKEN_MONITOR_APP_STORE_SKU"))
-        #expect(appStoreIdentityScript.contains("TOKEN_MONITOR_APP_STORE_TEAM_APPROVED"))
-        #expect(appStoreIdentityScript.contains("TOKEN_MONITOR_APP_STORE_BUNDLE_ID_APPROVED"))
-        #expect(appStoreIdentityScript.contains("TOKEN_MONITOR_APP_STORE_SKU_APPROVED"))
-        #expect(appStoreIdentityScript.contains("TOKEN_MONITOR_APP_STORE_CATEGORY_APPROVED"))
-        #expect(appStoreIdentityScript.contains("TOKEN_MONITOR_APP_STORE_TEAM_ID is not set"))
-        #expect(appStoreIdentityScript.contains("TOKEN_MONITOR_APP_STORE_SKU is not set"))
-        #expect(appStoreIdentityScript.contains("App Store Connect identity is not ready"))
-        #expect(distributionAuditScript.contains("--require-complete"))
-        #expect(distributionAuditScript.contains("--run-tests"))
-        #expect(distributionAuditScript.contains("without uploading, submitting"))
-        #expect(distributionAuditScript.contains("./scripts/check-release-version-consistency.sh"))
-        #expect(distributionAuditScript.contains("./scripts/check-public-repo-hygiene.sh"))
-        #expect(distributionAuditScript.contains("./scripts/check-github-security-reporting.sh"))
-        #expect(distributionAuditScript.contains("--require-private-vulnerability-reporting"))
-        #expect(distributionAuditScript.contains("Check App Store metadata limits"))
-        #expect(distributionAuditScript.contains("./scripts/check-app-store-metadata.sh"))
-        #expect(distributionAuditScript.contains("./scripts/check-app-store-screenshots.sh"))
-        #expect(distributionAuditScript.contains("./scripts/check-app-store-screenshots.sh --require-ready"))
-        #expect(distributionAuditScript.contains("./scripts/check-app-store-identity.sh"))
-        #expect(distributionAuditScript.contains("./scripts/check-app-store-identity.sh --require-ready"))
-        #expect(distributionAuditScript.contains("./scripts/check-github-release-secrets.sh --require-signing-secrets"))
-        #expect(distributionAuditScript.contains("./scripts/check-apple-distribution.sh --require-ready"))
-        #expect(distributionAuditScript.contains("./scripts/check-app-store-upload-readiness.sh --require-ready"))
-        #expect(distributionAuditScript.contains("./scripts/check-app-store-submission-gates.sh --require-human-gates"))
-        #expect(distributionAuditScript.contains("./scripts/check-publication-legal-gates.sh"))
-        #expect(distributionAuditScript.contains("./scripts/check-publication-legal-gates.sh --require-legal-gates"))
-        #expect(distributionAuditScript.contains("./scripts/check-release-recovery-readiness.sh"))
-        #expect(distributionAuditScript.contains("./scripts/check-release-recovery-readiness.sh --require-ready"))
-        #expect(distributionAuditScript.contains("Apple distribution is not complete yet"))
-        #expect(preflightScript.contains("swift test"))
-        #expect(preflightScript.contains("./scripts/check-release-version-consistency.sh"))
-        #expect(preflightScript.contains("./scripts/check-public-repo-hygiene.sh"))
-        #expect(preflightScript.contains("./scripts/verify-mas-build.sh"))
-        #expect(masVerifierScript.contains("--require-apple-distribution"))
-        #expect(masVerifierScript.contains("TOKEN_MONITOR_REQUIRE_APPLE_DISTRIBUTION"))
-        #expect(masVerifierScript.contains("Authority=Apple Distribution:"))
-        #expect(masVerifierScript.contains("MAS app is not signed with an Apple Distribution identity"))
-        #expect(settingsView.contains("#if MAS_BUILD"))
-        #expect(settingsView.contains("Updates are delivered by the Mac App Store."))
-        #expect(settingsView.contains("Use Sparkle to watch the GitHub release feed and offer new versions."))
-        #expect(settingsView.contains("Check for Updates..."))
-        #expect(appUpdateController.contains("#if MAS_BUILD"))
-        #expect(appUpdateController.contains("Updates are delivered by the Mac App Store for MAS builds."))
-        #expect(appUpdateController.contains("import Sparkle"))
-        #expect(masPackageScript.contains("TOKEN_MONITOR_MAS_INSTALLER_IDENTITY"))
-        #expect(masPackageScript.contains("3rd Party Mac Developer Installer:"))
-        #expect(masPackageScript.contains("Mac Installer Distribution:"))
-        #expect(masPackageScript.contains("productbuild"))
-        #expect(masPackageScript.contains("pkgutil --check-signature"))
-        #expect(masPackageScript.contains("TokenMonitor-macOS-AppStore.pkg"))
-        #expect(masPackageScript.contains("verify-mas-build.sh\" --require-apple-distribution"))
-        #expect(masPreflightScript.contains("TOKEN_MONITOR_MAS_CODESIGN_IDENTITY"))
-        #expect(masPreflightScript.contains("TOKEN_MONITOR_MAS_INSTALLER_IDENTITY"))
-        #expect(masPreflightScript.contains("TOKEN_MONITOR_APP_STORE_TEAM_ID"))
-        #expect(masPreflightScript.contains("TOKEN_MONITOR_APP_STORE_SKU"))
-        #expect(masPreflightScript.contains("TOKEN_MONITOR_APP_STORE_TEAM_APPROVED=1"))
-        #expect(masPreflightScript.contains("TOKEN_MONITOR_APP_STORE_BUNDLE_ID_APPROVED=1"))
-        #expect(masPreflightScript.contains("TOKEN_MONITOR_APP_STORE_SKU_APPROVED=1"))
-        #expect(masPreflightScript.contains("TOKEN_MONITOR_APP_STORE_CATEGORY_APPROVED=1"))
-        #expect(masPreflightScript.contains("Apple Distribution:"))
-        #expect(masPreflightScript.contains("Mac Installer Distribution:"))
-        #expect(masPreflightScript.contains("swift test"))
-        #expect(masPreflightScript.contains("./scripts/check-mas-readiness.sh"))
-        #expect(masPreflightScript.contains("./scripts/check-app-store-identity.sh --require-ready"))
-        #expect(masPreflightScript.contains("./scripts/build-mas-app.sh"))
-        #expect(masPreflightScript.contains("./scripts/verify-mas-build.sh --require-apple-distribution"))
-        #expect(masPreflightScript.contains("./scripts/package-mas-pkg.sh"))
-        #expect(masPreflightScript.contains("Manual gates still required before App Store upload"))
-        #expect(masPreflightScript.contains("./scripts/check-app-store-submission-gates.sh --require-human-gates"))
-        #expect(appStoreUploadScript.contains("This script does not upload anything"))
-        #expect(appStoreUploadScript.contains("TOKEN_MONITOR_APP_STORE_CONNECT_API_KEY_ID"))
-        #expect(appStoreUploadScript.contains("TOKEN_MONITOR_APP_STORE_CONNECT_API_PRIVATE_KEY_PATH"))
-        #expect(appStoreUploadScript.contains("TOKEN_MONITOR_APP_STORE_USERNAME"))
-        #expect(appStoreUploadScript.contains("TOKEN_MONITOR_APP_STORE_APP_PASSWORD"))
-        #expect(appStoreUploadScript.contains("No App Store Connect upload tool is available"))
-        #expect(appStoreUploadScript.contains("Mac App Store installer distribution identity"))
-        #expect(appStoreUploadScript.contains("App Store upload readiness is strict-clean"))
-        #expect(appStoreGateScript.contains("--require-human-gates"))
-        #expect(appStoreGateScript.contains("TOKEN_MONITOR_REQUIRE_APP_STORE_HUMAN_GATES"))
-        #expect(appStoreGateScript.contains("TOKEN_MONITOR_APP_STORE_ACCOUNT_HOLDER_APPROVED"))
-        #expect(appStoreGateScript.contains("TOKEN_MONITOR_APP_STORE_CONNECT_READY"))
-        #expect(appStoreGateScript.contains("TOKEN_MONITOR_APP_STORE_PRIVACY_APPROVED"))
-        #expect(appStoreGateScript.contains("TOKEN_MONITOR_APP_STORE_REVIEWER_PLAN_APPROVED"))
-        #expect(appStoreGateScript.contains("TOKEN_MONITOR_APP_STORE_SCREENSHOTS_APPROVED"))
-        #expect(appStoreGateScript.contains("TOKEN_MONITOR_APP_STORE_SUPPORT_URL_APPROVED"))
-        #expect(appStoreGateScript.contains("TOKEN_MONITOR_APP_STORE_SANDBOX_SMOKE_TEST_PASSED"))
-        #expect(appStoreGateScript.contains("Mac App Store human gates are incomplete"))
-        #expect(appStoreGateScript.contains("Run ./scripts/preflight-mas-submission.sh for the technical MAS build gate."))
-        #expect(publicationLegalGateScript.contains("TOKEN_MONITOR_LICENSE_DECISION_APPROVED"))
-        #expect(publicationLegalGateScript.contains("TOKEN_MONITOR_PUBLIC_CLAIMS_APPROVED"))
-        #expect(publicationLegalGateScript.contains("TOKEN_MONITOR_SUPPORT_SECURITY_APPROVED"))
-        #expect(publicationLegalGateScript.contains("TOKEN_MONITOR_PRIVACY_POLICY_APPROVED"))
-        #expect(publicationLegalGateScript.contains("No repository license file exists"))
-        #expect(publicationLegalGateScript.contains("Publication/legal gates are incomplete"))
-        #expect(preflightScript.contains("./scripts/check-github-release-secrets.sh"))
-        #expect(preflightScript.contains("./scripts/check-github-release-secrets.sh --require-signing-secrets"))
-        #expect(preflightScript.contains("./scripts/check-apple-distribution.sh"))
-        #expect(preflightScript.contains("--require-distribution-ready"))
-        #expect(preflightScript.contains("./scripts/check-apple-distribution.sh --require-ready"))
-        #expect(masReadinessScript.contains("Mac App Store readiness"))
-        #expect(masReadinessScript.contains("TOKEN_MONITOR_MAS_BUILD"))
-        #expect(masReadinessScript.contains("LSApplicationCategoryType"))
-        #expect(masReadinessScript.contains("Info.plist declares an App Store category"))
-        #expect(masReadinessScript.contains("MAS build script exists: scripts/build-mas-app.sh"))
-        #expect(masReadinessScript.contains("SMAppService login items"))
-        #expect(masReadinessScript.contains("Mac App Store static readiness has blockers"))
-        #expect(masReadinessScript.contains("exit 1"))
-        #expect(masReadinessScript.contains("Mac App Store static readiness has no blockers"))
-        #expect(credentialRunbook.contains("Do not share Apple ID passwords"))
-        #expect(credentialRunbook.contains("base64 -i /path/to/DeveloperIDApplication.p12"))
-        #expect(credentialRunbook.contains("TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64"))
-        #expect(credentialRunbook.contains("TOKEN_MONITOR_NOTARY_APP_PASSWORD"))
-        #expect(credentialRunbook.contains("SPARKLE_PRIVATE_KEY"))
-        #expect(credentialRunbook.contains("After Credentials Are Ready"))
-        #expect(credentialRunbook.contains("./scripts/preflight-release.sh --require-signing-secrets"))
-        #expect(credentialRunbook.contains("./scripts/audit-apple-distribution.sh --require-complete --run-tests"))
-        #expect(credentialRunbook.contains("./scripts/package-release.sh --require-distribution-ready"))
-        #expect(credentialRunbook.contains("./scripts/check-apple-distribution.sh --require-ready"))
-        #expect(credentialRunbook.contains("TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1"))
-        #expect(credentialRunbook.contains("Release` workflow manually with the existing tag"))
-        #expect(credentialRunbook.contains("xcrun notarytool store-credentials token-monitor-notary"))
-        #expect(credentialRunbook.contains("Mac App Store Certificates"))
-        #expect(credentialRunbook.contains("App Store Connect Upload Credentials"))
-        #expect(credentialRunbook.contains("TOKEN_MONITOR_MAS_INSTALLER_IDENTITY"))
-        #expect(credentialRunbook.contains("TOKEN_MONITOR_APP_STORE_CONNECT_API_KEY_ID"))
-        #expect(credentialRunbook.contains("dist/mas/TokenMonitor-macOS-AppStore.pkg"))
-        #expect(masFeasibility.contains("Mac App Store distribution is not ready as-is."))
-        #expect(masFeasibility.contains("./scripts/check-mas-readiness.sh"))
-        #expect(masFeasibility.contains("scripts/check-app-store-identity.sh --require-ready"))
-        #expect(masFeasibility.contains("scripts/package-mas-pkg.sh"))
-        #expect(masFeasibility.contains("scripts/check-app-store-upload-readiness.sh"))
-        #expect(masFeasibility.contains("Verify Sparkle is absent from the MAS binary."))
-        #expect(masFeasibility.contains("com.apple.security.app-sandbox"))
-        #expect(masFeasibility.contains("packaging/TokenMonitorMAS.entitlements"))
-        #expect(masFeasibility.contains("WKWebsiteDataStore.default()"))
-        #expect(masFeasibility.contains("SMAppService.mainApp"))
-        #expect(masFeasibility.contains("scripts/build-mas-app.sh"))
-        #expect(masEntitlements.contains("com.apple.security.app-sandbox"))
-        #expect(masEntitlements.contains("com.apple.security.network.client"))
-        #expect(appStoreIdentity.contains("App Store Connect Identity Checklist"))
-        #expect(appStoreIdentity.contains("./scripts/check-app-store-identity.sh --require-ready"))
-        #expect(appStoreIdentity.contains("com.mediapublishing.tokenmonitor"))
-        #expect(appStoreIdentity.contains("public.app-category.productivity"))
-        #expect(appStoreIdentity.contains("TOKEN_MONITOR_APP_STORE_SKU"))
-        #expect(appStoreIdentity.contains("Values required by the strict checker"))
-        #expect(appStoreIdentity.contains("TOKEN_MONITOR_APP_STORE_CATEGORY_APPROVED=1"))
-        #expect(releaseRecoveryRunbook.contains("Release Recovery Runbook"))
-        #expect(releaseRecoveryRunbook.contains("Hotfix Release"))
-        #expect(releaseRecoveryRunbook.contains("Appcast Rollback"))
-        #expect(releaseRecoveryRunbook.contains("Mac App Store Recovery"))
-        #expect(releaseRecoveryRunbook.contains("Credential Exposure"))
-        #expect(releaseRecoveryRunbook.contains("GitHub Issues are public"))
-        #expect(releaseRecoveryRunbook.contains("SPARKLE_PRIVATE_KEY"))
-        #expect(releaseRecoveryScript.contains("workflow_dispatch:"))
-        #expect(releaseRecoveryScript.contains("TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1"))
-        #expect(releaseRecoveryScript.contains("docs/release-recovery-runbook.md"))
-        #expect(releaseVersionScript.contains("CFBundleShortVersionString"))
-        #expect(releaseVersionScript.contains("CFBundleVersion"))
-        #expect(releaseVersionScript.contains("--require-tag"))
-        #expect(releaseVersionScript.contains("Release tag $RELEASE_TAG does not match app version"))
-        #expect(legalChecklist.contains("No repository license is published yet."))
-        #expect(legalChecklist.contains("Do not choose a software license on behalf of the owner."))
-        #expect(legalChecklist.contains("./scripts/check-publication-legal-gates.sh --require-legal-gates"))
-        #expect(legalChecklist.contains("./scripts/check-public-repo-hygiene.sh"))
-        #expect(legalChecklist.contains("docs/app-store-privacy-labels.md"))
-        #expect(legalChecklist.contains("docs/privacy.md"))
-        #expect(legalChecklist.contains("SECURITY.md"))
-        #expect(publicRepoHygieneScript.contains("Tracked sensitive file path(s) found"))
-        #expect(publicRepoHygieneScript.contains("private key block"))
-        #expect(publicRepoHygieneScript.contains("OpenAI secret key"))
-        #expect(publicRepoHygieneScript.contains("GitHub token"))
-        #expect(publicRepoHygieneScript.contains("Slack token"))
-        #expect(publicRepoHygieneScript.contains("AWS access key"))
-        #expect(publicRepoHygieneScript.contains("Public repository hygiene check failed"))
-        #expect(appStorePacket.contains("Reviewer Notes Draft"))
-        #expect(appStorePacket.contains("Reviewer Test Plan"))
-        #expect(appStorePacket.contains("docs/app-store-connect-identity.md"))
-        #expect(appStorePacket.contains("./scripts/check-app-store-identity.sh --require-ready"))
-        #expect(appStorePacket.contains("com.mediapublishing.tokenmonitor"))
-        #expect(appStorePacket.contains("Privacy Label Draft"))
-        #expect(appStorePacket.contains("./scripts/check-app-store-metadata.sh"))
-        #expect(appStorePacket.contains("./scripts/check-app-store-screenshots.sh --require-ready"))
-        #expect(appStorePacket.contains("AI tools"))
-        #expect(appStorePacket.contains("docs/app-store-privacy-labels.md"))
-        #expect(appStorePacket.contains("docs/app-store-screenshot-checklist.md"))
-        #expect(appStorePacket.contains("2880 x 1800"))
-        #expect(appStorePacket.contains("scripts/verify-mas-build.sh"))
-        #expect(appStorePacket.contains("--require-apple-distribution"))
-        #expect(appStorePacket.contains("scripts/package-mas-pkg.sh"))
-        #expect(appStorePacket.contains("scripts/check-app-store-upload-readiness.sh"))
-        #expect(appStorePacket.contains("TOKEN_MONITOR_MAS_INSTALLER_IDENTITY"))
-        #expect(appStorePacket.contains("TokenMonitor-macOS-AppStore.pkg"))
-        #expect(appStorePacket.contains("./scripts/preflight-mas-submission.sh"))
-        #expect(appStorePacket.contains("./scripts/check-app-store-identity.sh --require-ready"))
-        #expect(appStorePacket.contains("The preflight runs:"))
-        #expect(appStorePacket.contains("docs/mas-sandbox-smoke-test.md"))
-        #expect(appStorePacket.contains("TOKEN_MONITOR_MAS_CODESIGN_IDENTITY"))
-        #expect(appStorePacket.contains("scripts/check-app-store-submission-gates.sh --require-human-gates"))
-        #expect(appStorePacket.contains("TOKEN_MONITOR_APP_STORE_ACCOUNT_HOLDER_APPROVED"))
-        #expect(appStorePacket.contains("Do not use personal accounts."))
-        #expect(appStorePacket.contains("No Sparkle framework or `SU*` Info.plist keys"))
-        #expect(appStorePrivacyLabels.contains("No, Token Monitor does not collect data from this app."))
-        #expect(appStorePrivacyLabels.contains("No, Token Monitor does not track users across apps or websites."))
-        #expect(appStorePrivacyLabels.contains("TOKEN_MONITOR_APP_STORE_PRIVACY_APPROVED=1"))
-        #expect(appStorePrivacyLabels.contains("Debug mode still opens drafts only"))
-        #expect(appStorePrivacyLabels.contains("Apple App Privacy Details"))
-        #expect(appStoreScreenshotChecklist.contains("1 to 10 screenshots"))
-        #expect(appStoreScreenshotChecklist.contains("16:10 aspect ratio"))
-        #expect(appStoreScreenshotChecklist.contains("1280 x 800"))
-        #expect(appStoreScreenshotChecklist.contains("2880 x 1800"))
-        #expect(appStoreScreenshotChecklist.contains("dist/app-store/screenshots/"))
-        #expect(appStoreScreenshotChecklist.contains("./scripts/check-app-store-screenshots.sh --require-ready"))
-        #expect(appStoreScreenshotChecklist.contains("TOKEN_MONITOR_APP_STORE_SCREENSHOTS_APPROVED=1"))
-        #expect(appStoreScreenshotChecklist.contains("Do not commit App Store screenshots"))
-        #expect(masSmokeTest.contains("Pass Criteria"))
-        #expect(masSmokeTest.contains("Fail Conditions"))
-        #expect(masSmokeTest.contains("docs/mas-sandbox-smoke-test-receipt.md"))
-        #expect(masSmokeTest.contains("Launch at Login"))
-        #expect(masSmokeTest.contains("Debug GitHub draft"))
-        #expect(masSmokeTest.contains("Debug email draft"))
-        #expect(masSmokeTest.contains("Approved by Account Holder"))
-        #expect(masSmokeTestReceipt.contains("Required Command Evidence"))
-        #expect(masSmokeTestReceipt.contains("Privacy Review"))
-        #expect(masSmokeTestReceipt.contains("./scripts/verify-mas-build.sh --require-apple-distribution"))
-        #expect(masSmokeTestReceipt.contains("./scripts/check-app-store-upload-readiness.sh --require-ready"))
-        #expect(masSmokeTestReceipt.contains("Screenshots contain no cookies, tokens, or debug dumps"))
-        #expect(masSmokeTestReceipt.contains("Approved by Account Holder"))
+        #expect(FileManager.default.fileExists(atPath: publicDistributionURLsScriptURL.path))
+        #expect(FileManager.default.isExecutableFile(atPath: publicDistributionURLsScriptURL.path))
+        #expect(publicDistributionURLsScript.contains("Support URL"))
+        #expect(publicDistributionURLsScript.contains("Marketing URL"))
+        #expect(publicDistributionURLsScript.contains("Privacy URL"))
+        #expect(publicDistributionURLsScript.contains("Latest release page"))
+        #expect(publicDistributionURLsScript.contains("Latest DMG download URL"))
+        #expect(publicDistributionURLsScript.contains("Security reporting URL"))
+        #expect(publicDistributionURLsScript.contains("TOKEN_MONITOR_APP_STORE_PACKET"))
+        #expect(distributionAuditScript.contains("./scripts/check-public-distribution-urls.sh"))
+        #expect(completionAudit.contains("Check public distribution URLs"))
+        #expect(completionAudit.contains("./scripts/check-public-distribution-urls.sh"))
+        #expect(launchKit.contains("./scripts/check-public-distribution-urls.sh"))
     }
 
     @Test func publicIssueTemplatesProtectPrivateDebugData() throws {
