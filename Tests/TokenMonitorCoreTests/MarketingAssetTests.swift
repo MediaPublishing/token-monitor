@@ -105,7 +105,10 @@ struct MarketingAssetTests {
         #expect(dmgScript.contains("xcrun stapler validate \"$DMG_PATH\""))
         #expect(releaseWorkflow.contains("workflow_dispatch"))
         #expect(releaseWorkflow.contains("require_developer_id"))
+        #expect(releaseWorkflow.contains("allow_unsigned_preview"))
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_REQUIRE_DEVELOPER_ID"))
+        #expect(releaseWorkflow.contains("TOKEN_MONITOR_RELEASE_IS_PRERELEASE"))
+        #expect(releaseWorkflow.contains("TOKEN_MONITOR_ALLOW_UNSIGNED_PREVIEW"))
         #expect(releaseWorkflow.contains("RELEASE_TAG:"))
         #expect(releaseWorkflow.contains("github.event.inputs.tag"))
         #expect(releaseWorkflow.contains("package-release.sh"))
@@ -119,6 +122,7 @@ struct MarketingAssetTests {
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_NOTARIZE=1"))
         #expect(releaseWorkflow.contains("Developer ID signing is not configured; skipping notarization."))
         #expect(releaseWorkflow.contains("Refusing to upload a signed non-notarized release."))
+        #expect(releaseWorkflow.contains("Unsigned release artifacts require a GitHub prerelease or allow_unsigned_preview=true."))
         #expect(releaseWorkflow.contains("Check release version consistency"))
         #expect(releaseWorkflow.contains("./scripts/check-release-version-consistency.sh --tag \"$RELEASE_TAG\" --require-tag"))
         #expect(releaseWorkflow.contains("Check public repository hygiene"))
@@ -249,6 +253,7 @@ struct MarketingAssetTests {
                 "Public distribution URL checker",
                 "Apple access handoff checker",
                 "GitHub release variable checker",
+                "preview-only",
                 "Marketing Setup",
                 "Ongoing Issue-Fixing Loop",
                 "Completion Audit",
@@ -266,6 +271,7 @@ struct MarketingAssetTests {
                 "./scripts/check-public-distribution-urls.sh",
                 "./scripts/check-apple-access-handoff.sh",
                 "./scripts/check-github-release-variables.sh",
+                "preview-only",
                 "Not complete.",
                 "Do not mark the Apple distribution objective complete",
                 "Apple Distribution certificate",
@@ -277,6 +283,7 @@ struct MarketingAssetTests {
             ("docs/apple-credential-runbook.md", [
                 "./scripts/check-apple-access-handoff.sh --require-direct-dmg-access",
                 "./scripts/check-github-release-variables.sh --require-direct-dmg-variables",
+                "TOKEN_MONITOR_ALLOW_UNSIGNED_PREVIEW_RELEASES=1",
                 "TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64",
                 "TOKEN_MONITOR_NOTARY_APP_PASSWORD",
                 "SPARKLE_PRIVATE_KEY",

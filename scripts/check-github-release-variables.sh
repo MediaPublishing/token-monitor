@@ -24,6 +24,11 @@ Required direct Developer ID release variables:
   TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_APPROVED=1
   TOKEN_MONITOR_NOTARY_CREDENTIALS_APPROVED=1
   TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED=1
+
+Optional preview override:
+  TOKEN_MONITOR_ALLOW_UNSIGNED_PREVIEW_RELEASES=1
+    Allows unsigned preview releases when Developer ID signing is not configured.
+    Do not enable for signed/public Developer ID distribution.
 EOF
 }
 
@@ -120,6 +125,16 @@ for variable in "${required_flag_variables[@]}"; do
     missing_or_invalid=$((missing_or_invalid + 1))
   fi
 done
+
+unsigned_preview_override="$(variable_value TOKEN_MONITOR_ALLOW_UNSIGNED_PREVIEW_RELEASES)"
+if [[ "$unsigned_preview_override" == "1" ]]; then
+  warn "TOKEN_MONITOR_ALLOW_UNSIGNED_PREVIEW_RELEASES is enabled; normal public releases should use Developer ID signing"
+  if [[ "$REQUIRE_DIRECT_DMG_VARIABLES" == "1" ]]; then
+    missing_or_invalid=$((missing_or_invalid + 1))
+  fi
+elif [[ -n "$unsigned_preview_override" ]]; then
+  warn "TOKEN_MONITOR_ALLOW_UNSIGNED_PREVIEW_RELEASES should be unset or 1"
+fi
 
 printf '\nRelease variable summary:\n'
 printf -- '- Missing or invalid direct DMG variables: %s\n' "$missing_or_invalid"

@@ -14,6 +14,11 @@ on:
         required: false
         default: false
         type: boolean
+      allow_unsigned_preview:
+        description: Allow an unsigned preview rebuild when Developer ID signing is not configured
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -33,6 +38,8 @@ jobs:
     env:
       RELEASE_TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
       TOKEN_MONITOR_REQUIRE_DEVELOPER_ID: ${{ github.event.inputs.require_developer_id || 'false' }}
+      TOKEN_MONITOR_RELEASE_IS_PRERELEASE: ${{ github.event.release.prerelease || 'false' }}
+      TOKEN_MONITOR_ALLOW_UNSIGNED_PREVIEW: ${{ github.event.inputs.allow_unsigned_preview || vars.TOKEN_MONITOR_ALLOW_UNSIGNED_PREVIEW_RELEASES || 'false' }}
 
     steps:
       - name: Check out release tag
@@ -74,6 +81,11 @@ jobs:
           if [[ -z "$CERTIFICATE_BASE64" || -z "$CERTIFICATE_PASSWORD" || -z "$CODESIGN_IDENTITY" ]]; then
             if [[ "$TOKEN_MONITOR_REQUIRE_DEVELOPER_ID" == "true" ]]; then
               echo "::error::Developer ID signing is required, but signing secrets are not fully configured."
+              exit 1
+            fi
+
+            if [[ "$TOKEN_MONITOR_RELEASE_IS_PRERELEASE" != "true" && "$TOKEN_MONITOR_ALLOW_UNSIGNED_PREVIEW" != "true" ]]; then
+              echo "::error::Unsigned release artifacts require a GitHub prerelease or allow_unsigned_preview=true."
               exit 1
             fi
 

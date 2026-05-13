@@ -106,6 +106,14 @@ Verify those repository variables without exposing any secret values:
 ./scripts/check-github-release-variables.sh --require-direct-dmg-variables
 ```
 
+Optional preview override:
+
+```text
+TOKEN_MONITOR_ALLOW_UNSIGNED_PREVIEW_RELEASES=1
+```
+
+Use this only for explicit preview distribution before Developer ID credentials exist. Normal public releases should be Developer ID signed and notarized. The `Release` workflow refuses unsigned normal releases unless the GitHub Release is marked as a prerelease or the manual workflow input `allow_unsigned_preview` is enabled.
+
 ## Mac App Store Certificates
 
 The Mac App Store track needs separate signing identities from the direct Developer ID DMG path:

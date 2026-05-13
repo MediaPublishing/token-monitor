@@ -41,6 +41,7 @@ Verified locally:
 - The manual release workflow has a `require_developer_id` option. When enabled, the workflow fails before upload unless Developer ID signing and notarization are configured and verified.
 - The release workflow also runs the Apple access handoff check strictly when Developer ID signing is required or signing secrets are present, using non-secret GitHub repository variables for the acknowledgement flags.
 - The release workflow refuses to upload a signed non-notarized release if Developer ID signing secrets exist but notary secrets are incomplete.
+- Unsigned artifacts are treated as preview-only: the Release workflow refuses an unsigned normal release unless the GitHub Release is a prerelease or the manual `allow_unsigned_preview` input is enabled.
 - `scripts/package-release.sh --require-distribution-ready` verifies the final app, DMG, notarization ticket, GitHub release ZIP, and versioned Sparkle update ZIP before upload.
 - `scripts/verify-public-release.sh` can verify the public DMG, GitHub release ZIP, and public Sparkle update ZIP together when `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1` is set.
 - `scripts/audit-apple-distribution.sh` provides a safe consolidated audit command; use `--require-complete --run-tests` only after Apple credentials and human approvals exist.
