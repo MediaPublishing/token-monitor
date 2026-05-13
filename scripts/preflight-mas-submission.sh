@@ -11,6 +11,9 @@ Runs the technical Mac App Store submission preflight after Apple Distribution
 signing is configured. This does not replace human App Store Connect, privacy,
 reviewer-account, screenshot, or legal approval gates.
 
+Run ./scripts/check-app-store-submission-gates.sh --require-human-gates before
+upload to explicitly verify those non-technical gates.
+
 Required:
   TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: <Name> (<TEAMID>)"
 
@@ -73,4 +76,7 @@ Manual gates still required before App Store upload:
 - Reviewer test accounts or approved reviewer plan.
 - Screenshots captured from the submitted MAS binary.
 - Sandbox smoke test for login, refresh, snapshots, diagnostics, and Launch at Login.
+
+Run ./scripts/check-app-store-submission-gates.sh --require-human-gates after
+those approvals are complete.
 EOF

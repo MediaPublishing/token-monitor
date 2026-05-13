@@ -22,6 +22,7 @@ Do not submit until all are true:
 8. Screenshots are captured from the submitted binary and contain no private account data.
 9. Privacy labels and the privacy policy receive final human/legal approval.
 10. Reviewer notes and test accounts are approved by the Account Holder.
+11. `scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit acknowledgements for Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, support URLs, and sandbox smoke testing.
 
 ## App Metadata Draft
 
@@ -199,6 +200,19 @@ The preflight runs:
 - `./scripts/verify-mas-build.sh --require-apple-distribution`
 
 It does not replace Account Holder approval, App Store Connect setup, privacy-label review, reviewer-account approval, submitted-binary screenshots, or sandbox smoke testing.
+
+Run the human gate check before upload:
+
+```bash
+TOKEN_MONITOR_APP_STORE_ACCOUNT_HOLDER_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_CONNECT_READY=1 \
+TOKEN_MONITOR_APP_STORE_PRIVACY_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_REVIEWER_PLAN_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_SCREENSHOTS_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_SUPPORT_URL_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_SANDBOX_SMOKE_TEST_PASSED=1 \
+./scripts/check-app-store-submission-gates.sh --require-human-gates
+```
 
 ## Open Human Decisions
 

@@ -188,7 +188,8 @@ Before Mac App Store submission:
 5. Complete privacy labels with final legal/human approval.
 6. Attach screenshots captured from the submitted binary.
 7. Add reviewer notes and a test-account plan.
-8. Submit only after Account Holder approval.
+8. Run `./scripts/check-app-store-submission-gates.sh --require-human-gates`.
+9. Submit only after Account Holder approval.
 
 ## Approval Gates
 
