@@ -55,7 +55,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Preserve legal/privacy gates | `docs/publication-legal-checklist.md`, `docs/privacy.md`, `./scripts/check-publication-legal-gates.sh --require-legal-gates` | License, privacy policy, privacy labels, support/security routes, and public claims remain human approval gates. Strict checker blocks broad promotion or App Store completion until explicit acknowledgements exist. | Prepared with human gates |
 | Route support safely | `SUPPORT.md`, `SECURITY.md` | Public support and private vulnerability routes exist and warn against posting secrets/debug dumps. | Prepared |
 | Keep issue fixing safe | `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`, `.github/ISSUE_TEMPLATE/install-update-bug.yml`, `docs/apple-distribution-readiness.md` | Parser and install/update issue templates warn that GitHub Issues are public and block raw debug dumps, private account data, Apple credentials, certificates, private keys, and GitHub Secrets. | Prepared |
-| Maintain regression coverage | `swift test` | Local and CI tests pass with 34 tests. | Prepared |
+| Maintain regression coverage | `swift test` | Local and CI tests pass with 35 tests. | Prepared |
 | Verify current CI | `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` | Current-state CI must pass release script smoke checks, tests, direct build, MAS build, MAS verification, and MAS readiness. | Prepared when current run is green |
 
 ## Current Verified Commands
@@ -93,11 +93,12 @@ gh run list --repo MediaPublishing/token-monitor --branch main --limit 1
 
 Recent previously verified commands:
 
-- `swift test` passed with 34 tests for the current `1.0.20` release line.
+- `swift test` passed with 35 tests for the current `1.0.20` release line.
 - Shell syntax checks and release/distribution script help checks pass locally and are covered by CI.
 - `./scripts/audit-apple-distribution.sh --require-complete` is available as the final non-uploading completion audit, includes App Store metadata validation, and is expected to fail until real credentials and approvals exist.
 - `./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting` passes after private vulnerability reporting was enabled on GitHub.
 - `./scripts/check-public-distribution-urls.sh` verifies public Support, Marketing, Privacy, Release, DMG, and security-reporting URLs.
+- GitHub CI run `25791039031` passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness for commit `f3995d7`.
 - `./scripts/build-mas-app.sh` passed for the MAS candidate.
 - `./scripts/verify-mas-build.sh` passed for the MAS candidate.
 - `./scripts/check-mas-readiness.sh` reported zero static blockers, with manual smoke-test warnings.

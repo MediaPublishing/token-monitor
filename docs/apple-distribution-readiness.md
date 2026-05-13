@@ -18,7 +18,7 @@ Success means:
 
 Verified locally:
 
-- `swift test` passes with 34 tests.
+- `swift test` passes with 35 tests.
 - `scripts/build-app.sh` builds `dist/TokenMonitor.app`.
 - Current local direct-DMG build is `1.0.20` build `21` and is ad hoc signed when no `TOKEN_MONITOR_CODESIGN_IDENTITY` is provided.
 - Verified 2026-05-12: `spctl --assess --type execute --verbose=4 dist/TokenMonitor.app` rejects the ad hoc build, as expected.
@@ -222,6 +222,7 @@ Prepared and verified repo artifacts:
 - Local release preflight: `scripts/preflight-release.sh`.
 - Release version consistency checker: `scripts/check-release-version-consistency.sh`.
 - Public release verifier: `scripts/verify-public-release.sh`.
+- Public distribution URL checker: `scripts/check-public-distribution-urls.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - Consolidated Apple distribution audit: `scripts/audit-apple-distribution.sh`.
 - Current GitHub release: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.20`.
@@ -246,9 +247,9 @@ Prepared and verified repo artifacts:
 - Public privacy summary: `docs/privacy.md`.
 - Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
 - Public install/update issue form with Apple credential and debug dump warnings: `.github/ISSUE_TEMPLATE/install-update-bug.yml`.
-- Regression coverage: `swift test` passes with 34 tests.
+- Regression coverage: `swift test` passes with 35 tests.
 - Earlier release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25496438297` passed for `v1.0.20`.
-- Current CI evidence: run `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` and confirm the latest `main` run passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness.
+- Current CI evidence: run `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` and confirm the latest `main` run passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness. Latest verified run: `25791039031` for commit `f3995d7`.
 
 Current blockers:
 
