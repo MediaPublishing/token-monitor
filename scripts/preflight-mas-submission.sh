@@ -17,6 +17,12 @@ upload to explicitly verify those non-technical gates.
 Required:
   TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: <Name> (<TEAMID>)"
   TOKEN_MONITOR_MAS_INSTALLER_IDENTITY="3rd Party Mac Developer Installer: <Name> (<TEAMID>)"
+  TOKEN_MONITOR_APP_STORE_TEAM_ID="<TEAMID>"
+  TOKEN_MONITOR_APP_STORE_SKU="<sku>"
+  TOKEN_MONITOR_APP_STORE_TEAM_APPROVED=1
+  TOKEN_MONITOR_APP_STORE_BUNDLE_ID_APPROVED=1
+  TOKEN_MONITOR_APP_STORE_SKU_APPROVED=1
+  TOKEN_MONITOR_APP_STORE_CATEGORY_APPROVED=1
 
 EOF
 }
@@ -78,6 +84,7 @@ fi
 
 run_step "Run Swift test suite" swift test
 run_step "Check MAS static readiness" ./scripts/check-mas-readiness.sh
+run_step "Check App Store Connect identity" ./scripts/check-app-store-identity.sh --require-ready
 run_step "Build Apple Distribution signed MAS app" ./scripts/build-mas-app.sh
 run_step "Verify submitted MAS app shape and Apple Distribution signature" \
   ./scripts/verify-mas-build.sh --require-apple-distribution

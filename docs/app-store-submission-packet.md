@@ -15,18 +15,18 @@ Do not submit until all are true:
 1. Account Holder approves Mac App Store submission.
 2. Apple Developer Program and App Store Connect access are available.
 3. Agreements, tax, and banking are complete in App Store Connect.
-4. `scripts/build-mas-app.sh` builds the submitted binary.
-5. `scripts/verify-mas-build.sh --require-apple-distribution` passes for the submitted binary.
-6. `scripts/package-mas-pkg.sh` produces `dist/mas/TokenMonitor-macOS-AppStore.pkg` with a Mac App Store installer distribution identity.
-7. `scripts/check-mas-readiness.sh` reports zero blockers.
-8. The sandbox smoke test in `docs/mas-sandbox-smoke-test.md` passes for login, refresh, local snapshots, diagnostics, and Launch at Login.
-9. Screenshots are captured from the submitted binary and contain no private account data.
-10. `scripts/check-app-store-screenshots.sh --require-ready` passes for the final screenshot folder.
-11. Privacy labels and the privacy policy receive final human/legal approval.
-12. Reviewer notes and test accounts are approved by the Account Holder.
-13. `scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit acknowledgements for Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, support URLs, and sandbox smoke testing.
-14. `scripts/check-app-store-upload-readiness.sh --require-ready` passes on the upload machine, or the Account Holder confirms upload will happen manually through App Store Connect, Xcode, or Transporter.
-15. `scripts/check-app-store-identity.sh --require-ready` passes before App Store Connect record creation or upload.
+4. `scripts/check-app-store-identity.sh --require-ready` passes before App Store Connect record creation or upload.
+5. `scripts/build-mas-app.sh` builds the submitted binary.
+6. `scripts/verify-mas-build.sh --require-apple-distribution` passes for the submitted binary.
+7. `scripts/package-mas-pkg.sh` produces `dist/mas/TokenMonitor-macOS-AppStore.pkg` with a Mac App Store installer distribution identity.
+8. `scripts/check-mas-readiness.sh` reports zero blockers.
+9. The sandbox smoke test in `docs/mas-sandbox-smoke-test.md` passes for login, refresh, local snapshots, diagnostics, and Launch at Login.
+10. Screenshots are captured from the submitted binary and contain no private account data.
+11. `scripts/check-app-store-screenshots.sh --require-ready` passes for the final screenshot folder.
+12. Privacy labels and the privacy policy receive final human/legal approval.
+13. Reviewer notes and test accounts are approved by the Account Holder.
+14. `scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit acknowledgements for Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, support URLs, and sandbox smoke testing.
+15. `scripts/check-app-store-upload-readiness.sh --require-ready` passes on the upload machine, or the Account Holder confirms upload will happen manually through App Store Connect, Xcode, or Transporter.
 
 ## App Metadata Draft
 
@@ -236,6 +236,7 @@ The preflight runs:
 
 - `swift test`
 - `./scripts/check-mas-readiness.sh`
+- `./scripts/check-app-store-identity.sh --require-ready`
 - `./scripts/build-mas-app.sh`
 - `./scripts/verify-mas-build.sh --require-apple-distribution`
 - `./scripts/package-mas-pkg.sh`

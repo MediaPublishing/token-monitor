@@ -53,11 +53,11 @@ If only direct Developer ID DMG distribution is needed:
 If Mac App Store submission is pursued:
 
 - Create the App Store Connect app record.
-- Run `./scripts/check-app-store-identity.sh --require-ready`.
 - Assign app-specific access for Token Monitor where possible.
 - Prepare Apple Distribution and Mac App Store installer distribution certificates.
 - Prepare upload authentication on the upload machine.
-- Run `./scripts/preflight-mas-submission.sh`.
+- Run `./scripts/check-app-store-identity.sh --require-ready` if the App Store Connect record is being created before the full preflight.
+- Run `./scripts/preflight-mas-submission.sh`, which includes the strict App Store Connect identity gate.
 - Run `./scripts/check-app-store-upload-readiness.sh --require-ready`.
 - Run `./scripts/check-app-store-submission-gates.sh --require-human-gates`.
 
