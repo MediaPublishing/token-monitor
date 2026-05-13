@@ -109,3 +109,10 @@ Recommended next MAS step:
 3. Sign with an Apple Distribution certificate when App Store Connect access exists.
 4. Smoke-test WebKit login, refresh, snapshots, and Login Items under sandbox.
 EOF
+
+if [[ "$blockers" -gt 0 ]]; then
+  warn "Mac App Store static readiness has blockers; fix them before submission."
+  exit 1
+fi
+
+pass "Mac App Store static readiness has no blockers"
