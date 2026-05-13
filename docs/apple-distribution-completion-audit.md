@@ -23,7 +23,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Notarize and staple DMG | `TOKEN_MONITOR_NOTARIZE=1 TOKEN_MONITOR_NOTARY_PROFILE=... ./scripts/package-release.sh --require-distribution-ready` | Script path exists, but no local `TOKEN_MONITOR_NOTARY_PROFILE` is configured. | Blocked |
 | Verify Gatekeeper acceptance | `./scripts/check-apple-distribution.sh --require-ready` | Current ad hoc app and DMG are rejected and the DMG has no stapled ticket, as expected before credentials. Strict mode fails until credentials exist. | Blocked |
 | Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-12: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. | Partially prepared |
-| Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | Current CI passed for commit `0a22282`; release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
+| Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | Recent CI run `25778597241` passed; release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
 | Verify public and Sparkle ZIP paths | `./scripts/package-release.sh --require-distribution-ready`, `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>` | Strict local release verifies both the GitHub release ZIP and the versioned Sparkle update ZIP; public signed-release verification downloads and checks both published ZIPs. | Prepared |
 | Keep the repository publicly reachable | GitHub repository settings | Verified 2026-05-12: `MediaPublishing/token-monitor` is public and uses `main` as the default branch. | Prepared |
 | Assess Mac App Store feasibility | `docs/mac-app-store-feasibility.md` | Documents MAS as a separate track with Sparkle removed and App Review risks called out. | Prepared |
@@ -38,7 +38,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Route support safely | `SUPPORT.md`, `SECURITY.md` | Public support and private vulnerability routes exist and warn against posting secrets/debug dumps. | Prepared |
 | Keep issue fixing safe | `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`, `docs/apple-distribution-readiness.md` | Parser issue template warns that GitHub Issues are public and blocks raw debug dump sharing. | Prepared |
 | Maintain regression coverage | `swift test` | Local and CI tests pass with 34 tests. | Prepared |
-| Verify latest CI | GitHub Actions CI | Run `25778449974` passed tests, direct build, MAS build, MAS verification, and MAS readiness for commit `0a22282`. | Prepared |
+| Verify latest CI | GitHub Actions CI | Run `25778597241` passed tests, direct build, MAS build, MAS verification, and MAS readiness. | Prepared |
 
 ## Current Verified Commands
 
