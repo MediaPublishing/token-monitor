@@ -40,6 +40,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Check MAS upload handoff | `./scripts/check-app-store-upload-readiness.sh --require-ready` | Script path exists and checks the signed MAS pkg, local upload tool availability, and approved upload authentication inputs without uploading anything. Current machine has no MAS pkg or upload credentials. | Blocked |
 | Smoke-test sandboxed MAS behavior | `docs/mas-sandbox-smoke-test.md` | Checklist exists for login, refresh, snapshots, diagnostics, Launch at Login, evidence capture, and fail conditions. Execution is not possible without reviewer/test accounts and App Store Connect context. | Blocked |
 | Prepare App Store submission material | `docs/app-store-submission-packet.md` | Draft metadata, privacy labels, reviewer notes, screenshots, and test plan are documented. | Prepared |
+| Prepare App Store privacy labels | `docs/app-store-privacy-labels.md` | Documents draft App Store Connect answers, no-collection rationale, tracking answer, privacy URL, change triggers, and the privacy approval gate. Final approval remains a human/legal gate. | Prepared with human gate |
 | Prepare App Store screenshots | `docs/app-store-screenshot-checklist.md` | Documents Mac screenshot counts, formats, dimensions, sanitized capture set, filename convention, and screenshot approval gate. Actual screenshots remain blocked until the submitted MAS binary exists. | Prepared with human gate |
 | Gate App Store human approvals | `./scripts/check-app-store-submission-gates.sh --require-human-gates` | Script exists and fails strict mode until Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, final URLs, and sandbox smoke test are explicitly acknowledged. | Prepared with human gates |
 | Prepare marketing setup | `docs/marketing-launch-kit.md`, `landing/index.html`, `README.md` | Direct distribution copy, App Store draft metadata, screenshot inventory, launch checklist, and approval gates exist. | Prepared |
@@ -112,6 +113,7 @@ Required before Mac App Store submission can be completed:
 - App Store Connect upload tool and approved upload authentication method on the upload machine.
 - Agreements, tax, and banking completed by the Account Holder.
 - Final privacy policy and App Privacy labels approved by a human/legal reviewer.
+- App Store privacy answers reviewed against `docs/app-store-privacy-labels.md`.
 - Reviewer test accounts or approved review plan.
 - Screenshots captured from the submitted MAS binary.
 - Screenshot dimensions and privacy reviewed against `docs/app-store-screenshot-checklist.md`.

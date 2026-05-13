@@ -24,7 +24,7 @@ Before broad public promotion:
 Before Mac App Store submission:
 
 1. Approve the final privacy policy URL.
-2. Complete App Store privacy labels.
+2. Complete App Store privacy labels using `docs/app-store-privacy-labels.md`.
 3. Approve App Review notes.
 4. Confirm screenshots contain no private account data.
 5. Confirm support URL and marketing URL are final.
@@ -41,6 +41,7 @@ Before Mac App Store submission:
 ## Evidence Already Prepared
 
 - Privacy summary: `docs/privacy.md`.
+- App Store privacy-label checklist: `docs/app-store-privacy-labels.md`.
 - Support routing: `SUPPORT.md`.
 - Security reporting: `SECURITY.md`.
 - Marketing metadata draft: `docs/marketing-launch-kit.md`.

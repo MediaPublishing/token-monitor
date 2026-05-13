@@ -147,6 +147,8 @@ Tracking: No tracking by Token Monitor.
 Diagnostics: Opt-in draft reports only; users review content before sending or posting.
 ```
 
+Detailed App Store privacy-label rationale lives in `docs/app-store-privacy-labels.md` and must be approved before submission.
+
 ## Screenshot Inventory
 
 Current repo assets:

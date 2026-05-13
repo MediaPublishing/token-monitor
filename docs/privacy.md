@@ -1,10 +1,10 @@
 # Token Monitor Privacy
 
-Last reviewed: 2026-05-02
+Last reviewed: 2026-05-13
 
 Token Monitor is designed as a local macOS utility. It does not require a Token Monitor account and does not send usage data to Token Monitor server infrastructure.
 
-This document is a product privacy summary. It should be reviewed before being used as a formal App Store privacy policy.
+This document is a product privacy summary. It should be reviewed before being used as a formal App Store privacy policy. App Store privacy-label preparation lives in `docs/app-store-privacy-labels.md`.
 
 ## What The App Does
 

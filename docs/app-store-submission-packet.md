@@ -84,6 +84,8 @@ https://github.com/MediaPublishing/token-monitor/blob/main/docs/privacy.md
 
 Final answers must be reviewed in App Store Connect before submission.
 
+Detailed privacy-label rationale and approval gates live in `docs/app-store-privacy-labels.md`.
+
 Data collected by Token Monitor server infrastructure:
 
 ```text
