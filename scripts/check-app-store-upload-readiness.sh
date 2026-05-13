@@ -71,6 +71,11 @@ if [[ -f "$PKG_PATH" ]]; then
   if pkgutil --check-signature "$PKG_PATH" >/tmp/token-monitor-pkg-signature.out 2>&1; then
     pass "MAS upload package signature can be inspected"
     sed 's/^/  /' /tmp/token-monitor-pkg-signature.out
+    if grep -Eq '3rd Party Mac Developer Installer|Mac Installer Distribution' /tmp/token-monitor-pkg-signature.out; then
+      pass "MAS upload package is signed with a Mac App Store installer distribution identity"
+    else
+      warn "MAS upload package is not signed with a Mac App Store installer distribution identity"
+    fi
   else
     warn "MAS upload package signature could not be verified"
     sed 's/^/  /' /tmp/token-monitor-pkg-signature.out || true

@@ -377,6 +377,7 @@ struct MarketingAssetTests {
         #expect(appStoreUploadScript.contains("TOKEN_MONITOR_APP_STORE_USERNAME"))
         #expect(appStoreUploadScript.contains("TOKEN_MONITOR_APP_STORE_APP_PASSWORD"))
         #expect(appStoreUploadScript.contains("No App Store Connect upload tool is available"))
+        #expect(appStoreUploadScript.contains("Mac App Store installer distribution identity"))
         #expect(appStoreUploadScript.contains("App Store upload readiness is strict-clean"))
         #expect(appStoreGateScript.contains("--require-human-gates"))
         #expect(appStoreGateScript.contains("TOKEN_MONITOR_REQUIRE_APP_STORE_HUMAN_GATES"))
