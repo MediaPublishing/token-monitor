@@ -110,7 +110,10 @@ Recent previously verified commands:
 - `./scripts/build-mas-app.sh` passed for the MAS candidate.
 - `./scripts/verify-mas-build.sh` passed for the MAS candidate.
 - `./scripts/check-mas-readiness.sh` reported zero static blockers, with manual smoke-test warnings.
-- `./scripts/verify-public-release.sh v1.0.21 1.0.21 22` must pass for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP after the preview release is published.
+- `./scripts/verify-public-release.sh v1.0.21 1.0.21 22` passes for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
+- `./scripts/check-public-distribution-urls.sh` passes for the configured public preview release tag `v1.0.21`.
+- Release workflow `25793576869` passed for `v1.0.21`.
+- Main CI workflow `25793398798` passed for commit `ed9f7d1`.
 - `./scripts/check-github-release-secrets.sh --require-signing-secrets` fails as expected until Developer ID and notary secrets exist.
 - `./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff` is the operator preflight once Apple access is approved.
 - `./scripts/check-app-store-submission-gates.sh --require-human-gates` fails as expected until all human/App Store Connect acknowledgements are set.

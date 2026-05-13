@@ -215,7 +215,7 @@ Triage workflow:
 Prepared and verified repo artifacts:
 
 - Current public GitHub/Sparkle preview release: `v1.0.21` / build `22`.
-- Public release verification: `./scripts/verify-public-release.sh v1.0.21 1.0.21 22` must pass for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP after the preview release is published.
+- Public release verification: `./scripts/verify-public-release.sh v1.0.21 1.0.21 22` passes for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
 - Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
 - Prompt-to-artifact completion audit: `docs/apple-distribution-completion-audit.md`.
 - Apple credential setup: `docs/apple-credential-runbook.md`.
@@ -230,6 +230,8 @@ Prepared and verified repo artifacts:
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - Consolidated Apple distribution audit: `scripts/audit-apple-distribution.sh`.
 - Current GitHub preview release: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.21`.
+- Current release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25793576869` passed for `v1.0.21`.
+- Current main CI workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25793398798` passed for commit `ed9f7d1`.
 - GitHub CI workflow: `.github/workflows/ci.yml` runs release script smoke checks, tests, direct app build, MAS build, MAS build verification, and MAS readiness checks.
 - GitHub workflows use Node-24-compatible action pins where available and set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`.
 - Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
