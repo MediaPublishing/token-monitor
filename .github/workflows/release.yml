@@ -43,6 +43,9 @@ jobs:
       - name: Check release version consistency
         run: ./scripts/check-release-version-consistency.sh --tag "$RELEASE_TAG" --require-tag
 
+      - name: Check public repository hygiene
+        run: ./scripts/check-public-repo-hygiene.sh
+
       - name: Prepare Developer ID signing
         env:
           CERTIFICATE_BASE64: ${{ secrets.TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64 }}
