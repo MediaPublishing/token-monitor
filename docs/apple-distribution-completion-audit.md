@@ -37,6 +37,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Check public repository hygiene | `./scripts/check-public-repo-hygiene.sh`, `.github/workflows/release.yml` | Scans tracked files for high-risk secret file paths and obvious secret token patterns before public distribution. CI, release preflight, the consolidated audit, and the Release workflow run this before public assets are packaged or uploaded. This is a local hygiene gate, not a replacement for human legal/privacy review. | Prepared |
 | Check GitHub security reporting | `./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting` | Verifies the repo is public, GitHub Issues are enabled, and private vulnerability reporting is enabled for sensitive reports. | Prepared |
 | Check public distribution URLs | `./scripts/check-public-distribution-urls.sh` | Verifies that Support, Marketing, Privacy, the configured public release tag, public DMG, and security-reporting URLs are HTTPS and reachable. | Prepared |
+| Check GitHub release channel | `./scripts/check-github-release-channel.sh` | Verifies that the configured public release is published as a prerelease and that no stable GitHub Release exists while public builds are unsigned. | Prepared |
 | Assess Mac App Store feasibility | `docs/mac-app-store-feasibility.md` | Documents MAS as a separate track with Sparkle removed and App Review risks called out. | Prepared |
 | Build a MAS candidate | `./scripts/build-mas-app.sh` | Local MAS candidate builds as `1.0.21` build `22`. | Prepared |
 | Verify MAS candidate shape | `./scripts/verify-mas-build.sh` | Verifies no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and valid local signature. Strict `--require-apple-distribution` mode is available for the submitted binary. | Prepared |
@@ -79,6 +80,7 @@ Last verified on 2026-05-13:
 ./scripts/check-public-repo-hygiene.sh
 ./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting
 ./scripts/check-public-distribution-urls.sh
+./scripts/check-github-release-channel.sh
 ./scripts/check-apple-access-handoff.sh
 ./scripts/check-github-release-variables.sh
 ./scripts/audit-apple-distribution.sh --help
@@ -103,6 +105,7 @@ Recent previously verified commands:
 - `./scripts/audit-apple-distribution.sh --require-complete` is available as the final non-uploading completion audit, includes App Store metadata validation, and is expected to fail until real credentials and approvals exist.
 - `./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting` passes after private vulnerability reporting was enabled on GitHub.
 - `./scripts/check-public-distribution-urls.sh` verifies public Support, Marketing, Privacy, configured release, DMG, and security-reporting URLs.
+- `./scripts/check-github-release-channel.sh` verifies that the configured preview release is a prerelease and that no stable GitHub Release exists while builds are unsigned.
 - `./scripts/check-apple-access-handoff.sh` verifies non-secret Apple access acknowledgements without reading or printing secret values.
 - `./scripts/check-github-release-variables.sh` verifies non-secret GitHub repository variables used by signed release workflow gates.
 - Unsigned GitHub release artifacts are now preview-only; normal unsigned releases require a prerelease marker or explicit `allow_unsigned_preview` workflow input.

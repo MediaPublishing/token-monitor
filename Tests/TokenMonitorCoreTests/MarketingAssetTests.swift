@@ -198,6 +198,7 @@ struct MarketingAssetTests {
             "scripts/check-apple-distribution.sh",
             "scripts/check-github-release-variables.sh",
             "scripts/check-github-release-secrets.sh",
+            "scripts/check-github-release-channel.sh",
             "scripts/check-github-security-reporting.sh",
             "scripts/check-app-store-metadata.sh",
             "scripts/check-app-store-screenshots.sh",
@@ -335,6 +336,7 @@ struct MarketingAssetTests {
                 "./scripts/check-github-release-variables.sh",
                 "./scripts/check-release-version-consistency.sh",
                 "./scripts/check-public-repo-hygiene.sh",
+                "./scripts/check-github-release-channel.sh",
                 "./scripts/check-github-security-reporting.sh",
                 "./scripts/check-app-store-metadata.sh",
                 "./scripts/check-app-store-screenshots.sh --require-ready",
@@ -385,7 +387,9 @@ struct MarketingAssetTests {
             .deletingLastPathComponent()
 
         let publicDistributionURLsScriptURL = rootURL.appendingPathComponent("scripts/check-public-distribution-urls.sh")
+        let releaseChannelScriptURL = rootURL.appendingPathComponent("scripts/check-github-release-channel.sh")
         let publicDistributionURLsScript = try String(contentsOf: publicDistributionURLsScriptURL, encoding: .utf8)
+        let releaseChannelScript = try String(contentsOf: releaseChannelScriptURL, encoding: .utf8)
         let distributionAuditScript = try String(
             contentsOf: rootURL.appendingPathComponent("scripts/audit-apple-distribution.sh"),
             encoding: .utf8
@@ -400,7 +404,9 @@ struct MarketingAssetTests {
         )
 
         #expect(FileManager.default.fileExists(atPath: publicDistributionURLsScriptURL.path))
+        #expect(FileManager.default.fileExists(atPath: releaseChannelScriptURL.path))
         #expect(FileManager.default.isExecutableFile(atPath: publicDistributionURLsScriptURL.path))
+        #expect(FileManager.default.isExecutableFile(atPath: releaseChannelScriptURL.path))
         #expect(publicDistributionURLsScript.contains("Support URL"))
         #expect(publicDistributionURLsScript.contains("Marketing URL"))
         #expect(publicDistributionURLsScript.contains("Privacy URL"))
@@ -409,7 +415,12 @@ struct MarketingAssetTests {
         #expect(publicDistributionURLsScript.contains("TOKEN_MONITOR_PUBLIC_RELEASE_TAG"))
         #expect(publicDistributionURLsScript.contains("Security reporting URL"))
         #expect(publicDistributionURLsScript.contains("TOKEN_MONITOR_APP_STORE_PACKET"))
+        #expect(releaseChannelScript.contains("TOKEN_MONITOR_PUBLIC_RELEASE_TAG"))
+        #expect(releaseChannelScript.contains("TOKEN_MONITOR_ALLOW_STABLE_RELEASES"))
+        #expect(releaseChannelScript.contains("--exclude-pre-releases"))
+        #expect(releaseChannelScript.contains("must be a prerelease until Developer ID signing is available"))
         #expect(distributionAuditScript.contains("./scripts/check-public-distribution-urls.sh"))
+        #expect(distributionAuditScript.contains("./scripts/check-github-release-channel.sh"))
         #expect(completionAudit.contains("Check public distribution URLs"))
         #expect(completionAudit.contains("./scripts/check-public-distribution-urls.sh"))
         #expect(launchKit.contains("./scripts/check-public-distribution-urls.sh"))
