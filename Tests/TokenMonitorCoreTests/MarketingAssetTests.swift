@@ -304,6 +304,7 @@ struct MarketingAssetTests {
                 "TOKEN_MONITOR_NOTARY_APP_PASSWORD",
                 "SPARKLE_PRIVATE_KEY",
                 "./scripts/audit-apple-distribution.sh --require-complete --run-tests",
+                "./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff",
                 "./scripts/package-release.sh --require-distribution-ready",
                 "TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1",
                 "Mac App Store Certificates",
@@ -342,6 +343,13 @@ struct MarketingAssetTests {
                 "If App Review Rejects",
                 "./scripts/check-app-store-submission-gates.sh --require-human-gates",
                 "./scripts/check-publication-legal-gates.sh --require-legal-gates"
+            ]),
+            ("docs/apple-access-handoff.md", [
+                "./scripts/check-github-release-secrets.sh --require-signing-secrets",
+                "./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff"
+            ]),
+            ("docs/release-recovery-runbook.md", [
+                "./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff --require-distribution-ready"
             ]),
             ("docs/app-store-privacy-labels.md", [
                 "No, Token Monitor does not collect data from this app.",

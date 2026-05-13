@@ -61,7 +61,7 @@ TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED=1 \
 - Account Holder or approved operator exports the `.p12` on the release Mac.
 - Add the GitHub secrets listed in `docs/apple-credential-runbook.md`.
 - Run `./scripts/check-github-release-secrets.sh --require-signing-secrets`.
-- Run `./scripts/preflight-release.sh --require-signing-secrets`.
+- Run `./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff`.
 
 If Mac App Store submission is pursued:
 

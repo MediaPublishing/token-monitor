@@ -181,8 +181,6 @@ TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED=1 \
 
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 
-./scripts/audit-apple-distribution.sh --require-complete --run-tests
-
 xcrun notarytool store-credentials token-monitor-notary
 
 ./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff
@@ -195,6 +193,8 @@ TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 \
 
 TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 \
 ./scripts/verify-public-release.sh <tag> <version> <build>
+
+./scripts/audit-apple-distribution.sh --require-complete --run-tests
 ```
 
 Run the consolidated audit again after publishing and after any App Store Connect handoff changes:

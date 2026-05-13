@@ -40,7 +40,7 @@ swift test
 3. Build and verify with the strict release path after Developer ID credentials exist:
 
 ```bash
-./scripts/preflight-release.sh --require-signing-secrets --require-distribution-ready
+./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff --require-distribution-ready
 
 TOKEN_MONITOR_CODESIGN_IDENTITY="Developer ID Application: <Name> (<TEAMID>)" \
 TOKEN_MONITOR_NOTARIZE=1 \
