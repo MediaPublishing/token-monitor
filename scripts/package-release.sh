@@ -9,6 +9,37 @@ UPDATES_DIR="$ROOT_DIR/dist/updates"
 APPCAST_PATH="$ROOT_DIR/dist/appcast.xml"
 SPARKLE_BIN_DIR="$ROOT_DIR/.build/artifacts/sparkle/Sparkle/bin"
 DOWNLOAD_URL_PREFIX="${TOKEN_MONITOR_DOWNLOAD_URL_PREFIX:-https://mediapublishing.github.io/token-monitor/updates/}"
+REQUIRE_DISTRIBUTION_READY="${TOKEN_MONITOR_REQUIRE_DISTRIBUTION_READY:-0}"
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/package-release.sh [--require-distribution-ready]
+
+Builds Token Monitor release artifacts: ZIP, DMG, Sparkle update ZIP, and appcast.
+
+Options:
+  --require-distribution-ready  Verify app and DMG with the strict Apple distribution check after packaging.
+  -h, --help                    Show this help.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --require-distribution-ready)
+      REQUIRE_DISTRIBUTION_READY=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown option: %s\n\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
 
 "$ROOT_DIR/scripts/build-app.sh"
 
@@ -44,6 +75,10 @@ EOF
 fi
 
 cp "$UPDATES_DIR/appcast.xml" "$APPCAST_PATH"
+
+if [[ "$REQUIRE_DISTRIBUTION_READY" == "1" ]]; then
+  "$ROOT_DIR/scripts/check-apple-distribution.sh" --require-ready
+fi
 
 shasum -a 256 "$ZIP_PATH"
 shasum -a 256 "$DMG_PATH"

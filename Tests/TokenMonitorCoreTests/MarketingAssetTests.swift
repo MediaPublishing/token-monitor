@@ -66,8 +66,12 @@ struct MarketingAssetTests {
         let publicReleaseVerifier = try String(contentsOf: publicReleaseVerifierURL, encoding: .utf8)
 
         let dmgScriptURL = rootURL.appendingPathComponent("scripts/package-dmg.sh")
+        let releasePackageScriptURL = rootURL.appendingPathComponent("scripts/package-release.sh")
+        let releasePackageScript = try String(contentsOf: releasePackageScriptURL, encoding: .utf8)
         #expect(FileManager.default.fileExists(atPath: dmgScriptURL.path))
         #expect(FileManager.default.isExecutableFile(atPath: dmgScriptURL.path))
+        #expect(FileManager.default.fileExists(atPath: releasePackageScriptURL.path))
+        #expect(FileManager.default.isExecutableFile(atPath: releasePackageScriptURL.path))
         #expect(FileManager.default.fileExists(atPath: publicReleaseVerifierURL.path))
         #expect(FileManager.default.isExecutableFile(atPath: publicReleaseVerifierURL.path))
         #expect(readme.contains("TokenMonitor-macOS.dmg"))
@@ -111,6 +115,9 @@ struct MarketingAssetTests {
         #expect(publicReleaseVerifier.contains("spctl --assess --type open"))
         #expect(publicReleaseVerifier.contains("xcrun stapler validate"))
         #expect(publicReleaseVerifier.contains("dist/public-release-verification"))
+        #expect(releasePackageScript.contains("--require-distribution-ready"))
+        #expect(releasePackageScript.contains("TOKEN_MONITOR_REQUIRE_DISTRIBUTION_READY"))
+        #expect(releasePackageScript.contains("scripts/check-apple-distribution.sh\" --require-ready"))
     }
 
     @Test func appleDistributionReadinessDocCoversReleasePaths() throws {
@@ -230,7 +237,8 @@ struct MarketingAssetTests {
         #expect(credentialRunbook.contains("TOKEN_MONITOR_NOTARY_APP_PASSWORD"))
         #expect(credentialRunbook.contains("SPARKLE_PRIVATE_KEY"))
         #expect(credentialRunbook.contains("After Credentials Are Ready"))
-        #expect(credentialRunbook.contains("./scripts/preflight-release.sh --require-signing-secrets --require-distribution-ready"))
+        #expect(credentialRunbook.contains("./scripts/preflight-release.sh --require-signing-secrets"))
+        #expect(credentialRunbook.contains("./scripts/package-release.sh --require-distribution-ready"))
         #expect(credentialRunbook.contains("./scripts/check-apple-distribution.sh --require-ready"))
         #expect(credentialRunbook.contains("TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1"))
         #expect(credentialRunbook.contains("Release` workflow manually with the existing tag"))

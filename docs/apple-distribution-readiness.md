@@ -83,7 +83,7 @@ TOKEN_MONITOR_CODESIGN_IDENTITY="Developer ID Application: <Name> (<TEAMID>)" \
 TOKEN_MONITOR_NOTARIZE=1 \
 TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary \
 TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 \
-./scripts/package-release.sh
+./scripts/package-release.sh --require-distribution-ready
 ```
 
 Local readiness check:
