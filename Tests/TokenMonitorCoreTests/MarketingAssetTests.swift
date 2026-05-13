@@ -266,6 +266,9 @@ struct MarketingAssetTests {
             ("docs/apple-distribution-completion-audit.md", [
                 "Prompt-To-Artifact Checklist",
                 "./scripts/audit-apple-distribution.sh --require-complete",
+                "./scripts/check-apple-access-handoff.sh --require-direct-dmg-access",
+                "./scripts/check-github-release-variables.sh --require-direct-dmg-variables",
+                "./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff",
                 "./scripts/check-app-store-metadata.sh",
                 "./scripts/check-app-store-identity.sh --require-ready",
                 "./scripts/check-release-recovery-readiness.sh --require-ready",
@@ -553,7 +556,9 @@ struct MarketingAssetTests {
         #expect(launchKit.contains("docs/app-store-screenshot-checklist.md"))
         #expect(launchKit.contains("Launch Checklist"))
         #expect(launchKit.contains("./scripts/check-github-release-secrets.sh --require-signing-secrets"))
-        #expect(launchKit.contains("./scripts/preflight-release.sh --require-signing-secrets"))
+        #expect(launchKit.contains("./scripts/check-apple-access-handoff.sh --require-direct-dmg-access"))
+        #expect(launchKit.contains("./scripts/check-github-release-variables.sh --require-direct-dmg-variables"))
+        #expect(launchKit.contains("./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff"))
         #expect(launchKit.contains("./scripts/check-release-version-consistency.sh --tag <tag> --require-tag"))
         #expect(launchKit.contains("./scripts/check-public-repo-hygiene.sh"))
         #expect(launchKit.contains("./scripts/package-release.sh --require-distribution-ready"))

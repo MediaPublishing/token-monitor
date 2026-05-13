@@ -165,11 +165,15 @@ Required before Mac App Store submission can be completed:
 After Apple credentials are available:
 
 ```bash
+./scripts/check-apple-access-handoff.sh --require-direct-dmg-access
+
+./scripts/check-github-release-variables.sh --require-direct-dmg-variables
+
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 
 xcrun notarytool store-credentials token-monitor-notary
 
-./scripts/preflight-release.sh --require-signing-secrets
+./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff
 
 TOKEN_MONITOR_CODESIGN_IDENTITY="Developer ID Application: <Name> (<TEAMID>)" \
 TOKEN_MONITOR_NOTARIZE=1 \
