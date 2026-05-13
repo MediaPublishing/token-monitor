@@ -1,6 +1,6 @@
 # Apple Distribution Completion Audit
 
-Last reviewed: 2026-05-06
+Last reviewed: 2026-05-12
 
 ## Objective
 
@@ -22,8 +22,9 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Produce signed Developer ID app | `TOKEN_MONITOR_CODESIGN_IDENTITY=... ./scripts/package-release.sh` | Script path exists, but no `Developer ID Application` identity is installed locally. | Blocked |
 | Notarize and staple DMG | `TOKEN_MONITOR_NOTARIZE=1 TOKEN_MONITOR_NOTARY_PROFILE=... ./scripts/package-release.sh` | Script path exists, but no local `TOKEN_MONITOR_NOTARY_PROFILE` is configured. | Blocked |
 | Verify Gatekeeper acceptance | `spctl --assess --type execute --verbose=4 dist/TokenMonitor.app` and `xcrun stapler validate dist/TokenMonitor-macOS.dmg` | Current ad hoc app and DMG are rejected and the DMG has no stapled ticket, as expected before credentials. | Blocked |
-| Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | `SPARKLE_PRIVATE_KEY` exists; Developer ID and notary secrets are missing. | Partially prepared |
+| Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-12: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. | Partially prepared |
 | Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | `v1.0.20` release workflow passed; public release verifier passed for `v1.0.20 1.0.20 21`. | Prepared |
+| Keep the repository publicly reachable | GitHub repository settings | Verified 2026-05-12: `MediaPublishing/token-monitor` is public and uses `main` as the default branch. | Prepared |
 | Assess Mac App Store feasibility | `docs/mac-app-store-feasibility.md` | Documents MAS as a separate track with Sparkle removed and App Review risks called out. | Prepared |
 | Build a MAS candidate | `./scripts/build-mas-app.sh` | Local MAS candidate builds as `1.0.20` build `21`. | Prepared |
 | Verify MAS candidate shape | `./scripts/verify-mas-build.sh` | Verifies no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and valid local signature. | Prepared |
@@ -40,17 +41,24 @@ The repository is prepared for Apple Developer access, but the distribution obje
 
 ## Current Verified Commands
 
-Last verified on 2026-05-06:
+Last verified on 2026-05-12:
 
 ```bash
-swift test
 ./scripts/check-apple-distribution.sh
 ./scripts/check-github-release-secrets.sh
-./scripts/build-mas-app.sh
-./scripts/verify-mas-build.sh
-./scripts/check-mas-readiness.sh
-./scripts/verify-public-release.sh v1.0.20 1.0.20 21
+gh pr list --repo MediaPublishing/token-monitor --state open --json number,title,updatedAt,url
+gh issue list --repo MediaPublishing/token-monitor --state open --json number,title,labels,updatedAt,url
+gh release view v1.0.20 --repo MediaPublishing/token-monitor --json tagName,name,isDraft,isPrerelease,publishedAt,url,assets
+gh repo view MediaPublishing/token-monitor --json visibility,url,defaultBranchRef
 ```
+
+Recent previously verified commands:
+
+- `swift test` passed with 34 tests for the current `1.0.20` release line.
+- `./scripts/build-mas-app.sh` passed for the MAS candidate.
+- `./scripts/verify-mas-build.sh` passed for the MAS candidate.
+- `./scripts/check-mas-readiness.sh` reported zero static blockers, with manual smoke-test warnings.
+- `./scripts/verify-public-release.sh v1.0.20 1.0.20 21` passed for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
 
 ## Missing Inputs
 

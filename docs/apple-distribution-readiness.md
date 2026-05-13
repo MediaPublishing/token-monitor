@@ -1,6 +1,6 @@
 # Apple Distribution Readiness
 
-Last reviewed: 2026-05-06
+Last reviewed: 2026-05-12
 
 ## Objective
 
@@ -21,7 +21,11 @@ Verified locally:
 - `swift test` passes with 34 tests.
 - `scripts/build-app.sh` builds `dist/TokenMonitor.app`.
 - Current local direct-DMG build is `1.0.20` build `21` and is ad hoc signed when no `TOKEN_MONITOR_CODESIGN_IDENTITY` is provided.
-- `spctl --assess --type execute --verbose=4 dist/TokenMonitor.app` rejects the ad hoc build, as expected.
+- Verified 2026-05-12: `spctl --assess --type execute --verbose=4 dist/TokenMonitor.app` rejects the ad hoc build, as expected.
+- Verified 2026-05-12: `spctl` rejects `dist/TokenMonitor-macOS.dmg` because it has no usable signature, and `xcrun stapler validate` reports no stapled ticket.
+- Verified 2026-05-12: GitHub repository `MediaPublishing/token-monitor` is public.
+- Verified 2026-05-12: GitHub Release `v1.0.20` is published and includes `TokenMonitor-macOS.dmg` and `TokenMonitor-macOS.zip`.
+- Verified 2026-05-12: no open GitHub PRs or Issues were present.
 - `scripts/package-dmg.sh` already supports Developer ID signing and notarization through:
   - `TOKEN_MONITOR_CODESIGN_IDENTITY`
   - `TOKEN_MONITOR_NOTARIZE=1`
@@ -203,6 +207,7 @@ Prepared and verified repo artifacts:
 - Local release preflight: `scripts/preflight-release.sh`.
 - Public release verifier: `scripts/verify-public-release.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
+- Current GitHub release: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.20`.
 - GitHub CI workflow: `.github/workflows/ci.yml` runs tests, direct app build, MAS build, MAS build verification, and MAS readiness checks.
 - GitHub workflows use Node-24-compatible action pins where available and set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`.
 - Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
