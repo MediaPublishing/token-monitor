@@ -82,6 +82,27 @@ After Developer ID access exists, make the check fail if signing or notarization
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 ```
 
+## Mac App Store Certificates
+
+The Mac App Store track needs separate signing identities from the direct Developer ID DMG path:
+
+- `Apple Distribution: <Name> (<TEAMID>)` signs the MAS app bundle.
+- `3rd Party Mac Developer Installer: <Name> (<TEAMID>)` or `Mac Installer Distribution: <Name> (<TEAMID>)` signs the upload package.
+
+Use these only for the MAS build track:
+
+```bash
+TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: <Name> (<TEAMID>)" \
+TOKEN_MONITOR_MAS_INSTALLER_IDENTITY="3rd Party Mac Developer Installer: <Name> (<TEAMID>)" \
+./scripts/preflight-mas-submission.sh
+```
+
+The MAS package script writes:
+
+```text
+dist/mas/TokenMonitor-macOS-AppStore.pkg
+```
+
 ## After Credentials Are Ready
 
 Use this operator sequence after the Apple Developer certificate, notary credentials, and GitHub secrets exist:

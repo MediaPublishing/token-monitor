@@ -184,12 +184,13 @@ Before Mac App Store submission:
 1. Decide whether the MAS track is approved despite Sparkle and WebKit-review risks.
 2. Create a MAS build without Sparkle updates.
 3. Enable and test App Sandbox entitlements.
-4. Fill App Store metadata from this file and `docs/app-store-submission-packet.md`.
-5. Complete privacy labels with final legal/human approval.
-6. Attach screenshots captured from the submitted binary.
-7. Add reviewer notes and a test-account plan.
-8. Run `./scripts/check-app-store-submission-gates.sh --require-human-gates`.
-9. Submit only after Account Holder approval.
+4. Package the signed MAS app with `./scripts/package-mas-pkg.sh`.
+5. Fill App Store metadata from this file and `docs/app-store-submission-packet.md`.
+6. Complete privacy labels with final legal/human approval.
+7. Attach screenshots captured from the submitted binary.
+8. Add reviewer notes and a test-account plan.
+9. Run `./scripts/check-app-store-submission-gates.sh --require-human-gates`.
+10. Submit only after Account Holder approval.
 
 ## Approval Gates
 

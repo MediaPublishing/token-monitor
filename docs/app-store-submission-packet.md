@@ -17,12 +17,13 @@ Do not submit until all are true:
 3. Agreements, tax, and banking are complete in App Store Connect.
 4. `scripts/build-mas-app.sh` builds the submitted binary.
 5. `scripts/verify-mas-build.sh --require-apple-distribution` passes for the submitted binary.
-6. `scripts/check-mas-readiness.sh` reports zero blockers.
-7. The sandbox smoke test in `docs/mas-sandbox-smoke-test.md` passes for login, refresh, local snapshots, diagnostics, and Launch at Login.
-8. Screenshots are captured from the submitted binary and contain no private account data.
-9. Privacy labels and the privacy policy receive final human/legal approval.
-10. Reviewer notes and test accounts are approved by the Account Holder.
-11. `scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit acknowledgements for Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, support URLs, and sandbox smoke testing.
+6. `scripts/package-mas-pkg.sh` produces `dist/mas/TokenMonitor-macOS-AppStore.pkg` with a Mac App Store installer distribution identity.
+7. `scripts/check-mas-readiness.sh` reports zero blockers.
+8. The sandbox smoke test in `docs/mas-sandbox-smoke-test.md` passes for login, refresh, local snapshots, diagnostics, and Launch at Login.
+9. Screenshots are captured from the submitted binary and contain no private account data.
+10. Privacy labels and the privacy policy receive final human/legal approval.
+11. Reviewer notes and test accounts are approved by the Account Holder.
+12. `scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit acknowledgements for Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, support URLs, and sandbox smoke testing.
 
 ## App Metadata Draft
 
@@ -189,6 +190,7 @@ Run before upload:
 
 ```bash
 TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: <Name> (<TEAMID>)" \
+TOKEN_MONITOR_MAS_INSTALLER_IDENTITY="3rd Party Mac Developer Installer: <Name> (<TEAMID>)" \
 ./scripts/preflight-mas-submission.sh
 ```
 
@@ -198,6 +200,7 @@ The preflight runs:
 - `./scripts/check-mas-readiness.sh`
 - `./scripts/build-mas-app.sh`
 - `./scripts/verify-mas-build.sh --require-apple-distribution`
+- `./scripts/package-mas-pkg.sh`
 
 It does not replace Account Holder approval, App Store Connect setup, privacy-label review, reviewer-account approval, submitted-binary screenshots, or sandbox smoke testing.
 

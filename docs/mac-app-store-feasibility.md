@@ -52,14 +52,15 @@ Before submitting to the Mac App Store:
 2. Verify Sparkle is absent from the MAS binary.
 3. Verify `SUFeedURL` and Sparkle update UI are absent from the MAS build.
 4. Sign with an Apple Distribution certificate once App Store Connect access exists.
-5. Keep App Sandbox entitlements enabled.
-6. Include at least:
+5. Package the signed app with `scripts/package-mas-pkg.sh` and a Mac App Store installer distribution identity.
+6. Keep App Sandbox entitlements enabled.
+7. Include at least:
    - `com.apple.security.app-sandbox`
    - `com.apple.security.network.client`
-7. Verify Application Support and WebKit storage work inside the app container.
-8. Verify `SMAppService` launch-at-login behavior under sandbox.
-9. Prepare reviewer notes explaining embedded WebKit sessions and local-only storage.
-10. Provide reviewer accounts or a reviewer test plan.
+8. Verify Application Support and WebKit storage work inside the app container.
+9. Verify `SMAppService` launch-at-login behavior under sandbox.
+10. Prepare reviewer notes explaining embedded WebKit sessions and local-only storage.
+11. Provide reviewer accounts or a reviewer test plan.
 
 ## App Review Risks
 
@@ -107,5 +108,6 @@ After Developer ID distribution is working, continue MAS validation with the cur
 
 1. Run `scripts/build-mas-app.sh`.
 2. Inspect the built app for Sparkle references and `SU*` Info.plist keys.
-3. Run a sandbox smoke test for login, refresh, snapshots, and Login Items.
-4. Decide whether to continue toward App Store Connect submission.
+3. Package the MAS upload package with `scripts/package-mas-pkg.sh` once Apple signing identities exist.
+4. Run a sandbox smoke test for login, refresh, snapshots, and Login Items.
+5. Decide whether to continue toward App Store Connect submission.

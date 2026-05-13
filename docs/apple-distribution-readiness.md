@@ -44,6 +44,7 @@ Verified locally:
 - `scripts/verify-public-release.sh` can verify the public DMG, GitHub release ZIP, and public Sparkle update ZIP together when `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1` is set.
 - `scripts/build-mas-app.sh` produces a separate `1.0.20` build `21` MAS candidate.
 - `scripts/verify-mas-build.sh` verifies the MAS candidate has no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and a valid local signature. Use `--require-apple-distribution` before App Store submission.
+- `scripts/package-mas-pkg.sh` packages the Apple Distribution signed MAS app as `dist/mas/TokenMonitor-macOS-AppStore.pkg` with a Mac App Store installer distribution identity.
 
 ## Recommended Distribution Path
 
@@ -129,6 +130,7 @@ Mac App Store prep tasks:
 
 - Use `scripts/build-mas-app.sh` as the separate MAS build configuration.
 - Keep Sparkle and update-related settings disabled in the MAS build.
+- Sign the app with an Apple Distribution certificate and package it with a Mac App Store installer distribution certificate before upload.
 - Add App Sandbox entitlements:
   - `com.apple.security.app-sandbox`
   - `com.apple.security.network.client`
@@ -221,6 +223,7 @@ Prepared and verified repo artifacts:
 - App Store submission packet: `docs/app-store-submission-packet.md`.
 - MAS candidate build path: `scripts/build-mas-app.sh`.
 - MAS build verifier: `scripts/verify-mas-build.sh`.
+- MAS upload package builder: `scripts/package-mas-pkg.sh`.
 - MAS submission preflight: `scripts/preflight-mas-submission.sh`.
 - MAS human/App Store Connect gate checker: `scripts/check-app-store-submission-gates.sh`.
 - MAS sandbox smoke test checklist: `docs/mas-sandbox-smoke-test.md`.
@@ -238,6 +241,7 @@ Current blockers:
 
 - No Developer ID Application certificate is installed locally.
 - No Apple Distribution certificate is installed locally.
+- No Mac App Store installer distribution certificate is installed locally.
 - No local `TOKEN_MONITOR_NOTARY_PROFILE` is configured.
 - The current `dist/TokenMonitor.app` is version `1.0.20` build `21` and ad hoc signed.
 - Gatekeeper rejects the current local app and DMG.
@@ -245,6 +249,7 @@ Current blockers:
 - GitHub has `SPARKLE_PRIVATE_KEY` configured, but Developer ID signing/notarization secrets are not configured with real Apple credentials.
 - Mac App Store submission remains a separate, not-ready track until Apple Distribution signing, App Store Connect setup, sandbox smoke testing, reviewer accounts, screenshots, and final approvals are complete.
 - The MAS candidate build removes Sparkle and passes local verification, but it has not been signed with an Apple Distribution certificate or smoke-tested with real reviewer accounts under App Sandbox.
+- The MAS upload package path exists, but it has not been signed with a Mac App Store installer distribution identity.
 - Repository license and final legal/privacy approvals remain human approval gates before broad promotion or App Store submission.
 
 Conclusion:
