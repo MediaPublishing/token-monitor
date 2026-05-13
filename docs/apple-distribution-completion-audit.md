@@ -96,7 +96,7 @@ TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 ./scripts/check-github-release-secrets.s
 
 xcrun notarytool store-credentials token-monitor-notary
 
-./scripts/preflight-release.sh --require-signing-secrets
+./scripts/preflight-release.sh --require-signing-secrets --require-distribution-ready
 
 TOKEN_MONITOR_CODESIGN_IDENTITY="Developer ID Application: <Name> (<TEAMID>)" \
 TOKEN_MONITOR_NOTARIZE=1 \

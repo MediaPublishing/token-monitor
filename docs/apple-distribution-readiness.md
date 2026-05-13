@@ -93,9 +93,12 @@ Local readiness check:
 
 TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary \
 ./scripts/check-apple-distribution.sh
+
+TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary \
+./scripts/check-apple-distribution.sh --require-ready
 ```
 
-The readiness check is advisory. It reports missing certificates, missing notary credentials, ad hoc signatures, and unstapled DMGs as warnings so the repo remains usable before Apple Developer access exists.
+The readiness check is advisory by default. It reports missing certificates, missing notary credentials, ad hoc signatures, and unstapled DMGs as warnings so the repo remains usable before Apple Developer access exists. Use `--require-ready` after Developer ID credentials are configured to make any signing, Gatekeeper, or notarization warning fail the check.
 
 Acceptance checks:
 

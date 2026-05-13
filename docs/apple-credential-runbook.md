@@ -91,7 +91,7 @@ TOKEN_MONITOR_REQUIRE_SIGNING_SECRETS=1 ./scripts/check-github-release-secrets.s
 
 xcrun notarytool store-credentials token-monitor-notary
 
-./scripts/preflight-release.sh --require-signing-secrets
+./scripts/preflight-release.sh --require-signing-secrets --require-distribution-ready
 
 TOKEN_MONITOR_CODESIGN_IDENTITY="Developer ID Application: <Name> (<TEAMID>)" \
 TOKEN_MONITOR_NOTARIZE=1 \
@@ -137,6 +137,13 @@ xcrun notarytool store-credentials token-monitor-notary
 
 TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary \
 ./scripts/check-apple-distribution.sh
+```
+
+Use strict mode after a signed/notarized build exists:
+
+```bash
+TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary \
+./scripts/check-apple-distribution.sh --require-ready
 ```
 
 ## Release Verification

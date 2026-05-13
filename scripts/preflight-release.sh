@@ -3,17 +3,19 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 REQUIRE_SIGNING_SECRETS=0
+REQUIRE_DISTRIBUTION_READY=0
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/preflight-release.sh [--require-signing-secrets]
+Usage: ./scripts/preflight-release.sh [--require-signing-secrets] [--require-distribution-ready]
 
 Runs the local release readiness checks in the same order an operator should
 use before publishing or republishing Token Monitor release assets.
 
 Options:
-  --require-signing-secrets  Fail if Developer ID GitHub secrets are missing.
-  -h, --help                 Show this help.
+  --require-signing-secrets     Fail if Developer ID GitHub secrets are missing.
+  --require-distribution-ready  Fail if local Developer ID, Gatekeeper, or notarization checks warn.
+  -h, --help                    Show this help.
 EOF
 }
 
@@ -21,6 +23,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --require-signing-secrets)
       REQUIRE_SIGNING_SECRETS=1
+      shift
+      ;;
+    --require-distribution-ready)
+      REQUIRE_DISTRIBUTION_READY=1
       shift
       ;;
     -h|--help)
@@ -59,6 +65,10 @@ else
   run_step "Check GitHub release secrets" ./scripts/check-github-release-secrets.sh
 fi
 
-run_step "Check local Apple distribution readiness" ./scripts/check-apple-distribution.sh
+if [[ "$REQUIRE_DISTRIBUTION_READY" == "1" ]]; then
+  run_step "Check local Apple distribution readiness" ./scripts/check-apple-distribution.sh --require-ready
+else
+  run_step "Check local Apple distribution readiness" ./scripts/check-apple-distribution.sh
+fi
 
 printf '\nRelease preflight complete.\n'

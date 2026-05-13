@@ -5,12 +5,45 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 APP_DIR="$ROOT_DIR/dist/TokenMonitor.app"
 DMG_PATH="$ROOT_DIR/dist/TokenMonitor-macOS.dmg"
 NOTARY_PROFILE="${TOKEN_MONITOR_NOTARY_PROFILE:-}"
+REQUIRE_READY="${TOKEN_MONITOR_REQUIRE_DISTRIBUTION_READY:-0}"
+warning_count=0
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/check-apple-distribution.sh [--require-ready]
+
+Checks local Apple distribution readiness for Token Monitor.
+
+Options:
+  --require-ready  Exit non-zero if any signing, Gatekeeper, or notarization check warns.
+  -h, --help       Show this help.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --require-ready)
+      REQUIRE_READY=1
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      printf 'Unknown option: %s\n\n' "$1" >&2
+      usage >&2
+      exit 2
+      ;;
+  esac
+done
 
 pass() {
   printf '[OK] %s\n' "$1"
 }
 
 warn() {
+  warning_count=$((warning_count + 1))
   printf '[WARN] %s\n' "$1"
 }
 
@@ -128,3 +161,12 @@ TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary \
 TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY=1 \
 ./scripts/package-release.sh
 EOF
+
+if [[ "$REQUIRE_READY" == "1" ]]; then
+  if [[ "$warning_count" -gt 0 ]]; then
+    printf '\n[FAIL] Apple distribution readiness has %s warning(s).\n' "$warning_count" >&2
+    exit 1
+  fi
+
+  printf '\n[OK] Apple distribution readiness is strict-clean.\n'
+fi
