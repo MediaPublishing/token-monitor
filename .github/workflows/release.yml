@@ -141,6 +141,17 @@ jobs:
           echo "TOKEN_MONITOR_NOTARIZE=1" >> "$GITHUB_ENV"
           echo "TOKEN_MONITOR_NOTARY_PROFILE=token-monitor-notary-ci" >> "$GITHUB_ENV"
 
+      - name: Check GitHub release channel
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TOKEN_MONITOR_PUBLIC_RELEASE_TAG: ${{ env.RELEASE_TAG }}
+        run: |
+          if [[ "${TOKEN_MONITOR_NOTARIZE:-}" == "1" ]]; then
+            TOKEN_MONITOR_ALLOW_STABLE_RELEASES=1 ./scripts/check-github-release-channel.sh
+          else
+            ./scripts/check-github-release-channel.sh
+          fi
+
       - name: Package app and appcast
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
