@@ -340,6 +340,8 @@ struct MarketingAssetTests {
         #expect(distributionAuditScript.contains("--require-complete"))
         #expect(distributionAuditScript.contains("--run-tests"))
         #expect(distributionAuditScript.contains("without uploading, submitting"))
+        #expect(distributionAuditScript.contains("Check App Store metadata limits"))
+        #expect(distributionAuditScript.contains("./scripts/check-app-store-metadata.sh"))
         #expect(distributionAuditScript.contains("./scripts/check-github-release-secrets.sh --require-signing-secrets"))
         #expect(distributionAuditScript.contains("./scripts/check-apple-distribution.sh --require-ready"))
         #expect(distributionAuditScript.contains("./scripts/check-app-store-upload-readiness.sh --require-ready"))
