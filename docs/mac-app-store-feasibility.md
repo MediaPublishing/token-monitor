@@ -14,6 +14,8 @@ Run the advisory checker:
 ./scripts/check-mas-readiness.sh
 ```
 
+Review-risk response planning lives in `docs/app-store-review-risk-register.md`.
+
 ## Current Code Evidence
 
 Sparkle updater:

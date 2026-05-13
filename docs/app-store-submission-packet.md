@@ -216,6 +216,8 @@ Before uploading screenshots, validate file dimensions:
 
 ## Known Review Risks
 
+Detailed mitigation notes and draft response snippets live in `docs/app-store-review-risk-register.md`.
+
 - The app reads third-party provider usage pages after user login.
 - Provider layouts can change and temporarily break parsing.
 - Embedded WebKit login may behave differently from provider-owned browsers.

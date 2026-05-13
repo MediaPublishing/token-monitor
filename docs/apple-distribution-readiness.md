@@ -132,6 +132,7 @@ Known blockers or risks:
 - Review may question embedded WebKit login and usage-page scraping of third-party services.
 - Review notes will need a clear explanation of what the app does, what data stays local, and how reviewers can test without private user accounts.
 - Banking, tax, agreements, app metadata, screenshots, privacy labels, and final submission remain Account Holder / App Store Connect approval gates.
+- Use `docs/app-store-review-risk-register.md` before App Review submission or response work.
 
 Mac App Store prep tasks:
 
@@ -147,6 +148,7 @@ Mac App Store prep tasks:
 - Prepare the upload machine with Xcode, altool, or Transporter and approved App Store Connect upload authentication.
 - Create a reviewer demo plan that does not require sharing private Claude or ChatGPT credentials.
 - Use `docs/app-store-submission-packet.md` for the draft metadata, privacy label notes, reviewer notes, screenshot requirements, and reviewer test plan.
+- Use `docs/app-store-review-risk-register.md` for likely App Review objections, mitigation evidence, and draft response snippets.
 
 ## Apple Access Checklist
 

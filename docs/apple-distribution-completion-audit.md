@@ -50,6 +50,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Check MAS upload handoff | `./scripts/check-app-store-upload-readiness.sh --require-ready` | Script path exists and checks the signed MAS pkg, confirms the package uses a Mac App Store installer distribution identity, checks local upload tool availability, and checks approved upload authentication inputs without uploading anything. Current machine has no MAS pkg or upload credentials. | Blocked |
 | Smoke-test sandboxed MAS behavior | `docs/mas-sandbox-smoke-test.md`, `docs/mas-sandbox-smoke-test-receipt.md` | Checklist and receipt template exist for login, refresh, snapshots, diagnostics, Launch at Login, evidence capture, privacy review, and fail conditions. Execution is not possible without reviewer/test accounts and App Store Connect context. | Blocked |
 | Prepare App Store submission material | `docs/app-store-submission-packet.md` | Draft metadata, privacy labels, reviewer notes, screenshots, and test plan are documented. | Prepared |
+| Prepare App Review response plan | `docs/app-store-review-risk-register.md` | Documents likely App Review objections, mitigation evidence, draft response snippets, and rejection triage steps for WebKit login, provider usage-page parsing, Sparkle removal, sandbox behavior, reviewer accounts, privacy labels, debug reporting, and Launch at Login. | Prepared |
 | Validate App Store metadata limits | `./scripts/check-app-store-metadata.sh` | Script path exists and checks app name, subtitle, promotional text, description, keyword byte limit, keyword minimum length, and HTTPS URLs against the draft submission packet. | Prepared |
 | Prepare App Store privacy labels | `docs/app-store-privacy-labels.md` | Documents draft App Store Connect answers, no-collection rationale, tracking answer, privacy URL, change triggers, and the privacy approval gate. Final approval remains a human/legal gate. | Prepared with human gate |
 | Prepare App Store screenshots | `docs/app-store-screenshot-checklist.md`, `./scripts/check-app-store-screenshots.sh --require-ready` | Documents Mac screenshot counts, formats, dimensions, sanitized capture set, filename convention, and screenshot approval gate. Script validates screenshot count, file type, and accepted Mac dimensions. Actual screenshots remain blocked until the submitted MAS binary exists. | Prepared with human gate |
@@ -155,6 +156,7 @@ Required before Mac App Store submission can be completed:
 - Final privacy policy and App Privacy labels approved by a human/legal reviewer.
 - App Store privacy answers reviewed against `docs/app-store-privacy-labels.md`.
 - Reviewer test accounts or approved review plan.
+- App Review risk response plan reviewed against `docs/app-store-review-risk-register.md`.
 - Screenshots captured from the submitted MAS binary.
 - Screenshot dimensions and privacy reviewed against `docs/app-store-screenshot-checklist.md`.
 - Sandbox smoke test for WebKit login, refresh, snapshots, diagnostics, and Launch at Login.

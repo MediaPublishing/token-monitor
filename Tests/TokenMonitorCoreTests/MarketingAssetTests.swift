@@ -190,6 +190,7 @@ struct MarketingAssetTests {
             "docs/mac-app-store-feasibility.md",
             "packaging/TokenMonitorMAS.entitlements",
             "docs/app-store-connect-identity.md",
+            "docs/app-store-review-risk-register.md",
             "docs/release-recovery-runbook.md",
             "docs/publication-legal-checklist.md",
             "docs/app-store-submission-packet.md",
@@ -239,6 +240,7 @@ struct MarketingAssetTests {
                 "docs/apple-credential-runbook.md",
                 "docs/mac-app-store-feasibility.md",
                 "docs/app-store-submission-packet.md",
+                "docs/app-store-review-risk-register.md",
                 "docs/app-store-connect-identity.md",
                 "docs/app-store-privacy-labels.md",
                 "docs/app-store-screenshot-checklist.md",
@@ -278,6 +280,7 @@ struct MarketingAssetTests {
                 "./scripts/check-public-distribution-urls.sh",
                 "./scripts/check-apple-access-handoff.sh",
                 "./scripts/check-github-release-variables.sh",
+                "docs/app-store-review-risk-register.md",
                 "preview-only",
                 "Not complete.",
                 "Do not mark the Apple distribution objective complete",
@@ -303,6 +306,7 @@ struct MarketingAssetTests {
             ("docs/mac-app-store-feasibility.md", [
                 "Mac App Store distribution is not ready as-is.",
                 "./scripts/check-mas-readiness.sh",
+                "docs/app-store-review-risk-register.md",
                 "scripts/check-app-store-identity.sh --require-ready",
                 "scripts/package-mas-pkg.sh",
                 "scripts/check-app-store-upload-readiness.sh",
@@ -315,7 +319,23 @@ struct MarketingAssetTests {
                 "./scripts/check-app-store-metadata.sh",
                 "./scripts/check-app-store-screenshots.sh --require-ready",
                 "scripts/check-app-store-submission-gates.sh --require-human-gates",
+                "docs/app-store-review-risk-register.md",
                 "No Sparkle framework or `SU*` Info.plist keys"
+            ]),
+            ("docs/app-store-review-risk-register.md", [
+                "Embedded provider login pages",
+                "Third-party usage-page parsing",
+                "No hosted account service",
+                "Sparkle in App Store build",
+                "App Sandbox behavior",
+                "Reviewer account access",
+                "Privacy labels",
+                "Debug reporting",
+                "Launch at Login",
+                "Draft Response Snippets",
+                "If App Review Rejects",
+                "./scripts/check-app-store-submission-gates.sh --require-human-gates",
+                "./scripts/check-publication-legal-gates.sh --require-legal-gates"
             ]),
             ("docs/app-store-privacy-labels.md", [
                 "No, Token Monitor does not collect data from this app.",
@@ -552,6 +572,7 @@ struct MarketingAssetTests {
         #expect(launchKit.contains("Privacy label draft"))
         #expect(launchKit.contains("https://github.com/MediaPublishing/token-monitor/blob/main/docs/privacy.md"))
         #expect(launchKit.contains("Review notes draft"))
+        #expect(launchKit.contains("docs/app-store-review-risk-register.md"))
         #expect(launchKit.contains("Screenshot Inventory"))
         #expect(launchKit.contains("docs/app-store-screenshot-checklist.md"))
         #expect(launchKit.contains("Launch Checklist"))
