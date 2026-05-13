@@ -30,6 +30,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Build a MAS candidate | `./scripts/build-mas-app.sh` | Local MAS candidate builds as `1.0.20` build `21`. | Prepared |
 | Verify MAS candidate shape | `./scripts/verify-mas-build.sh` | Verifies no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and valid local signature. Strict `--require-apple-distribution` mode is available for the submitted binary. | Prepared |
 | Check MAS static readiness | `./scripts/check-mas-readiness.sh` | Reports zero static blockers and warns that WebKit sessions and Login Items need smoke testing. | Prepared with warnings |
+| Run MAS submission technical preflight | `TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: ..." ./scripts/preflight-mas-submission.sh` | Script path exists and requires Apple Distribution signing before verifying the submitted MAS binary. | Blocked until credentials |
 | Sign MAS build for App Store | `TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: ..." ./scripts/build-mas-app.sh` | No Apple Distribution certificate is installed locally. | Blocked |
 | Smoke-test sandboxed MAS behavior | Manual MAS binary test for login, refresh, snapshots, diagnostics, and Launch at Login | Not possible without reviewer/test accounts and App Store Connect context. | Blocked |
 | Prepare App Store submission material | `docs/app-store-submission-packet.md` | Draft metadata, privacy labels, reviewer notes, screenshots, and test plan are documented. | Prepared |

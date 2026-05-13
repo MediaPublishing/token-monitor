@@ -187,24 +187,18 @@ Before submission, run the MAS binary and verify:
 Run before upload:
 
 ```bash
-swift test
-./scripts/build-mas-app.sh
-./scripts/verify-mas-build.sh
-./scripts/check-mas-readiness.sh
-```
-
-If Apple Distribution signing is configured locally, set:
-
-```bash
 TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: <Name> (<TEAMID>)" \
-./scripts/build-mas-app.sh
+./scripts/preflight-mas-submission.sh
 ```
 
-Then re-run:
+The preflight runs:
 
-```bash
-./scripts/verify-mas-build.sh --require-apple-distribution
-```
+- `swift test`
+- `./scripts/check-mas-readiness.sh`
+- `./scripts/build-mas-app.sh`
+- `./scripts/verify-mas-build.sh --require-apple-distribution`
+
+It does not replace Account Holder approval, App Store Connect setup, privacy-label review, reviewer-account approval, submitted-binary screenshots, or sandbox smoke testing.
 
 ## Open Human Decisions
 
