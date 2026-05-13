@@ -25,6 +25,7 @@ Verified locally:
 - Verified 2026-05-12: `spctl` rejects `dist/TokenMonitor-macOS.dmg` because it has no usable signature, and `xcrun stapler validate` reports no stapled ticket.
 - Verified 2026-05-12: GitHub repository `MediaPublishing/token-monitor` is public.
 - The current unsigned public build is handled as a GitHub prerelease preview until Developer ID signing and notarization are available.
+- Historical unsigned GitHub releases have also been marked as prereleases so GitHub does not present an unsigned DMG as the stable `/releases/latest` build.
 - Verified 2026-05-12: no open GitHub PRs or Issues were present.
 - `scripts/package-dmg.sh` already supports Developer ID signing and notarization through:
   - `TOKEN_MONITOR_CODESIGN_IDENTITY`
@@ -232,6 +233,7 @@ Prepared and verified repo artifacts:
 - Current GitHub preview release: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.21`.
 - Current release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25793576869` passed for `v1.0.21`.
 - Current main CI workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25793398798` passed for commit `ed9f7d1`.
+- Release list verification on 2026-05-13 showed `v1.0.0` through `v1.0.21` are marked as prerelease until Developer ID signing/notarization is available.
 - GitHub CI workflow: `.github/workflows/ci.yml` runs release script smoke checks, tests, direct app build, MAS build, MAS build verification, and MAS readiness checks.
 - GitHub workflows use Node-24-compatible action pins where available and set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`.
 - Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
