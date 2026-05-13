@@ -116,6 +116,9 @@ fi
 
 if [[ "$REQUIRE_COMPLETE" == "1" ]]; then
   run_step "Check Apple access handoff strictly" ./scripts/check-apple-access-handoff.sh --require-direct-dmg-access
+  if [[ "$SKIP_NETWORK" == "0" ]]; then
+    run_step "Check GitHub release variables strictly" ./scripts/check-github-release-variables.sh --require-direct-dmg-variables
+  fi
   run_step "Check GitHub release secrets strictly" ./scripts/check-github-release-secrets.sh --require-signing-secrets
   run_step "Check local Apple distribution strictly" ./scripts/check-apple-distribution.sh --require-ready
   run_step "Check App Store screenshots strictly" ./scripts/check-app-store-screenshots.sh --require-ready
@@ -125,6 +128,9 @@ if [[ "$REQUIRE_COMPLETE" == "1" ]]; then
   run_step "Check publication/legal gates strictly" ./scripts/check-publication-legal-gates.sh --require-legal-gates
   run_step "Check release recovery readiness strictly" ./scripts/check-release-recovery-readiness.sh --require-ready
 else
+  if [[ "$SKIP_NETWORK" == "0" ]]; then
+    run_step "Check GitHub release variables" ./scripts/check-github-release-variables.sh
+  fi
   run_step "Check GitHub release secrets" ./scripts/check-github-release-secrets.sh
   run_step "Check local Apple distribution readiness" ./scripts/check-apple-distribution.sh
   run_step "Check App Store screenshots" ./scripts/check-app-store-screenshots.sh

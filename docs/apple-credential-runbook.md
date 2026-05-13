@@ -100,6 +100,12 @@ TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED=1
 
 The `Release` workflow runs `./scripts/check-apple-access-handoff.sh --require-direct-dmg-access` when Developer ID signing is required or signing secrets are present. This prevents a signed/notarized release from being produced before the non-secret Apple access handoff has been acknowledged.
 
+Verify those repository variables without exposing any secret values:
+
+```bash
+./scripts/check-github-release-variables.sh --require-direct-dmg-variables
+```
+
 ## Mac App Store Certificates
 
 The Mac App Store track needs separate signing identities from the direct Developer ID DMG path:
@@ -162,6 +168,8 @@ TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_APPROVED=1 \
 TOKEN_MONITOR_NOTARY_CREDENTIALS_APPROVED=1 \
 TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED=1 \
 ./scripts/check-apple-access-handoff.sh --require-direct-dmg-access
+
+./scripts/check-github-release-variables.sh --require-direct-dmg-variables
 
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 

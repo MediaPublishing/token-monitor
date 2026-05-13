@@ -65,8 +65,10 @@ run_step "Check release version consistency" ./scripts/check-release-version-con
 run_step "Check public repository hygiene" ./scripts/check-public-repo-hygiene.sh
 if [[ "${REQUIRE_APPLE_ACCESS_HANDOFF:-0}" == "1" ]]; then
   run_step "Check Apple access handoff" ./scripts/check-apple-access-handoff.sh --require-direct-dmg-access
+  run_step "Check GitHub release variables" ./scripts/check-github-release-variables.sh --require-direct-dmg-variables
 else
   run_step "Check Apple access handoff" ./scripts/check-apple-access-handoff.sh
+  run_step "Check GitHub release variables" ./scripts/check-github-release-variables.sh
 fi
 run_step "Build direct DMG app candidate" ./scripts/build-app.sh
 run_step "Build MAS app candidate" ./scripts/build-mas-app.sh
