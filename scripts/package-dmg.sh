@@ -10,6 +10,15 @@ CODESIGN_IDENTITY="${TOKEN_MONITOR_CODESIGN_IDENTITY:--}"
 
 cd "$ROOT_DIR"
 
+if [[ "${TOKEN_MONITOR_NOTARIZE:-}" == "1" && "$CODESIGN_IDENTITY" == "-" ]]; then
+  cat >&2 <<'EOF'
+Notarization requires a signed Developer ID build.
+Set TOKEN_MONITOR_CODESIGN_IDENTITY to a Developer ID Application identity before
+setting TOKEN_MONITOR_NOTARIZE=1.
+EOF
+  exit 1
+fi
+
 if [[ "${TOKEN_MONITOR_SKIP_BUILD:-}" != "1" ]]; then
   "$ROOT_DIR/scripts/build-app.sh"
 fi
@@ -34,6 +43,7 @@ hdiutil create \
 
 if [[ "$CODESIGN_IDENTITY" != "-" ]]; then
   codesign --force --sign "$CODESIGN_IDENTITY" --timestamp "$DMG_PATH"
+  codesign --verify --strict "$DMG_PATH"
 fi
 
 if [[ "${TOKEN_MONITOR_NOTARIZE:-}" == "1" ]]; then
@@ -50,6 +60,7 @@ EOF
     --keychain-profile "$TOKEN_MONITOR_NOTARY_PROFILE" \
     --wait
   xcrun stapler staple "$DMG_PATH"
+  xcrun stapler validate "$DMG_PATH"
 fi
 
 rm -rf "$DMG_ROOT"
