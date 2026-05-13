@@ -102,6 +102,11 @@ fi
 
 if [[ "$SKIP_NETWORK" == "0" ]]; then
   run_step "Check GitHub repository visibility" gh repo view "$REPO" --json visibility,url,defaultBranchRef
+  if [[ "$REQUIRE_COMPLETE" == "1" ]]; then
+    run_step "Check GitHub security reporting strictly" ./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting
+  else
+    run_step "Check GitHub security reporting" ./scripts/check-github-security-reporting.sh
+  fi
   run_step "Check latest main CI run" gh run list --repo "$REPO" --branch main --limit 1
 else
   printf '\n[INFO] GitHub network/auth checks skipped.\n'

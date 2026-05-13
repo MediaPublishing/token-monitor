@@ -14,13 +14,13 @@ https://github.com/MediaPublishing/token-monitor/releases/latest
 
 Do not open a public issue for vulnerabilities, leaked credentials, private debug dumps, access tokens, `.p12` files, Apple credentials, GitHub Secrets, or account/session data.
 
-Use GitHub private vulnerability reporting if it is available for this repository:
+Use GitHub private vulnerability reporting for sensitive reports:
 
 ```text
 https://github.com/MediaPublishing/token-monitor/security
 ```
 
-If private vulnerability reporting is unavailable, open a minimal public issue that says a private security report is needed, without including sensitive details.
+If that route is unavailable for any reason, open a minimal public issue that says a private security report is needed, without including sensitive details.
 
 ## Not Security Issues
 

@@ -46,7 +46,7 @@ Read the privacy summary first:
 https://github.com/MediaPublishing/token-monitor/blob/main/docs/privacy.md
 ```
 
-For sensitive concerns, use GitHub private vulnerability reporting if available for the repository. Do not open a public issue with private account data.
+For sensitive concerns, use GitHub private vulnerability reporting. Do not open a public issue with private account data.
 
 Security policy:
 

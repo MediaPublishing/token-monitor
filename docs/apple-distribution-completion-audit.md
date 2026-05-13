@@ -33,6 +33,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Prepare release recovery path | `docs/release-recovery-runbook.md`, `./scripts/check-release-recovery-readiness.sh --require-ready` | Documents first response, hotfix release, appcast rollback, Mac App Store recovery, credential exposure handling, support triage, and prohibited recovery actions. Checker verifies that the workflow, verifier, and runbook cover the recovery path. | Prepared |
 | Keep the repository publicly reachable | GitHub repository settings | Verified 2026-05-12: `MediaPublishing/token-monitor` is public and uses `main` as the default branch. | Prepared |
 | Check public repository hygiene | `./scripts/check-public-repo-hygiene.sh`, `.github/workflows/release.yml` | Scans tracked files for high-risk secret file paths and obvious secret token patterns before public distribution. CI, release preflight, the consolidated audit, and the Release workflow run this before public assets are packaged or uploaded. This is a local hygiene gate, not a replacement for human legal/privacy review. | Prepared |
+| Check GitHub security reporting | `./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting` | Verifies the repo is public, GitHub Issues are enabled, and private vulnerability reporting is enabled for sensitive reports. | Prepared |
 | Assess Mac App Store feasibility | `docs/mac-app-store-feasibility.md` | Documents MAS as a separate track with Sparkle removed and App Review risks called out. | Prepared |
 | Build a MAS candidate | `./scripts/build-mas-app.sh` | Local MAS candidate builds as `1.0.20` build `21`. | Prepared |
 | Verify MAS candidate shape | `./scripts/verify-mas-build.sh` | Verifies no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and valid local signature. Strict `--require-apple-distribution` mode is available for the submitted binary. | Prepared |
@@ -73,6 +74,7 @@ Last verified on 2026-05-13:
 ./scripts/check-release-version-consistency.sh
 ./scripts/check-release-version-consistency.sh --tag v1.0.20 --require-tag
 ./scripts/check-public-repo-hygiene.sh
+./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting
 ./scripts/audit-apple-distribution.sh --help
 ./scripts/package-mas-pkg.sh --help
 ./scripts/check-app-store-upload-readiness.sh --help
@@ -92,6 +94,7 @@ Recent previously verified commands:
 - `swift test` passed with 34 tests for the current `1.0.20` release line.
 - Shell syntax checks and release/distribution script help checks pass locally and are covered by CI.
 - `./scripts/audit-apple-distribution.sh --require-complete` is available as the final non-uploading completion audit, includes App Store metadata validation, and is expected to fail until real credentials and approvals exist.
+- `./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting` passes after private vulnerability reporting was enabled on GitHub.
 - `./scripts/build-mas-app.sh` passed for the MAS candidate.
 - `./scripts/verify-mas-build.sh` passed for the MAS candidate.
 - `./scripts/check-mas-readiness.sh` reported zero static blockers, with manual smoke-test warnings.
