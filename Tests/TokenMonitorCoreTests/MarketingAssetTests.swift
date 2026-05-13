@@ -105,6 +105,7 @@ struct MarketingAssetTests {
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_NOTARY_APP_PASSWORD"))
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_NOTARIZE=1"))
         #expect(releaseWorkflow.contains("Developer ID signing is not configured; skipping notarization."))
+        #expect(releaseWorkflow.contains("Refusing to upload a signed non-notarized release."))
         #expect(publicReleaseVerifier.contains("TokenMonitor-macOS.dmg"))
         #expect(publicReleaseVerifier.contains("TokenMonitor-macOS.zip"))
         #expect(publicReleaseVerifier.contains("appcast.xml"))

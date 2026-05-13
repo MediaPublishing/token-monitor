@@ -88,13 +88,8 @@ jobs:
           fi
 
           if [[ -z "$APPLE_ID" || -z "$APPLE_TEAM_ID" || -z "$APPLE_APP_PASSWORD" ]]; then
-            if [[ "$TOKEN_MONITOR_REQUIRE_DEVELOPER_ID" == "true" ]]; then
-              echo "::error::Developer ID signing is required, but notarization secrets are not fully configured."
-              exit 1
-            fi
-
-            echo "Notarization secrets are not fully configured; skipping notarization."
-            exit 0
+            echo "::error::Developer ID signing is configured, but notarization secrets are incomplete. Refusing to upload a signed non-notarized release."
+            exit 1
           fi
 
           xcrun notarytool store-credentials token-monitor-notary-ci \
