@@ -46,6 +46,24 @@ jobs:
       - name: Check public repository hygiene
         run: ./scripts/check-public-repo-hygiene.sh
 
+      - name: Check Apple access handoff
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64 }}
+          CODESIGN_IDENTITY: ${{ secrets.TOKEN_MONITOR_CODESIGN_IDENTITY }}
+          TOKEN_MONITOR_APPLE_TEAM_ID: ${{ vars.TOKEN_MONITOR_APPLE_TEAM_ID }}
+          TOKEN_MONITOR_APPLE_DEVELOPER_PROGRAM_READY: ${{ vars.TOKEN_MONITOR_APPLE_DEVELOPER_PROGRAM_READY }}
+          TOKEN_MONITOR_APPLE_ACCESS_MODEL_APPROVED: ${{ vars.TOKEN_MONITOR_APPLE_ACCESS_MODEL_APPROVED }}
+          TOKEN_MONITOR_DIRECT_DMG_APPROVED: ${{ vars.TOKEN_MONITOR_DIRECT_DMG_APPROVED }}
+          TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_APPROVED: ${{ vars.TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_APPROVED }}
+          TOKEN_MONITOR_NOTARY_CREDENTIALS_APPROVED: ${{ vars.TOKEN_MONITOR_NOTARY_CREDENTIALS_APPROVED }}
+          TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED: ${{ vars.TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED }}
+        run: |
+          if [[ "$TOKEN_MONITOR_REQUIRE_DEVELOPER_ID" == "true" || -n "$CERTIFICATE_BASE64" || -n "$CODESIGN_IDENTITY" ]]; then
+            ./scripts/check-apple-access-handoff.sh --require-direct-dmg-access
+          else
+            ./scripts/check-apple-access-handoff.sh
+          fi
+
       - name: Prepare Developer ID signing
         env:
           CERTIFICATE_BASE64: ${{ secrets.TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64 }}

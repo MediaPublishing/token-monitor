@@ -84,6 +84,22 @@ After Developer ID access exists, make the check fail if signing or notarization
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 ```
 
+## GitHub Repository Variables
+
+For signed GitHub Release workflow runs, configure these non-secret repository variables after the Account Holder has approved the direct Developer ID path:
+
+```text
+TOKEN_MONITOR_APPLE_TEAM_ID
+TOKEN_MONITOR_APPLE_DEVELOPER_PROGRAM_READY=1
+TOKEN_MONITOR_APPLE_ACCESS_MODEL_APPROVED=1
+TOKEN_MONITOR_DIRECT_DMG_APPROVED=1
+TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_APPROVED=1
+TOKEN_MONITOR_NOTARY_CREDENTIALS_APPROVED=1
+TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED=1
+```
+
+The `Release` workflow runs `./scripts/check-apple-access-handoff.sh --require-direct-dmg-access` when Developer ID signing is required or signing secrets are present. This prevents a signed/notarized release from being produced before the non-secret Apple access handoff has been acknowledged.
+
 ## Mac App Store Certificates
 
 The Mac App Store track needs separate signing identities from the direct Developer ID DMG path:
@@ -153,7 +169,7 @@ TOKEN_MONITOR_GITHUB_RELEASE_SECRETS_APPROVED=1 \
 
 xcrun notarytool store-credentials token-monitor-notary
 
-./scripts/preflight-release.sh --require-signing-secrets
+./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff
 
 TOKEN_MONITOR_CODESIGN_IDENTITY="Developer ID Application: <Name> (<TEAMID>)" \
 TOKEN_MONITOR_NOTARIZE=1 \

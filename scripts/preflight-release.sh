@@ -4,10 +4,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 REQUIRE_SIGNING_SECRETS=0
 REQUIRE_DISTRIBUTION_READY=0
+REQUIRE_APPLE_ACCESS_HANDOFF=0
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/preflight-release.sh [--require-signing-secrets] [--require-distribution-ready]
+Usage: ./scripts/preflight-release.sh [--require-signing-secrets] [--require-distribution-ready] [--require-apple-access-handoff]
 
 Runs the local release readiness checks in the same order an operator should
 use before publishing or republishing Token Monitor release assets.
@@ -15,6 +16,8 @@ use before publishing or republishing Token Monitor release assets.
 Options:
   --require-signing-secrets     Fail if Developer ID GitHub secrets are missing.
   --require-distribution-ready  Fail if local Developer ID, Gatekeeper, or notarization checks warn.
+  --require-apple-access-handoff
+                                Fail if direct Developer ID access handoff gates are missing.
   -h, --help                    Show this help.
 EOF
 }
@@ -27,6 +30,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --require-distribution-ready)
       REQUIRE_DISTRIBUTION_READY=1
+      shift
+      ;;
+    --require-apple-access-handoff)
+      REQUIRE_APPLE_ACCESS_HANDOFF=1
       shift
       ;;
     -h|--help)
@@ -56,6 +63,11 @@ printf 'Repo: %s\n' "$ROOT_DIR"
 run_step "Run Swift test suite" swift test
 run_step "Check release version consistency" ./scripts/check-release-version-consistency.sh
 run_step "Check public repository hygiene" ./scripts/check-public-repo-hygiene.sh
+if [[ "${REQUIRE_APPLE_ACCESS_HANDOFF:-0}" == "1" ]]; then
+  run_step "Check Apple access handoff" ./scripts/check-apple-access-handoff.sh --require-direct-dmg-access
+else
+  run_step "Check Apple access handoff" ./scripts/check-apple-access-handoff.sh
+fi
 run_step "Build direct DMG app candidate" ./scripts/build-app.sh
 run_step "Build MAS app candidate" ./scripts/build-mas-app.sh
 run_step "Verify MAS app candidate" ./scripts/verify-mas-build.sh

@@ -27,7 +27,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Check Apple access handoff | `./scripts/check-apple-access-handoff.sh --require-direct-dmg-access` | Verifies non-secret Apple Team ID shape and explicit acknowledgement of Developer Program, access model, direct DMG path, Developer ID certificate, notary credentials, and GitHub release-secret setup before real Apple signing work starts. | Prepared with human gates |
 | Run consolidated completion audit | `./scripts/audit-apple-distribution.sh --require-complete` | Script path exists and runs the repo, CI, App Store metadata, screenshot, App Store Connect identity, secret, Developer ID, MAS upload, App Store human gate, and publication/legal gate checks in one safe non-uploading audit. Strict mode fails until Apple credentials and approvals exist. | Prepared |
 | Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-13: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. GitHub secret values cannot be read locally, so the Release workflow validates the Developer ID identity class at runtime. | Partially prepared |
-| Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | CI covers release script smoke checks; the release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
+| Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | CI covers release script smoke checks; the release workflow uses the Apple access handoff gate, the package-level strict distribution gate, and blocks signed non-notarized releases. | Prepared |
 | Gate release version consistency | `./scripts/check-release-version-consistency.sh`, `.github/workflows/release.yml` | Checks that `CFBundleShortVersionString` is semantic-version-like, `CFBundleVersion` is a positive integer, and release tags match `v<version>` before the Release workflow packages assets. | Prepared |
 | Smoke-check release scripts in CI | `.github/workflows/ci.yml` | CI now runs shell syntax checks, release/distribution script `--help` checks, and the expected `package-mas-pkg.sh` no-identity failure path. | Prepared |
 | Verify public and Sparkle ZIP paths | `./scripts/package-release.sh --require-distribution-ready`, `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>` | Strict local release verifies both the GitHub release ZIP and the versioned Sparkle update ZIP; public signed-release verification downloads and checks both published ZIPs. | Prepared |
@@ -85,6 +85,7 @@ Last verified on 2026-05-13:
 ./scripts/verify-public-release.sh --help
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 ./scripts/check-apple-distribution.sh --require-ready
+./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff
 ./scripts/verify-public-release.sh v1.0.20 1.0.20 21
 gh pr list --repo MediaPublishing/token-monitor --state open --json number,title,updatedAt,url
 gh issue list --repo MediaPublishing/token-monitor --state open --json number,title,labels,updatedAt,url
@@ -107,6 +108,7 @@ Recent previously verified commands:
 - `./scripts/check-mas-readiness.sh` reported zero static blockers, with manual smoke-test warnings.
 - `./scripts/verify-public-release.sh v1.0.20 1.0.20 21` passed for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
 - `./scripts/check-github-release-secrets.sh --require-signing-secrets` fails as expected until Developer ID and notary secrets exist.
+- `./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff` is the operator preflight once Apple access is approved.
 - `./scripts/check-app-store-submission-gates.sh --require-human-gates` fails as expected until all human/App Store Connect acknowledgements are set.
 - `./scripts/package-mas-pkg.sh` fails as expected until Apple Distribution and installer distribution identities are available.
 - `./scripts/check-app-store-upload-readiness.sh` reports missing MAS upload package, upload tool, and upload authentication until the final upload machine is prepared.

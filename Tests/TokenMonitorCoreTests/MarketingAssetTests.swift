@@ -123,6 +123,9 @@ struct MarketingAssetTests {
         #expect(releaseWorkflow.contains("./scripts/check-release-version-consistency.sh --tag \"$RELEASE_TAG\" --require-tag"))
         #expect(releaseWorkflow.contains("Check public repository hygiene"))
         #expect(releaseWorkflow.contains("./scripts/check-public-repo-hygiene.sh"))
+        #expect(releaseWorkflow.contains("Check Apple access handoff"))
+        #expect(releaseWorkflow.contains("vars.TOKEN_MONITOR_APPLE_TEAM_ID"))
+        #expect(releaseWorkflow.contains("./scripts/check-apple-access-handoff.sh --require-direct-dmg-access"))
         #expect(ciWorkflow.contains("Check release scripts"))
         #expect(ciWorkflow.contains("bash -n scripts/*.sh"))
         #expect(ciWorkflow.contains("./scripts/check-apple-access-handoff.sh --help"))
@@ -162,6 +165,7 @@ struct MarketingAssetTests {
         #expect(releasePackageScript.contains("did not contain TokenMonitor.app"))
         #expect(releasePackageScript.contains("version mismatch"))
         #expect(releasePackageScript.contains("Verified %s %s contains signed TokenMonitor.app"))
+        #expect(releasePackageScript.contains("scripts/check-apple-distribution.sh\" --require-ready"))
     }
 
     @Test func appleDistributionReadinessDocCoversReleasePaths() throws {
@@ -333,6 +337,8 @@ struct MarketingAssetTests {
                 "swift test",
                 "./scripts/check-release-version-consistency.sh",
                 "./scripts/check-public-repo-hygiene.sh",
+                "--require-apple-access-handoff",
+                "./scripts/check-apple-access-handoff.sh --require-direct-dmg-access",
                 "./scripts/check-github-release-secrets.sh --require-signing-secrets",
                 "./scripts/check-apple-distribution.sh --require-ready"
             ]),
