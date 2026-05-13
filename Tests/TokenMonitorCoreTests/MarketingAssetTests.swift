@@ -204,6 +204,7 @@ struct MarketingAssetTests {
             "scripts/check-github-release-variables.sh",
             "scripts/check-github-release-secrets.sh",
             "scripts/check-github-release-channel.sh",
+            "scripts/check-github-issue-labels.sh",
             "scripts/check-github-security-reporting.sh",
             "scripts/check-app-store-metadata.sh",
             "scripts/check-app-store-screenshots.sh",
@@ -283,6 +284,7 @@ struct MarketingAssetTests {
                 "./scripts/check-public-distribution-urls.sh",
                 "./scripts/check-apple-access-handoff.sh",
                 "./scripts/check-github-release-variables.sh",
+                "./scripts/check-github-issue-labels.sh",
                 "docs/app-store-review-risk-register.md",
                 "docs/issue-triage-runbook.md",
                 "preview-only",
@@ -369,11 +371,19 @@ struct MarketingAssetTests {
                 "Private Report Redirect Template",
                 "Hotfix Release Path",
                 "Closeout Checklist",
+                "GitHub Label Setup",
+                "./scripts/check-github-issue-labels.sh",
                 ".github/ISSUE_TEMPLATE/parser-layout-bug.yml",
                 ".github/ISSUE_TEMPLATE/install-update-bug.yml",
                 "./scripts/check-public-distribution-urls.sh",
                 "./scripts/check-github-release-channel.sh",
                 "TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1"
+            ]),
+            ("scripts/check-github-issue-labels.sh", [
+                "parser",
+                "install",
+                "needs-triage",
+                "Issue templates reference label"
             ]),
             ("scripts/audit-apple-distribution.sh", [
                 "--require-complete",

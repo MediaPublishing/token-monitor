@@ -25,6 +25,20 @@ Use public issue forms only for sanitized reports:
 - `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`
 - `.github/ISSUE_TEMPLATE/install-update-bug.yml`
 
+## GitHub Label Setup
+
+The issue templates rely on these repository labels:
+
+- `parser`
+- `install`
+- `needs-triage`
+
+Verify them after repository setup or label cleanup:
+
+```bash
+./scripts/check-github-issue-labels.sh
+```
+
 ## Intake Checklist
 
 For every public issue:

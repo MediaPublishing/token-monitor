@@ -38,6 +38,7 @@ jobs:
           ./scripts/check-release-version-consistency.sh --help
           ./scripts/check-public-repo-hygiene.sh --help
           ./scripts/check-github-security-reporting.sh --help
+          ./scripts/check-github-issue-labels.sh --help
           ./scripts/check-github-release-variables.sh --help
           ./scripts/check-github-release-channel.sh --help
           ./scripts/check-public-distribution-urls.sh --help

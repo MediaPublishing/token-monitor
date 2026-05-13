@@ -108,6 +108,7 @@ if [[ "$SKIP_NETWORK" == "0" ]]; then
   else
     run_step "Check GitHub security reporting" ./scripts/check-github-security-reporting.sh
   fi
+  run_step "Check GitHub issue labels" ./scripts/check-github-issue-labels.sh
   run_step "Check public distribution URLs" ./scripts/check-public-distribution-urls.sh
   run_step "Check GitHub release channel" ./scripts/check-github-release-channel.sh
   run_step "Check latest main CI run" gh run list --repo "$REPO" --branch main --limit 1
