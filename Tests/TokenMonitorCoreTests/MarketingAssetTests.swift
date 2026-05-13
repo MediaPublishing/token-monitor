@@ -42,6 +42,8 @@ struct MarketingAssetTests {
         #expect(readme.contains("assets/screenshots/install/gatekeeper-open-anyway.png"))
         #expect(readme.contains("assets/screenshots/install/gatekeeper-admin-confirm.png"))
         #expect(readme.contains("[Landing page](landing/index.html)"))
+        #expect(readme.contains("[Product backlog](docs/product-backlog.md)"))
+        #expect(FileManager.default.fileExists(atPath: rootURL.appendingPathComponent("docs/product-backlog.md").path))
     }
 
     @Test func releaseMaterialsReferenceDmgInstaller() throws {
