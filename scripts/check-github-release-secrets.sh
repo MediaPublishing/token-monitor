@@ -64,6 +64,10 @@ fail() {
   exit 1
 }
 
+info() {
+  printf '[INFO] %s\n' "$1"
+}
+
 has_secret() {
   local name="$1"
   printf '%s\n' "$secret_names" | grep -Fxq "$name"
@@ -81,6 +85,7 @@ if ! gh auth status >/dev/null 2>&1; then
 fi
 
 secret_names="$(gh secret list --repo "$REPO" --app actions --json name --jq '.[].name')"
+info "GitHub secret values are not readable via gh; this check can confirm names only."
 
 missing_preview=0
 for secret in "${required_preview_secrets[@]}"; do
@@ -114,8 +119,24 @@ printf '\nRelease secrets summary:\n'
 printf -- '- Missing preview release secrets: %s\n' "$missing_preview"
 printf -- '- Missing Developer ID release secrets: %s\n' "$missing_signing"
 
+local_identity_invalid=0
+if [[ -n "${TOKEN_MONITOR_CODESIGN_IDENTITY:-}" ]]; then
+  if [[ "$TOKEN_MONITOR_CODESIGN_IDENTITY" == Developer\ ID\ Application:* ]]; then
+    pass "Local TOKEN_MONITOR_CODESIGN_IDENTITY uses a Developer ID Application identity"
+  else
+    warn "Local TOKEN_MONITOR_CODESIGN_IDENTITY must start with 'Developer ID Application:'"
+    local_identity_invalid=1
+  fi
+else
+  info "Local TOKEN_MONITOR_CODESIGN_IDENTITY is not set; the Release workflow validates the GitHub secret value at runtime."
+fi
+
 if [[ "$missing_preview" -gt 0 ]]; then
   fail "Preview release secrets are incomplete"
+fi
+
+if [[ "$local_identity_invalid" -gt 0 && "$REQUIRE_SIGNING_SECRETS" == "1" ]]; then
+  fail "Local TOKEN_MONITOR_CODESIGN_IDENTITY is not a Developer ID Application identity"
 fi
 
 if [[ "$missing_signing" -gt 0 ]]; then
