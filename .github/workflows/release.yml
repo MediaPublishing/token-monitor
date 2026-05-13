@@ -57,6 +57,11 @@ jobs:
             exit 0
           fi
 
+          if [[ "$CODESIGN_IDENTITY" != Developer\ ID\ Application:* ]]; then
+            echo "::error::TOKEN_MONITOR_CODESIGN_IDENTITY must start with 'Developer ID Application:' for notarized releases."
+            exit 1
+          fi
+
           KEYCHAIN_PATH="$RUNNER_TEMP/token-monitor-release.keychain-db"
           CERTIFICATE_PATH="$RUNNER_TEMP/developer-id-certificate.p12"
           KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-$(uuidgen)}"

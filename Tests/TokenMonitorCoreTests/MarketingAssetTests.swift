@@ -109,6 +109,8 @@ struct MarketingAssetTests {
         #expect(releaseWorkflow.contains("dist/TokenMonitor-macOS.dmg"))
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64"))
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_CODESIGN_IDENTITY"))
+        #expect(releaseWorkflow.contains("Developer\\ ID\\ Application:*"))
+        #expect(releaseWorkflow.contains("must start with 'Developer ID Application:'"))
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_NOTARY_APP_PASSWORD"))
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_NOTARIZE=1"))
         #expect(releaseWorkflow.contains("Developer ID signing is not configured; skipping notarization."))
