@@ -22,8 +22,8 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Produce signed Developer ID app | `TOKEN_MONITOR_CODESIGN_IDENTITY=... ./scripts/package-release.sh --require-distribution-ready` | Script path exists, but no `Developer ID Application` identity is installed locally. | Blocked |
 | Notarize and staple DMG | `TOKEN_MONITOR_NOTARIZE=1 TOKEN_MONITOR_NOTARY_PROFILE=... ./scripts/package-release.sh --require-distribution-ready` | Script path exists, but no local `TOKEN_MONITOR_NOTARY_PROFILE` is configured. | Blocked |
 | Verify Gatekeeper acceptance | `./scripts/check-apple-distribution.sh --require-ready` | Current ad hoc app and DMG are rejected and the DMG has no stapled ticket, as expected before credentials. Strict mode fails until credentials exist. | Blocked |
-| Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-12: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. | Partially prepared |
-| Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | Recent CI run `25778597241` passed; release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
+| Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-13: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. GitHub secret values cannot be read locally, so the Release workflow validates the Developer ID identity class at runtime. | Partially prepared |
+| Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | Recent CI run `25780615011` passed; release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
 | Verify public and Sparkle ZIP paths | `./scripts/package-release.sh --require-distribution-ready`, `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>` | Strict local release verifies both the GitHub release ZIP and the versioned Sparkle update ZIP; public signed-release verification downloads and checks both published ZIPs. | Prepared |
 | Keep the repository publicly reachable | GitHub repository settings | Verified 2026-05-12: `MediaPublishing/token-monitor` is public and uses `main` as the default branch. | Prepared |
 | Assess Mac App Store feasibility | `docs/mac-app-store-feasibility.md` | Documents MAS as a separate track with Sparkle removed and App Review risks called out. | Prepared |
@@ -34,12 +34,13 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Sign MAS build for App Store | `TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: ..." ./scripts/build-mas-app.sh` | No Apple Distribution certificate is installed locally. | Blocked |
 | Smoke-test sandboxed MAS behavior | `docs/mas-sandbox-smoke-test.md` | Checklist exists for login, refresh, snapshots, diagnostics, Launch at Login, evidence capture, and fail conditions. Execution is not possible without reviewer/test accounts and App Store Connect context. | Blocked |
 | Prepare App Store submission material | `docs/app-store-submission-packet.md` | Draft metadata, privacy labels, reviewer notes, screenshots, and test plan are documented. | Prepared |
+| Gate App Store human approvals | `./scripts/check-app-store-submission-gates.sh --require-human-gates` | Script exists and fails strict mode until Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, final URLs, and sandbox smoke test are explicitly acknowledged. | Prepared with human gates |
 | Prepare marketing setup | `docs/marketing-launch-kit.md`, `landing/index.html`, `README.md` | Direct distribution copy, App Store draft metadata, screenshot inventory, launch checklist, and approval gates exist. | Prepared |
 | Preserve legal/privacy gates | `docs/publication-legal-checklist.md`, `docs/privacy.md` | License, privacy policy, privacy labels, and public claims remain human approval gates. | Prepared with human gates |
 | Route support safely | `SUPPORT.md`, `SECURITY.md` | Public support and private vulnerability routes exist and warn against posting secrets/debug dumps. | Prepared |
 | Keep issue fixing safe | `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`, `docs/apple-distribution-readiness.md` | Parser issue template warns that GitHub Issues are public and blocks raw debug dump sharing. | Prepared |
 | Maintain regression coverage | `swift test` | Local and CI tests pass with 34 tests. | Prepared |
-| Verify latest CI | GitHub Actions CI | Run `25778597241` passed tests, direct build, MAS build, MAS verification, and MAS readiness. | Prepared |
+| Verify latest CI | GitHub Actions CI | Run `25780615011` passed tests, direct build, MAS build, MAS verification, and MAS readiness. | Prepared |
 
 ## Current Verified Commands
 
@@ -48,6 +49,8 @@ Last verified on 2026-05-13:
 ```bash
 ./scripts/check-apple-distribution.sh
 ./scripts/check-github-release-secrets.sh
+./scripts/check-app-store-submission-gates.sh
+./scripts/check-app-store-submission-gates.sh --require-human-gates
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 ./scripts/check-apple-distribution.sh --require-ready
 ./scripts/verify-public-release.sh v1.0.20 1.0.20 21
@@ -66,6 +69,7 @@ Recent previously verified commands:
 - `./scripts/check-mas-readiness.sh` reported zero static blockers, with manual smoke-test warnings.
 - `./scripts/verify-public-release.sh v1.0.20 1.0.20 21` passed for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP.
 - `./scripts/check-github-release-secrets.sh --require-signing-secrets` fails as expected until Developer ID and notary secrets exist.
+- `./scripts/check-app-store-submission-gates.sh --require-human-gates` fails as expected until all human/App Store Connect acknowledgements are set.
 - `./scripts/check-apple-distribution.sh --require-ready` fails as expected until a signed/notarized/stapled release exists.
 
 ## Missing Inputs
@@ -128,6 +132,19 @@ This verifies the published DMG, published GitHub release ZIP, and published Spa
 
 For a GitHub Actions rebuild after Developer ID credentials are configured, run the `Release` workflow manually with the existing tag and enable `require_developer_id`.
 
+For Mac App Store upload readiness after the technical MAS preflight and sandbox smoke test:
+
+```bash
+TOKEN_MONITOR_APP_STORE_ACCOUNT_HOLDER_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_CONNECT_READY=1 \
+TOKEN_MONITOR_APP_STORE_PRIVACY_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_REVIEWER_PLAN_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_SCREENSHOTS_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_SUPPORT_URL_APPROVED=1 \
+TOKEN_MONITOR_APP_STORE_SANDBOX_SMOKE_TEST_PASSED=1 \
+./scripts/check-app-store-submission-gates.sh --require-human-gates
+```
+
 ## Completion Criteria
 
 Do not mark the Apple distribution objective complete until all of these are true:
@@ -137,5 +154,5 @@ Do not mark the Apple distribution objective complete until all of these are tru
 3. The DMG has a stapled notarization ticket.
 4. The strict package step verifies both ZIP artifacts contain a signed `TokenMonitor.app` with the expected version/build.
 5. GitHub release assets, the Sparkle appcast, the public GitHub release ZIP, and the public Sparkle update ZIP are live and verified.
-6. If Mac App Store submission is pursued, the MAS binary is Apple Distribution signed, sandbox smoke-tested, and explicitly approved by the Account Holder.
+6. If Mac App Store submission is pursued, the MAS binary is Apple Distribution signed, sandbox smoke-tested, and `./scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit human/App Store Connect acknowledgements.
 7. Legal/privacy/license and public marketing claims have received required human approval.
