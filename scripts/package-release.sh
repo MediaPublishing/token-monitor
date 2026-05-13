@@ -9,6 +9,7 @@ UPDATES_DIR="$ROOT_DIR/dist/updates"
 APPCAST_PATH="$ROOT_DIR/dist/appcast.xml"
 SPARKLE_BIN_DIR="$ROOT_DIR/.build/artifacts/sparkle/Sparkle/bin"
 DOWNLOAD_URL_PREFIX="${TOKEN_MONITOR_DOWNLOAD_URL_PREFIX:-https://mediapublishing.github.io/token-monitor/updates/}"
+RELEASE_NOTES_PATH="${TOKEN_MONITOR_RELEASE_NOTES_PATH:-}"
 REQUIRE_DISTRIBUTION_READY="${TOKEN_MONITOR_REQUIRE_DISTRIBUTION_READY:-0}"
 
 usage() {
@@ -20,6 +21,9 @@ Builds Token Monitor release artifacts: ZIP, DMG, Sparkle update ZIP, and appcas
 Options:
   --require-distribution-ready  Verify app and DMG with the strict Apple distribution check after packaging.
   -h, --help                    Show this help.
+
+Environment:
+  TOKEN_MONITOR_RELEASE_NOTES_PATH  Optional Markdown, HTML, or text release notes file for Sparkle.
 EOF
 }
 
@@ -46,6 +50,7 @@ done
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist")"
 BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_DIR/Contents/Info.plist")"
 VERSIONED_ZIP_PATH="$UPDATES_DIR/TokenMonitor-${VERSION}-${BUILD_NUMBER}-macOS.zip"
+VERSIONED_RELEASE_NOTES_PATH="${VERSIONED_ZIP_PATH%.zip}.md"
 
 rm -f "$ZIP_PATH"
 ditto -c -k --sequesterRsrc --keepParent "$APP_DIR" "$ZIP_PATH"
@@ -53,16 +58,29 @@ TOKEN_MONITOR_SKIP_BUILD=1 "$ROOT_DIR/scripts/package-dmg.sh"
 
 mkdir -p "$UPDATES_DIR"
 cp "$ZIP_PATH" "$VERSIONED_ZIP_PATH"
+if [[ -n "$RELEASE_NOTES_PATH" && -s "$RELEASE_NOTES_PATH" ]]; then
+  cp "$RELEASE_NOTES_PATH" "$VERSIONED_RELEASE_NOTES_PATH"
+else
+  cat > "$VERSIONED_RELEASE_NOTES_PATH" <<EOF
+# Token Monitor ${VERSION}
+
+Token Monitor ${VERSION} build ${BUILD_NUMBER} is available.
+
+See the GitHub Release page for the full changelog.
+EOF
+fi
 
 if [[ -n "${SPARKLE_PRIVATE_KEY:-}" ]]; then
   printf '%s' "$SPARKLE_PRIVATE_KEY" | "$SPARKLE_BIN_DIR/generate_appcast" \
     --ed-key-file - \
     --download-url-prefix "$DOWNLOAD_URL_PREFIX" \
+    --embed-release-notes \
     "$UPDATES_DIR"
 elif [[ "${TOKEN_MONITOR_USE_KEYCHAIN_SPARKLE_KEY:-}" == "1" ]]; then
   "$SPARKLE_BIN_DIR/generate_appcast" \
     --account token-monitor \
     --download-url-prefix "$DOWNLOAD_URL_PREFIX" \
+    --embed-release-notes \
     "$UPDATES_DIR"
 else
   cat >&2 <<'EOF'

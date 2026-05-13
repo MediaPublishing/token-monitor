@@ -154,9 +154,17 @@ jobs:
 
       - name: Package app and appcast
         env:
+          GH_TOKEN: ${{ github.token }}
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
           TOKEN_MONITOR_DOWNLOAD_URL_PREFIX: https://mediapublishing.github.io/token-monitor/updates/
         run: |
+          release_notes_path="$RUNNER_TEMP/token-monitor-release-notes.md"
+          gh release view "$RELEASE_TAG" --json body --jq '.body // ""' > "$release_notes_path"
+          if [[ ! -s "$release_notes_path" ]]; then
+            printf 'Token Monitor %s\n' "$RELEASE_TAG" > "$release_notes_path"
+          fi
+          export TOKEN_MONITOR_RELEASE_NOTES_PATH="$release_notes_path"
+
           package_args=()
           if [[ "$TOKEN_MONITOR_REQUIRE_DEVELOPER_ID" == "true" || "${TOKEN_MONITOR_NOTARIZE:-}" == "1" ]]; then
             package_args+=(--require-distribution-ready)
