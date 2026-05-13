@@ -1,6 +1,6 @@
 # Apple Distribution Readiness
 
-Last reviewed: 2026-05-12
+Last reviewed: 2026-05-13
 
 ## Objective
 
@@ -39,6 +39,9 @@ Verified locally:
 - `.github/workflows/release.yml` publishes release assets, deploys the Sparkle appcast to GitHub Pages, and can import Developer ID/notary credentials from GitHub Secrets when they are available.
 - The release workflow can also be run manually with an existing tag through `workflow_dispatch` to rebuild and republish release assets, the appcast, and GitHub Pages without creating a new version.
 - The manual release workflow has a `require_developer_id` option. When enabled, the workflow fails before upload unless Developer ID signing and notarization are configured and verified.
+- The release workflow refuses to upload a signed non-notarized release if Developer ID signing secrets exist but notary secrets are incomplete.
+- `scripts/package-release.sh --require-distribution-ready` verifies the final app, DMG, notarization ticket, and versioned Sparkle update ZIP before upload.
+- `scripts/verify-public-release.sh` can verify the public DMG and public Sparkle update ZIP together when `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1` is set.
 - `scripts/build-mas-app.sh` produces a separate `1.0.20` build `21` MAS candidate.
 - `scripts/verify-mas-build.sh` verifies the MAS candidate has no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and a valid local signature.
 
@@ -228,6 +231,7 @@ Prepared and verified repo artifacts:
 - Verified CI for the current app-release commit: `https://github.com/MediaPublishing/token-monitor/actions/runs/25496427624` passed for commit `7c3b16f`.
 - Verified CI for the current workflow-hardening commit: `https://github.com/MediaPublishing/token-monitor/actions/runs/25259793656` passed for commit `8c2448e`.
 - Latest verified release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25496438297` passed for `v1.0.20`.
+- Latest verified CI for strict release gate docs/scripts: `https://github.com/MediaPublishing/token-monitor/actions/runs/25778120690` passed for commit `0cbca35`.
 
 Current blockers:
 
