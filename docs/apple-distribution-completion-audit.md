@@ -116,6 +116,8 @@ TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 \
 ./scripts/verify-public-release.sh <tag> <version> <build>
 ```
 
+For a GitHub Actions rebuild after Developer ID credentials are configured, run the `Release` workflow manually with the existing tag and enable `require_developer_id`.
+
 ## Completion Criteria
 
 Do not mark the Apple distribution objective complete until all of these are true:

@@ -103,7 +103,7 @@ TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 \
 ./scripts/verify-public-release.sh <tag> <version> <build>
 ```
 
-For a GitHub Actions rebuild of an existing release, run the `Release` workflow manually with the existing tag after the required repository secrets pass the strict check.
+For a GitHub Actions rebuild of an existing release, run the `Release` workflow manually with the existing tag after the required repository secrets pass the strict check. Enable the `require_developer_id` workflow option so the job fails before upload if signing, notarization, or Gatekeeper/stapler verification is incomplete.
 
 ## Notarization Password
 
