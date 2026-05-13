@@ -6,6 +6,12 @@ This checklist tracks publication decisions that require human or legal approval
 
 ## Current Status
 
+Run the executable gate before broad promotion or App Store submission:
+
+```bash
+./scripts/check-publication-legal-gates.sh --require-legal-gates
+```
+
 - No repository license is published yet.
 - No formal App Store privacy policy has been legally approved yet.
 - `docs/privacy.md` is a product privacy summary, not a legal policy.

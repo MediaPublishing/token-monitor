@@ -195,7 +195,8 @@ Before Mac App Store submission:
 9. Add reviewer notes and a test-account plan.
 10. Run `./scripts/check-app-store-upload-readiness.sh --require-ready` on the upload machine, or confirm the Account Holder will upload manually through App Store Connect, Xcode, or Transporter.
 11. Run `./scripts/check-app-store-submission-gates.sh --require-human-gates`.
-12. Submit only after Account Holder approval.
+12. Run `./scripts/check-publication-legal-gates.sh --require-legal-gates`.
+13. Submit only after Account Holder approval.
 
 ## Approval Gates
 
