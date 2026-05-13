@@ -21,10 +21,11 @@ Do not submit until all are true:
 7. `scripts/check-mas-readiness.sh` reports zero blockers.
 8. The sandbox smoke test in `docs/mas-sandbox-smoke-test.md` passes for login, refresh, local snapshots, diagnostics, and Launch at Login.
 9. Screenshots are captured from the submitted binary and contain no private account data.
-10. Privacy labels and the privacy policy receive final human/legal approval.
-11. Reviewer notes and test accounts are approved by the Account Holder.
-12. `scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit acknowledgements for Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, support URLs, and sandbox smoke testing.
-13. `scripts/check-app-store-upload-readiness.sh --require-ready` passes on the upload machine, or the Account Holder confirms upload will happen manually through App Store Connect, Xcode, or Transporter.
+10. `scripts/check-app-store-screenshots.sh --require-ready` passes for the final screenshot folder.
+11. Privacy labels and the privacy policy receive final human/legal approval.
+12. Reviewer notes and test accounts are approved by the Account Holder.
+13. `scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit acknowledgements for Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, support URLs, and sandbox smoke testing.
+14. `scripts/check-app-store-upload-readiness.sh --require-ready` passes on the upload machine, or the Account Holder confirms upload will happen manually through App Store Connect, Xcode, or Transporter.
 
 ## App Metadata Draft
 
@@ -188,6 +189,12 @@ Before submission, run the MAS binary through `docs/mas-sandbox-smoke-test.md` a
 - Launch at Login can be toggled and behaves as expected.
 - App Store update copy is visible instead of Sparkle update controls.
 - No Sparkle framework or `SU*` Info.plist keys are present in the submitted app.
+
+Before uploading screenshots, validate file dimensions:
+
+```bash
+./scripts/check-app-store-screenshots.sh --require-ready
+```
 
 ## Known Review Risks
 

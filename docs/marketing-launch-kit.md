@@ -191,7 +191,7 @@ Before Mac App Store submission:
 5. Fill App Store metadata from this file and `docs/app-store-submission-packet.md`.
 6. Run `./scripts/check-app-store-metadata.sh`.
 7. Complete privacy labels with final legal/human approval.
-8. Attach screenshots captured from the submitted binary.
+8. Attach screenshots captured from the submitted binary and run `./scripts/check-app-store-screenshots.sh --require-ready`.
 9. Add reviewer notes and a test-account plan.
 10. Run `./scripts/check-app-store-upload-readiness.sh --require-ready` on the upload machine, or confirm the Account Holder will upload manually through App Store Connect, Xcode, or Transporter.
 11. Run `./scripts/check-app-store-submission-gates.sh --require-human-gates`.

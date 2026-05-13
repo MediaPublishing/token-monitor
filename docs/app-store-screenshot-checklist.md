@@ -67,6 +67,12 @@ Do not commit App Store screenshots unless they are sanitized and intentionally 
 
 ## Approval Gate
 
+Validate file count, file type, and dimensions before upload:
+
+```bash
+./scripts/check-app-store-screenshots.sh --require-ready
+```
+
 Before setting `TOKEN_MONITOR_APP_STORE_SCREENSHOTS_APPROVED=1`, confirm:
 
 - Screenshots came from the submitted MAS binary.

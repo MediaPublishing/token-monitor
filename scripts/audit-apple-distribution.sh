@@ -108,11 +108,13 @@ fi
 if [[ "$REQUIRE_COMPLETE" == "1" ]]; then
   run_step "Check GitHub release secrets strictly" ./scripts/check-github-release-secrets.sh --require-signing-secrets
   run_step "Check local Apple distribution strictly" ./scripts/check-apple-distribution.sh --require-ready
+  run_step "Check App Store screenshots strictly" ./scripts/check-app-store-screenshots.sh --require-ready
   run_step "Check MAS upload handoff strictly" ./scripts/check-app-store-upload-readiness.sh --require-ready
   run_step "Check App Store human gates strictly" ./scripts/check-app-store-submission-gates.sh --require-human-gates
 else
   run_step "Check GitHub release secrets" ./scripts/check-github-release-secrets.sh
   run_step "Check local Apple distribution readiness" ./scripts/check-apple-distribution.sh
+  run_step "Check App Store screenshots" ./scripts/check-app-store-screenshots.sh
   run_step "Check MAS upload handoff" ./scripts/check-app-store-upload-readiness.sh
   run_step "Check App Store human gates" ./scripts/check-app-store-submission-gates.sh
 fi

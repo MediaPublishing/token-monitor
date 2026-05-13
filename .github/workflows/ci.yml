@@ -30,6 +30,7 @@ jobs:
           ./scripts/check-app-store-submission-gates.sh --help
           ./scripts/check-github-release-secrets.sh --help
           ./scripts/check-app-store-metadata.sh --help
+          ./scripts/check-app-store-screenshots.sh --help
           ./scripts/audit-apple-distribution.sh --help
           ./scripts/package-mas-pkg.sh --help
           ./scripts/preflight-release.sh --help
