@@ -264,6 +264,7 @@ token-monitor/
 - [App Store privacy labels](docs/app-store-privacy-labels.md)
 - [App Store screenshot checklist](docs/app-store-screenshot-checklist.md)
 - [Release recovery runbook](docs/release-recovery-runbook.md)
+- [Issue triage runbook](docs/issue-triage-runbook.md)
 - [Marketing launch kit](docs/marketing-launch-kit.md)
 - [Publication legal checklist](docs/publication-legal-checklist.md)
 - [Privacy summary](docs/privacy.md)

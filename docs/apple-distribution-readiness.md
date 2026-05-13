@@ -204,6 +204,7 @@ Current debug/reporting policy:
 - Public parser reports should use `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
 - Public install, update, Gatekeeper, and Launch at Login reports should use `.github/ISSUE_TEMPLATE/install-update-bug.yml`.
 - Private usage dumps should not be attached unredacted.
+- Detailed triage guidance lives in `docs/issue-triage-runbook.md`.
 
 Triage workflow:
 
@@ -260,6 +261,7 @@ Prepared and verified repo artifacts:
 - Public privacy summary: `docs/privacy.md`.
 - Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
 - Public install/update issue form with Apple credential and debug dump warnings: `.github/ISSUE_TEMPLATE/install-update-bug.yml`.
+- Public issue triage runbook: `docs/issue-triage-runbook.md`.
 - Regression coverage: `swift test` passes with 35 tests.
 - Earlier release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25496438297` passed for `v1.0.20`.
 - Current CI evidence: run `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` and confirm the latest `main` run passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness.

@@ -192,6 +192,7 @@ struct MarketingAssetTests {
             "docs/app-store-connect-identity.md",
             "docs/app-store-review-risk-register.md",
             "docs/release-recovery-runbook.md",
+            "docs/issue-triage-runbook.md",
             "docs/publication-legal-checklist.md",
             "docs/app-store-submission-packet.md",
             "docs/app-store-privacy-labels.md",
@@ -245,6 +246,7 @@ struct MarketingAssetTests {
                 "docs/app-store-privacy-labels.md",
                 "docs/app-store-screenshot-checklist.md",
                 "docs/release-recovery-runbook.md",
+                "docs/issue-triage-runbook.md",
                 "docs/publication-legal-checklist.md"
             ]),
             ("docs/apple-distribution-readiness.md", [
@@ -262,6 +264,7 @@ struct MarketingAssetTests {
                 "preview-only",
                 "Marketing Setup",
                 "Ongoing Issue-Fixing Loop",
+                "docs/issue-triage-runbook.md",
                 "Completion Audit",
                 "not complete until a signed, notarized, stapled Developer ID release is produced"
             ]),
@@ -281,6 +284,7 @@ struct MarketingAssetTests {
                 "./scripts/check-apple-access-handoff.sh",
                 "./scripts/check-github-release-variables.sh",
                 "docs/app-store-review-risk-register.md",
+                "docs/issue-triage-runbook.md",
                 "preview-only",
                 "Not complete.",
                 "Do not mark the Apple distribution objective complete",
@@ -355,6 +359,21 @@ struct MarketingAssetTests {
                 "Launch at Login",
                 "Debug GitHub draft",
                 "Debug email draft"
+            ]),
+            ("docs/issue-triage-runbook.md", [
+                "Public Issue Rules",
+                "Intake Checklist",
+                "Parser/Layout Bugs",
+                "Install, Gatekeeper, And Update Bugs",
+                "Public Reply Template",
+                "Private Report Redirect Template",
+                "Hotfix Release Path",
+                "Closeout Checklist",
+                ".github/ISSUE_TEMPLATE/parser-layout-bug.yml",
+                ".github/ISSUE_TEMPLATE/install-update-bug.yml",
+                "./scripts/check-public-distribution-urls.sh",
+                "./scripts/check-github-release-channel.sh",
+                "TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1"
             ]),
             ("scripts/audit-apple-distribution.sh", [
                 "--require-complete",
