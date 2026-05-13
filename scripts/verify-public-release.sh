@@ -82,6 +82,8 @@ If dist/TokenMonitor.app exists, version and build default to its Info.plist.
 
 Optional signed-release verification:
   TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>
+
+This downloads and verifies both the public DMG and the Sparkle update ZIP.
 EOF
   exit 1
 fi
@@ -122,7 +124,10 @@ if [[ "$VERIFY_DMG_SIGNATURE" == "1" ]]; then
 
   release_download_dir="$DOWNLOAD_DIR/$TAG"
   downloaded_dmg="$release_download_dir/TokenMonitor-macOS.dmg"
+  downloaded_update_zip="$release_download_dir/$UPDATE_ZIP_NAME"
+  update_extract_dir="$release_download_dir/update-zip"
   mkdir -p "$release_download_dir"
+  rm -rf "$update_extract_dir"
 
   info "Downloading DMG for local signature verification"
   info "$downloaded_dmg"
@@ -135,8 +140,31 @@ if [[ "$VERIFY_DMG_SIGNATURE" == "1" ]]; then
   check_command \
     "Downloaded DMG has a stapled notarization ticket" \
     xcrun stapler validate "$downloaded_dmg"
+
+  info "Downloading Sparkle update ZIP for local signature verification"
+  info "$downloaded_update_zip"
+  curl -fL --retry 2 --retry-delay 1 "$UPDATE_ZIP_URL" -o "$downloaded_update_zip"
+
+  mkdir -p "$update_extract_dir"
+  ditto -x -k "$downloaded_update_zip" "$update_extract_dir"
+  extracted_app="$update_extract_dir/TokenMonitor.app"
+  if [[ ! -d "$extracted_app" ]]; then
+    fail "Downloaded Sparkle update ZIP did not contain TokenMonitor.app: $downloaded_update_zip"
+  fi
+
+  check_command \
+    "Downloaded Sparkle update app code signature verifies" \
+    codesign --verify --deep --strict "$extracted_app"
+
+  extracted_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$extracted_app/Contents/Info.plist")"
+  extracted_build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$extracted_app/Contents/Info.plist")"
+  if [[ "$extracted_version" == "$VERSION" && "$extracted_build" == "$BUILD_NUMBER" ]]; then
+    pass "Downloaded Sparkle update app version matches $VERSION ($BUILD_NUMBER)"
+  else
+    fail "Downloaded Sparkle update app version mismatch: expected $VERSION ($BUILD_NUMBER), found $extracted_version ($extracted_build)"
+  fi
 else
-  info "Set TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 to download the DMG and verify Gatekeeper/stapler status."
+  info "Set TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 to download the DMG and Sparkle update ZIP for local signature verification."
 fi
 
 printf '\nPublic release verification complete.\n'
