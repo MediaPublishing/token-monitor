@@ -24,7 +24,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Verify local Apple signing identities | `./scripts/check-apple-distribution.sh` | Reports Developer ID Application, Apple Distribution, and Mac App Store installer distribution identities separately. Current machine has none installed. | Blocked |
 | Verify Gatekeeper acceptance | `./scripts/check-apple-distribution.sh --require-ready` | Current ad hoc app and DMG are rejected and the DMG has no stapled ticket, as expected before credentials. Strict mode fails until credentials exist. | Blocked |
 | Document Apple access handoff | `docs/apple-access-handoff.md` | Documents minimum practical roles, invitation checklist, safe-to-share values, blocked secrets, and revocation steps. | Prepared |
-| Run consolidated completion audit | `./scripts/audit-apple-distribution.sh --require-complete` | Script path exists and runs the repo, CI, App Store metadata, screenshot, secret, Developer ID, MAS upload, App Store human gate, and publication/legal gate checks in one safe non-uploading audit. Strict mode fails until Apple credentials and approvals exist. | Prepared |
+| Run consolidated completion audit | `./scripts/audit-apple-distribution.sh --require-complete` | Script path exists and runs the repo, CI, App Store metadata, screenshot, App Store Connect identity, secret, Developer ID, MAS upload, App Store human gate, and publication/legal gate checks in one safe non-uploading audit. Strict mode fails until Apple credentials and approvals exist. | Prepared |
 | Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-13: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. GitHub secret values cannot be read locally, so the Release workflow validates the Developer ID identity class at runtime. | Partially prepared |
 | Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | CI covers release script smoke checks; the release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
 | Smoke-check release scripts in CI | `.github/workflows/ci.yml` | CI now runs shell syntax checks, release/distribution script `--help` checks, and the expected `package-mas-pkg.sh` no-identity failure path. | Prepared |
@@ -35,6 +35,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Verify MAS candidate shape | `./scripts/verify-mas-build.sh` | Verifies no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and valid local signature. Strict `--require-apple-distribution` mode is available for the submitted binary. | Prepared |
 | Keep MAS update UI App Store-safe | `Sources/TokenMonitorApp/SettingsView.swift`, `Sources/TokenMonitorApp/AppUpdateController.swift`, `swift test` | MAS builds show Mac App Store update copy and use a no-op update controller instead of Sparkle UI. Direct DMG builds keep Sparkle update controls. | Prepared |
 | Check MAS static readiness | `./scripts/check-mas-readiness.sh` | Reports zero static blockers, verifies the App Store category marker, and warns that WebKit sessions and Login Items need smoke testing. | Prepared with warnings |
+| Check App Store Connect identity | `docs/app-store-connect-identity.md`, `./scripts/check-app-store-identity.sh --require-ready` | Documents the current app name, bundle ID, category, minimum macOS version, version/build, and explicit approvals for Apple Team ID, Bundle ID, SKU, and category. Strict mode fails until human identity approvals exist. | Prepared with human gates |
 | Run MAS submission technical preflight | `TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: ..." ./scripts/preflight-mas-submission.sh` | Script path exists and requires Apple Distribution signing before verifying the submitted MAS binary. | Blocked until credentials |
 | Sign MAS build for App Store | `TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: ..." ./scripts/build-mas-app.sh` | No Apple Distribution certificate is installed locally. | Blocked |
 | Package MAS upload pkg | `TOKEN_MONITOR_MAS_INSTALLER_IDENTITY="3rd Party Mac Developer Installer: ..." ./scripts/package-mas-pkg.sh` | Script path exists, verifies the app with `--require-apple-distribution`, and produces `dist/mas/TokenMonitor-macOS-AppStore.pkg`; no installer distribution certificate is installed locally. | Blocked |
@@ -62,6 +63,8 @@ Last verified on 2026-05-13:
 ./scripts/check-app-store-submission-gates.sh
 ./scripts/check-app-store-submission-gates.sh --require-human-gates
 ./scripts/check-app-store-metadata.sh
+./scripts/check-app-store-identity.sh
+./scripts/check-app-store-identity.sh --require-ready
 ./scripts/audit-apple-distribution.sh --help
 ./scripts/package-mas-pkg.sh --help
 ./scripts/check-app-store-upload-readiness.sh --help
@@ -113,6 +116,7 @@ Required before Mac App Store submission can be completed:
 - Apple Distribution certificate.
 - Mac App Store installer distribution certificate.
 - App Store Connect app record.
+- Approved Apple Team ID, Bundle ID, SKU, and App Store category.
 - App Store Connect upload tool and approved upload authentication method on the upload machine.
 - Agreements, tax, and banking completed by the Account Holder.
 - Final privacy policy and App Privacy labels approved by a human/legal reviewer.
@@ -162,6 +166,8 @@ For Mac App Store upload readiness after the technical MAS preflight and sandbox
 TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: <Name> (<TEAMID>)" \
 TOKEN_MONITOR_MAS_INSTALLER_IDENTITY="3rd Party Mac Developer Installer: <Name> (<TEAMID>)" \
 ./scripts/preflight-mas-submission.sh
+
+./scripts/check-app-store-identity.sh --require-ready
 
 ./scripts/check-app-store-upload-readiness.sh --require-ready
 

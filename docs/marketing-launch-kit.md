@@ -193,10 +193,11 @@ Before Mac App Store submission:
 7. Complete privacy labels with final legal/human approval.
 8. Attach screenshots captured from the submitted binary and run `./scripts/check-app-store-screenshots.sh --require-ready`.
 9. Add reviewer notes and a test-account plan.
-10. Run `./scripts/check-app-store-upload-readiness.sh --require-ready` on the upload machine, or confirm the Account Holder will upload manually through App Store Connect, Xcode, or Transporter.
-11. Run `./scripts/check-app-store-submission-gates.sh --require-human-gates`.
-12. Run `./scripts/check-publication-legal-gates.sh --require-legal-gates`.
-13. Submit only after Account Holder approval.
+10. Run `./scripts/check-app-store-identity.sh --require-ready`.
+11. Run `./scripts/check-app-store-upload-readiness.sh --require-ready` on the upload machine, or confirm the Account Holder will upload manually through App Store Connect, Xcode, or Transporter.
+12. Run `./scripts/check-app-store-submission-gates.sh --require-human-gates`.
+13. Run `./scripts/check-publication-legal-gates.sh --require-legal-gates`.
+14. Submit only after Account Holder approval.
 
 ## Approval Gates
 

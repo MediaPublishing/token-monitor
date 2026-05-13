@@ -26,6 +26,7 @@ Do not submit until all are true:
 12. Reviewer notes and test accounts are approved by the Account Holder.
 13. `scripts/check-app-store-submission-gates.sh --require-human-gates` passes with explicit acknowledgements for Account Holder approval, App Store Connect readiness, privacy approval, reviewer plan, screenshots, support URLs, and sandbox smoke testing.
 14. `scripts/check-app-store-upload-readiness.sh --require-ready` passes on the upload machine, or the Account Holder confirms upload will happen manually through App Store Connect, Xcode, or Transporter.
+15. `scripts/check-app-store-identity.sh --require-ready` passes before App Store Connect record creation or upload.
 
 ## App Metadata Draft
 
@@ -85,6 +86,23 @@ Privacy URL:
 
 ```text
 https://github.com/MediaPublishing/token-monitor/blob/main/docs/privacy.md
+```
+
+## App Store Connect Identity
+
+Detailed identity approval gates live in `docs/app-store-connect-identity.md`.
+
+Current technical identity:
+
+- App name: `Token Monitor`
+- Bundle ID: `com.mediapublishing.tokenmonitor`
+- Category: `public.app-category.productivity`
+- Minimum macOS version: `14.0`
+
+Before App Store Connect record creation or upload:
+
+```bash
+./scripts/check-app-store-identity.sh --require-ready
 ```
 
 ## Privacy Label Draft

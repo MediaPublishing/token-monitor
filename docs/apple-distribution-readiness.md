@@ -228,6 +228,7 @@ Prepared and verified repo artifacts:
 - GitHub workflows use Node-24-compatible action pins where available and set `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true`.
 - Mac App Store feasibility audit: `docs/mac-app-store-feasibility.md`.
 - App Store submission packet: `docs/app-store-submission-packet.md`.
+- App Store Connect identity checklist: `docs/app-store-connect-identity.md`.
 - MAS candidate build path: `scripts/build-mas-app.sh`.
 - MAS build verifier: `scripts/verify-mas-build.sh`.
 - MAS upload package builder: `scripts/package-mas-pkg.sh`.
@@ -260,6 +261,7 @@ Current blockers:
 - The MAS candidate build removes Sparkle and passes local verification, but it has not been signed with an Apple Distribution certificate or smoke-tested with real reviewer accounts under App Sandbox.
 - The MAS upload package path exists, but it has not been signed with a Mac App Store installer distribution identity.
 - The MAS upload handoff is not ready because no submitted package, App Store Connect upload tool, or upload authentication has been configured on this machine.
+- App Store Connect identity approval is not complete until the Account Holder or approved operator confirms Team ID, Bundle ID, SKU, and category.
 - Repository license and final legal/privacy approvals remain human approval gates before broad promotion or App Store submission.
 
 Conclusion:

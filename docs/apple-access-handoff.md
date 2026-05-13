@@ -39,6 +39,7 @@ Before inviting anyone:
 - Confirm whether the team is an organization or individual Apple Developer Program account.
 - Confirm whether direct DMG distribution, Mac App Store submission, or both are being pursued.
 - Confirm the Apple Team ID and the intended bundle ID owner.
+- Confirm the App Store Connect SKU and category against `docs/app-store-connect-identity.md`.
 - Confirm whether the operator should touch certificates or only metadata/upload handoff.
 
 If only direct Developer ID DMG distribution is needed:
@@ -52,6 +53,7 @@ If only direct Developer ID DMG distribution is needed:
 If Mac App Store submission is pursued:
 
 - Create the App Store Connect app record.
+- Run `./scripts/check-app-store-identity.sh --require-ready`.
 - Assign app-specific access for Token Monitor where possible.
 - Prepare Apple Distribution and Mac App Store installer distribution certificates.
 - Prepare upload authentication on the upload machine.

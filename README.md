@@ -259,6 +259,7 @@ token-monitor/
 - [Apple credential runbook](docs/apple-credential-runbook.md)
 - [Mac App Store feasibility audit](docs/mac-app-store-feasibility.md)
 - [App Store submission packet](docs/app-store-submission-packet.md)
+- [App Store Connect identity checklist](docs/app-store-connect-identity.md)
 - [App Store privacy labels](docs/app-store-privacy-labels.md)
 - [App Store screenshot checklist](docs/app-store-screenshot-checklist.md)
 - [Marketing launch kit](docs/marketing-launch-kit.md)
