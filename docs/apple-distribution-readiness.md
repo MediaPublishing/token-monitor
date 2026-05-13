@@ -220,6 +220,7 @@ Prepared and verified repo artifacts:
 - Local signing/notarization verifier: `scripts/check-apple-distribution.sh`; it reports Developer ID, Apple Distribution, and Mac App Store installer distribution identities separately.
 - GitHub release secret verifier: `scripts/check-github-release-secrets.sh`.
 - Local release preflight: `scripts/preflight-release.sh`.
+- Release version consistency checker: `scripts/check-release-version-consistency.sh`.
 - Public release verifier: `scripts/verify-public-release.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - Consolidated Apple distribution audit: `scripts/audit-apple-distribution.sh`.

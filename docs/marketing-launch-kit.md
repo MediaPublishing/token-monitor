@@ -174,14 +174,15 @@ Before public direct-DMG launch:
 
 1. Run `./scripts/check-github-release-secrets.sh --require-signing-secrets`.
 2. Run `./scripts/preflight-release.sh --require-signing-secrets`.
-3. Confirm Developer ID certificate and notary profile are available.
-4. Produce and verify a signed/notarized release with `./scripts/package-release.sh --require-distribution-ready`.
-5. Confirm the strict package step passed Gatekeeper, stapler, GitHub release ZIP, and Sparkle update ZIP checks.
-6. Publish GitHub Release assets.
-7. Run `./scripts/verify-public-release.sh <tag> <version> <build>` to verify GitHub Release assets, GitHub Pages, `appcast.xml`, and update ZIP are live.
-8. Run `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>` after Developer ID signing is configured to verify the published DMG, GitHub release ZIP, and Sparkle update ZIP.
-9. Run `./scripts/check-release-recovery-readiness.sh --require-ready`.
-10. Smoke-test install, launch at login, Claude login, ChatGPT login, and Sparkle update check.
+3. Run `./scripts/check-release-version-consistency.sh --tag <tag> --require-tag`.
+4. Confirm Developer ID certificate and notary profile are available.
+5. Produce and verify a signed/notarized release with `./scripts/package-release.sh --require-distribution-ready`.
+6. Confirm the strict package step passed Gatekeeper, stapler, GitHub release ZIP, and Sparkle update ZIP checks.
+7. Publish GitHub Release assets.
+8. Run `./scripts/verify-public-release.sh <tag> <version> <build>` to verify GitHub Release assets, GitHub Pages, `appcast.xml`, and update ZIP are live.
+9. Run `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>` after Developer ID signing is configured to verify the published DMG, GitHub release ZIP, and Sparkle update ZIP.
+10. Run `./scripts/check-release-recovery-readiness.sh --require-ready`.
+11. Smoke-test install, launch at login, Claude login, ChatGPT login, and Sparkle update check.
 
 Before Mac App Store submission:
 

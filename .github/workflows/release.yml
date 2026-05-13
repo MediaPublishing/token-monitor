@@ -40,6 +40,9 @@ jobs:
         with:
           ref: ${{ env.RELEASE_TAG }}
 
+      - name: Check release version consistency
+        run: ./scripts/check-release-version-consistency.sh --tag "$RELEASE_TAG" --require-tag
+
       - name: Prepare Developer ID signing
         env:
           CERTIFICATE_BASE64: ${{ secrets.TOKEN_MONITOR_DEVELOPER_ID_CERTIFICATE_BASE64 }}

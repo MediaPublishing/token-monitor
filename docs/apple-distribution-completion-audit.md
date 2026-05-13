@@ -27,6 +27,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Run consolidated completion audit | `./scripts/audit-apple-distribution.sh --require-complete` | Script path exists and runs the repo, CI, App Store metadata, screenshot, App Store Connect identity, secret, Developer ID, MAS upload, App Store human gate, and publication/legal gate checks in one safe non-uploading audit. Strict mode fails until Apple credentials and approvals exist. | Prepared |
 | Check GitHub release secrets | `./scripts/check-github-release-secrets.sh` | Verified 2026-05-13: `SPARKLE_PRIVATE_KEY` exists; six Developer ID and notary secrets are missing. GitHub secret values cannot be read locally, so the Release workflow validates the Developer ID identity class at runtime. | Partially prepared |
 | Keep release operations repeatable | `.github/workflows/release.yml`, `scripts/package-release.sh`, `scripts/preflight-release.sh`, `scripts/verify-public-release.sh` | CI covers release script smoke checks; the release workflow uses the package-level strict distribution gate and blocks signed non-notarized releases. | Prepared |
+| Gate release version consistency | `./scripts/check-release-version-consistency.sh`, `.github/workflows/release.yml` | Checks that `CFBundleShortVersionString` is semantic-version-like, `CFBundleVersion` is a positive integer, and release tags match `v<version>` before the Release workflow packages assets. | Prepared |
 | Smoke-check release scripts in CI | `.github/workflows/ci.yml` | CI now runs shell syntax checks, release/distribution script `--help` checks, and the expected `package-mas-pkg.sh` no-identity failure path. | Prepared |
 | Verify public and Sparkle ZIP paths | `./scripts/package-release.sh --require-distribution-ready`, `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1 ./scripts/verify-public-release.sh <tag> <version> <build>` | Strict local release verifies both the GitHub release ZIP and the versioned Sparkle update ZIP; public signed-release verification downloads and checks both published ZIPs. | Prepared |
 | Prepare release recovery path | `docs/release-recovery-runbook.md`, `./scripts/check-release-recovery-readiness.sh --require-ready` | Documents first response, hotfix release, appcast rollback, Mac App Store recovery, credential exposure handling, support triage, and prohibited recovery actions. Checker verifies that the workflow, verifier, and runbook cover the recovery path. | Prepared |
@@ -68,6 +69,8 @@ Last verified on 2026-05-13:
 ./scripts/check-app-store-identity.sh --require-ready
 ./scripts/check-release-recovery-readiness.sh
 ./scripts/check-release-recovery-readiness.sh --require-ready
+./scripts/check-release-version-consistency.sh
+./scripts/check-release-version-consistency.sh --tag v1.0.20 --require-tag
 ./scripts/audit-apple-distribution.sh --help
 ./scripts/package-mas-pkg.sh --help
 ./scripts/check-app-store-upload-readiness.sh --help

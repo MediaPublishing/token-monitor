@@ -54,6 +54,7 @@ printf 'Token Monitor release preflight\n'
 printf 'Repo: %s\n' "$ROOT_DIR"
 
 run_step "Run Swift test suite" swift test
+run_step "Check release version consistency" ./scripts/check-release-version-consistency.sh
 run_step "Build direct DMG app candidate" ./scripts/build-app.sh
 run_step "Build MAS app candidate" ./scripts/build-mas-app.sh
 run_step "Verify MAS app candidate" ./scripts/verify-mas-build.sh
