@@ -78,6 +78,28 @@ cp "$UPDATES_DIR/appcast.xml" "$APPCAST_PATH"
 
 if [[ "$REQUIRE_DISTRIBUTION_READY" == "1" ]]; then
   "$ROOT_DIR/scripts/check-apple-distribution.sh" --require-ready
+
+  update_verify_dir="$(mktemp -d "${TMPDIR:-/tmp}/token-monitor-update-verify.XXXXXX")"
+  trap 'rm -rf "$update_verify_dir"' EXIT
+
+  ditto -x -k "$VERSIONED_ZIP_PATH" "$update_verify_dir"
+  extracted_app="$update_verify_dir/TokenMonitor.app"
+  if [[ ! -d "$extracted_app" ]]; then
+    printf 'Sparkle update ZIP did not contain TokenMonitor.app: %s\n' "$VERSIONED_ZIP_PATH" >&2
+    exit 1
+  fi
+
+  codesign --verify --deep --strict "$extracted_app"
+  extracted_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$extracted_app/Contents/Info.plist")"
+  extracted_build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$extracted_app/Contents/Info.plist")"
+  if [[ "$extracted_version" != "$VERSION" || "$extracted_build" != "$BUILD_NUMBER" ]]; then
+    printf 'Sparkle update ZIP version mismatch: expected %s (%s), found %s (%s)\n' \
+      "$VERSION" "$BUILD_NUMBER" "$extracted_version" "$extracted_build" >&2
+    exit 1
+  fi
+
+  printf 'Verified Sparkle update ZIP %s contains signed TokenMonitor.app %s (%s)\n' \
+    "$VERSIONED_ZIP_PATH" "$extracted_version" "$extracted_build"
 fi
 
 shasum -a 256 "$ZIP_PATH"

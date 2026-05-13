@@ -117,6 +117,10 @@ struct MarketingAssetTests {
         #expect(releasePackageScript.contains("--require-distribution-ready"))
         #expect(releasePackageScript.contains("TOKEN_MONITOR_REQUIRE_DISTRIBUTION_READY"))
         #expect(releasePackageScript.contains("scripts/check-apple-distribution.sh\" --require-ready"))
+        #expect(releasePackageScript.contains("ditto -x -k \"$VERSIONED_ZIP_PATH\""))
+        #expect(releasePackageScript.contains("Sparkle update ZIP did not contain TokenMonitor.app"))
+        #expect(releasePackageScript.contains("Sparkle update ZIP version mismatch"))
+        #expect(releasePackageScript.contains("Verified Sparkle update ZIP"))
     }
 
     @Test func appleDistributionReadinessDocCoversReleasePaths() throws {
