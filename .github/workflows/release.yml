@@ -47,6 +47,13 @@ jobs:
         with:
           ref: ${{ env.RELEASE_TAG }}
 
+      - name: Restore current release tooling
+        run: |
+          git fetch origin main:refs/remotes/origin/main
+          git checkout origin/main -- \
+            scripts/check-github-release-channel.sh \
+            scripts/package-release.sh
+
       - name: Check release version consistency
         run: ./scripts/check-release-version-consistency.sh --tag "$RELEASE_TAG" --require-tag
 
