@@ -3,6 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PACKET_PATH="${TOKEN_MONITOR_APP_STORE_PACKET:-$ROOT_DIR/docs/app-store-submission-packet.md}"
+PUBLIC_RELEASE_TAG="${TOKEN_MONITOR_PUBLIC_RELEASE_TAG:-v1.0.21}"
 failure_count=0
 
 usage() {
@@ -15,6 +16,7 @@ change App Store Connect metadata.
 
 Optional environment:
   TOKEN_MONITOR_APP_STORE_PACKET  Override the submission packet path.
+  TOKEN_MONITOR_PUBLIC_RELEASE_TAG Override the public release tag to verify.
 EOF
 }
 
@@ -72,6 +74,7 @@ check_url() {
 
 printf 'Token Monitor public distribution URL check\n'
 printf 'Submission packet: %s\n\n' "$PACKET_PATH"
+printf 'Public release tag: %s\n\n' "$PUBLIC_RELEASE_TAG"
 
 if [[ ! -f "$PACKET_PATH" ]]; then
   printf '[FAIL] Submission packet is missing: %s\n' "$PACKET_PATH" >&2
@@ -85,8 +88,8 @@ privacy_url="$(extract_text_block_after_label "Privacy URL:")"
 check_url "Support URL" "$support_url"
 check_url "Marketing URL" "$marketing_url"
 check_url "Privacy URL" "$privacy_url"
-check_url "Latest release page" "https://github.com/MediaPublishing/token-monitor/releases/latest"
-check_url "Latest DMG download URL" "https://github.com/MediaPublishing/token-monitor/releases/latest/download/TokenMonitor-macOS.dmg"
+check_url "Public release page" "https://github.com/MediaPublishing/token-monitor/releases/tag/$PUBLIC_RELEASE_TAG"
+check_url "Public DMG download URL" "https://github.com/MediaPublishing/token-monitor/releases/download/$PUBLIC_RELEASE_TAG/TokenMonitor-macOS.dmg"
 check_url "Security reporting URL" "https://github.com/MediaPublishing/token-monitor/security"
 
 printf '\nPublic distribution URL summary:\n'

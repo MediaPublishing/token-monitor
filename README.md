@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude- und ChatGPT/Codex-Nutzung: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/latest/download/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.21/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview.
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.21`.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -62,15 +62,15 @@ If your work depends on Claude and ChatGPT, the limiting factor is often not the
 
 Normal users should install from the GitHub Release DMG:
 
-1. Download `TokenMonitor-macOS.dmg` from the latest release.
+1. Download `TokenMonitor-macOS.dmg` from the current preview release.
 2. Open the disk image.
 3. Drag `TokenMonitor.app` onto the Applications shortcut.
 4. Open Token Monitor and connect Claude and ChatGPT from Settings.
 
-Latest release download:
+Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/latest/download/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.21/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -159,15 +159,15 @@ Wenn deine Arbeit von Claude und ChatGPT abhängt, ist oft nicht die Modellquali
 
 Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 
-1. `TokenMonitor-macOS.dmg` aus dem neuesten Release herunterladen.
+1. `TokenMonitor-macOS.dmg` aus dem aktuellen Preview-Release herunterladen.
 2. Disk Image öffnen.
 3. `TokenMonitor.app` auf die Applications-Verknüpfung ziehen.
 4. Token Monitor öffnen und Claude sowie ChatGPT in den Settings verbinden.
 
-Aktueller Release-Download:
+Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/latest/download/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.21/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -185,12 +185,12 @@ Visuelle Schritt-für-Schritt-Anleitung:
 | Schritt 1 | Schritt 2 |
 | --- | --- |
 | **Fertig** klicken, nicht **In den Papierkorb legen**. | **Systemeinstellungen > Datenschutz & Sicherheit** öffnen und **Dennoch öffnen** klicken. |
-| ![Gatekeeper-Warnung mit Fertig-Button](assets/screenshots/install/gatekeeper-blocked.png) | ![Datenschutz und Sicherheit mit Dennoch-oeffnen-Button](assets/screenshots/install/gatekeeper-privacy-security.png) |
+| ![Gatekeeper-Warnung mit Fertig-Button](assets/screenshots/install/gatekeeper-blocked.png) | ![Datenschutz und Sicherheit mit Dennoch-öffnen-Button](assets/screenshots/install/gatekeeper-privacy-security.png) |
 
 | Schritt 3 | Schritt 4 |
 | --- | --- |
 | Mit **Open Anyway** bestätigen. | Mac-Passwort eingeben oder Touch ID nutzen, danach **OK** klicken. |
-| ![Open-Anyway-Bestaetigungsdialog](assets/screenshots/install/gatekeeper-open-anyway.png) | ![Datenschutz-und-Sicherheit-Passwortbestaetigung](assets/screenshots/install/gatekeeper-admin-confirm.png) |
+| ![Open-Anyway-Bestätigungsdialog](assets/screenshots/install/gatekeeper-open-anyway.png) | ![Datenschutz-und-Sicherheit-Passwortbestätigung](assets/screenshots/install/gatekeeper-admin-confirm.png) |
 
 macOS speichert diese Ausnahme für Token Monitor, danach sollte die App normal starten. Wenn **Dennoch öffnen** nicht sichtbar ist, öffne `TokenMonitor.app` noch einmal und gehe danach wieder zu **Datenschutz & Sicherheit**. Apples offizielle Anleitung: <https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac>
 

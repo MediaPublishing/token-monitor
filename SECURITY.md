@@ -4,10 +4,10 @@
 
 Security fixes are handled for the latest public Token Monitor release.
 
-Before reporting, check the latest release:
+Before reporting, check the current public preview release:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/latest
+https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.21
 ```
 
 ## Reporting A Vulnerability
