@@ -109,24 +109,13 @@ jobs:
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
           TOKEN_MONITOR_DOWNLOAD_URL_PREFIX: https://mediapublishing.github.io/token-monitor/updates/
-        run: ./scripts/package-release.sh
-
-      - name: Verify Developer ID release
         run: |
-          if [[ "$TOKEN_MONITOR_REQUIRE_DEVELOPER_ID" != "true" && "${TOKEN_MONITOR_NOTARIZE:-}" != "1" ]]; then
-            echo "Developer ID verification is not required for this preview release."
-            exit 0
+          package_args=()
+          if [[ "$TOKEN_MONITOR_REQUIRE_DEVELOPER_ID" == "true" || "${TOKEN_MONITOR_NOTARIZE:-}" == "1" ]]; then
+            package_args+=(--require-distribution-ready)
           fi
 
-          if [[ -z "${TOKEN_MONITOR_CODESIGN_IDENTITY:-}" || "${TOKEN_MONITOR_NOTARIZE:-}" != "1" ]]; then
-            echo "::error::Developer ID verification requires signing and notarization."
-            exit 1
-          fi
-
-          codesign --verify --deep --strict dist/TokenMonitor.app
-          spctl --assess --type execute --verbose=4 dist/TokenMonitor.app
-          spctl --assess --type open --context context:primary-signature --verbose=4 dist/TokenMonitor-macOS.dmg
-          xcrun stapler validate dist/TokenMonitor-macOS.dmg
+          ./scripts/package-release.sh "${package_args[@]}"
 
       - name: Upload release archive
         env:
