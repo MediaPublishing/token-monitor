@@ -43,7 +43,7 @@ Verified locally:
 - `scripts/package-release.sh --require-distribution-ready` verifies the final app, DMG, notarization ticket, GitHub release ZIP, and versioned Sparkle update ZIP before upload.
 - `scripts/verify-public-release.sh` can verify the public DMG, GitHub release ZIP, and public Sparkle update ZIP together when `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1` is set.
 - `scripts/build-mas-app.sh` produces a separate `1.0.20` build `21` MAS candidate.
-- `scripts/verify-mas-build.sh` verifies the MAS candidate has no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and a valid local signature.
+- `scripts/verify-mas-build.sh` verifies the MAS candidate has no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and a valid local signature. Use `--require-apple-distribution` before App Store submission.
 
 ## Recommended Distribution Path
 

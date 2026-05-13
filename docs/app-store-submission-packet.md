@@ -16,7 +16,7 @@ Do not submit until all are true:
 2. Apple Developer Program and App Store Connect access are available.
 3. Agreements, tax, and banking are complete in App Store Connect.
 4. `scripts/build-mas-app.sh` builds the submitted binary.
-5. `scripts/verify-mas-build.sh` passes for the submitted binary.
+5. `scripts/verify-mas-build.sh --require-apple-distribution` passes for the submitted binary.
 6. `scripts/check-mas-readiness.sh` reports zero blockers.
 7. A sandbox smoke test passes for login, refresh, local snapshots, diagnostics, and Launch at Login.
 8. Screenshots are captured from the submitted binary and contain no private account data.
@@ -203,7 +203,7 @@ TOKEN_MONITOR_MAS_CODESIGN_IDENTITY="Apple Distribution: <Name> (<TEAMID>)" \
 Then re-run:
 
 ```bash
-./scripts/verify-mas-build.sh
+./scripts/verify-mas-build.sh --require-apple-distribution
 ```
 
 ## Open Human Decisions
