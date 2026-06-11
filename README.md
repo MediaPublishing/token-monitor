@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude- und ChatGPT/Codex-Nutzung: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.22/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.23/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.22`.
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.23`.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -70,7 +70,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.22/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.23/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -171,7 +171,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.22/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.23/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet

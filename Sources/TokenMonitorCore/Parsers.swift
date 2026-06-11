@@ -422,7 +422,8 @@ private func isClaudeMoneyValue(_ text: String) -> Bool {
     let patterns = [
         #"^\$\s?\d+(?:[.,]\d+)?$"#,
         #"^€\s?\d+(?:[.,]\d+)?$"#,
-        #"^\d+(?:[.,]\d+)?\s?€$"#
+        #"^\d+(?:[.,]\d+)?\s?€$"#,
+        #"^\d+(?:[.,]\d+)?$"#
     ]
     return patterns.contains { pattern in
         normalized.range(of: pattern, options: .regularExpression) != nil
@@ -443,6 +444,7 @@ private func isUsageUsedValue(_ text: String) -> Bool {
 private func isResetLine(_ text: String) -> Bool {
     let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
     return normalized.localizedCaseInsensitiveContains("Resets")
+        || normalized.localizedCaseInsensitiveContains("Reset")
         || normalized.localizedCaseInsensitiveContains("Zurücksetzen")
         || normalized.localizedCaseInsensitiveContains("zurückgesetzt")
         || normalized.localizedCaseInsensitiveContains("Setzt zurück")

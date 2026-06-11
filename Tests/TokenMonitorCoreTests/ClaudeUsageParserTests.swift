@@ -148,6 +148,52 @@ struct ClaudeUsageParserTests {
         #expect(snapshot.metric(for: "current-balance")?.valueText == "€0.00")
     }
 
+    @Test func parsesClaudeMoneyValuesWithoutCurrencySymbol() throws {
+        let extract = ServicePageExtract(
+            service: .claude,
+            pageTitle: "Claude",
+            url: "https://claude.ai/settings/usage",
+            bodyText: "",
+            segments: [
+                """
+                Current session
+                Reset in 1 hr 47 min
+                12% used
+                Weekly limits
+                All models
+                Reset Fri 12:00
+                24% used
+                Sonnet
+                Reset Fri 12:00
+                1% used
+                Claude Design
+                Reset Fri 12:00
+                0% used
+                """,
+                """
+                Extra usage
+                $0.00 spent
+                Reset Jun 1
+                0% used
+                200
+                Monthly spend limit
+                10.01
+                Current balance
+                """
+            ]
+        )
+
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: Date(timeIntervalSince1970: 1_700_000_000))
+
+        #expect(snapshot.metric(for: "current-session")?.valueText == "88% remaining")
+        #expect(snapshot.metric(for: "weekly-all-models")?.valueText == "76% remaining")
+        #expect(snapshot.metric(for: "weekly-sonnet")?.valueText == "99% remaining")
+        #expect(snapshot.metric(for: "claude-design")?.valueText == "100% remaining")
+        #expect(snapshot.metric(for: "extra-usage-spend")?.valueText == "$0.00 spent")
+        #expect(snapshot.metric(for: "monthly-spend-limit")?.valueText == "200")
+        #expect(snapshot.metric(for: "current-balance")?.valueText == "10.01")
+    }
+
     @Test func rejectsClaudeExtractWhileBalanceIsStillLoading() throws {
         let extract = ServicePageExtract(
             service: .claude,
