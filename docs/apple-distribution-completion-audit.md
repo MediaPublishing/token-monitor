@@ -39,7 +39,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Check public distribution URLs | `./scripts/check-public-distribution-urls.sh` | Verifies that Support, Marketing, Privacy, the configured public release tag, public DMG, and security-reporting URLs are HTTPS and reachable. | Prepared |
 | Check GitHub release channel | `./scripts/check-github-release-channel.sh` | Verifies that the configured public release is published as a prerelease and that no stable GitHub Release exists while public builds are unsigned. | Prepared |
 | Assess Mac App Store feasibility | `docs/mac-app-store-feasibility.md` | Documents MAS as a separate track with Sparkle removed and App Review risks called out. | Prepared |
-| Build a MAS candidate | `./scripts/build-mas-app.sh` | Local MAS candidate builds as `1.0.23` build `24`. | Prepared |
+| Build a MAS candidate | `./scripts/build-mas-app.sh` | Local MAS candidate builds as `1.0.24` build `25`. | Prepared |
 | Verify MAS candidate shape | `./scripts/verify-mas-build.sh` | Verifies no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and valid local signature. Strict `--require-apple-distribution` mode is available for the submitted binary. | Prepared |
 | Keep MAS update UI App Store-safe | `Sources/TokenMonitorApp/SettingsView.swift`, `Sources/TokenMonitorApp/AppUpdateController.swift`, `swift test` | MAS builds show Mac App Store update copy and use a no-op update controller instead of Sparkle UI. Direct DMG builds keep Sparkle update controls. | Prepared |
 | Check MAS static readiness | `./scripts/check-mas-readiness.sh` | Reports zero static blockers, verifies the App Store category marker, and warns that WebKit sessions and Login Items need smoke testing. | Prepared with warnings |
@@ -59,7 +59,7 @@ The repository is prepared for Apple Developer access, but the distribution obje
 | Preserve legal/privacy gates | `docs/publication-legal-checklist.md`, `docs/privacy.md`, `./scripts/check-publication-legal-gates.sh --require-legal-gates` | License, privacy policy, privacy labels, support/security routes, and public claims remain human approval gates. Strict checker blocks broad promotion or App Store completion until explicit acknowledgements exist. | Prepared with human gates |
 | Route support safely | `SUPPORT.md`, `SECURITY.md` | Public support and private vulnerability routes exist and warn against posting secrets/debug dumps. | Prepared |
 | Keep issue fixing safe | `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`, `.github/ISSUE_TEMPLATE/install-update-bug.yml`, `docs/issue-triage-runbook.md`, `./scripts/check-github-issue-labels.sh`, `docs/apple-distribution-readiness.md` | Parser and install/update issue templates warn that GitHub Issues are public and block raw debug dumps, private account data, Apple credentials, certificates, private keys, and GitHub Secrets. The triage runbook documents intake, parser fix flow, install/update checks, hotfix path, and sanitized public replies. The label checker verifies `parser`, `install`, and `needs-triage` exist in GitHub. | Prepared |
-| Maintain regression coverage | `swift test` | Local and CI tests pass with 37 tests. | Prepared |
+| Maintain regression coverage | `swift test` | Local and CI tests pass with 38 tests. | Prepared |
 | Verify current CI | `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` | Current-state CI must pass release script smoke checks, tests, direct build, MAS build, MAS verification, and MAS readiness. | Prepared when current run is green |
 
 ## Current Verified Commands
@@ -77,7 +77,7 @@ Last verified on 2026-05-13:
 ./scripts/check-release-recovery-readiness.sh
 ./scripts/check-release-recovery-readiness.sh --require-ready
 ./scripts/check-release-version-consistency.sh
-./scripts/check-release-version-consistency.sh --tag v1.0.23 --require-tag
+./scripts/check-release-version-consistency.sh --tag v1.0.24 --require-tag
 ./scripts/check-public-repo-hygiene.sh
 ./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting
 ./scripts/check-public-distribution-urls.sh
@@ -91,17 +91,17 @@ Last verified on 2026-05-13:
 ./scripts/check-github-release-secrets.sh --require-signing-secrets
 ./scripts/check-apple-distribution.sh --require-ready
 ./scripts/preflight-release.sh --require-signing-secrets --require-apple-access-handoff
-./scripts/verify-public-release.sh v1.0.23 1.0.23 24
+./scripts/verify-public-release.sh v1.0.24 1.0.24 25
 gh pr list --repo MediaPublishing/token-monitor --state open --json number,title,updatedAt,url
 gh issue list --repo MediaPublishing/token-monitor --state open --json number,title,labels,updatedAt,url
-gh release view v1.0.23 --repo MediaPublishing/token-monitor --json tagName,name,isDraft,isPrerelease,publishedAt,url,assets
+gh release view v1.0.24 --repo MediaPublishing/token-monitor --json tagName,name,isDraft,isPrerelease,publishedAt,url,assets
 gh repo view MediaPublishing/token-monitor --json visibility,url,defaultBranchRef
 gh run list --repo MediaPublishing/token-monitor --branch main --limit 1
 ```
 
 Recent previously verified commands:
 
-- `swift test` passed with 37 tests for the current `1.0.23` release line.
+- `swift test` passed with 38 tests for the current `1.0.24` release line.
 - Shell syntax checks and release/distribution script help checks pass locally and are covered by CI.
 - `./scripts/audit-apple-distribution.sh --require-complete` is available as the final non-uploading completion audit, includes App Store metadata validation, and is expected to fail until real credentials and approvals exist.
 - `./scripts/check-github-security-reporting.sh --require-private-vulnerability-reporting` passes after private vulnerability reporting was enabled on GitHub.
@@ -114,8 +114,8 @@ Recent previously verified commands:
 - `./scripts/build-mas-app.sh` passed for the MAS candidate.
 - `./scripts/verify-mas-build.sh` passed for the MAS candidate.
 - `./scripts/check-mas-readiness.sh` reported zero static blockers, with manual smoke-test warnings.
-- `./scripts/verify-public-release.sh v1.0.23 1.0.23 24` is the public verification command for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP after publishing this preview line.
-- `./scripts/check-public-distribution-urls.sh` passes for the configured public preview release tag `v1.0.23`.
+- `./scripts/verify-public-release.sh v1.0.24 1.0.24 25` is the public verification command for GitHub Release assets, GitHub Pages, `appcast.xml`, and the Sparkle update ZIP after publishing this preview line.
+- `./scripts/check-public-distribution-urls.sh` passes for the configured public preview release tag `v1.0.24`.
 - Release workflow evidence must be checked with `gh run list --repo MediaPublishing/token-monitor --workflow Release --limit 1` after publishing.
 - Main CI workflow evidence must be checked with `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` after pushing.
 - GitHub release list verification should show all public releases from `v1.0.0` through the current preview release as prereleases, so no unsigned build is advertised as GitHub's stable latest release.

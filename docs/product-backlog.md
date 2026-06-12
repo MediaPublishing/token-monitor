@@ -4,8 +4,8 @@ Last reviewed: 2026-05-13
 
 ## Current Release State
 
-- Current public preview release: `v1.0.23` / build `24`.
-- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.23`.
+- Current public preview release: `v1.0.24` / build `25`.
+- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.24`.
 - GitHub Pages landing page: `https://mediapublishing.github.io/token-monitor/`.
 - Sparkle appcast: `https://mediapublishing.github.io/token-monitor/appcast.xml`.
 - Public builds remain preview builds until Developer ID signing and notarization are resumed.

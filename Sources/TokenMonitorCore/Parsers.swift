@@ -19,20 +19,22 @@ public struct ClaudeUsageParser: UsageParsing {
         }
 
         let lines = claudeCandidateLines(from: extract)
+        let monthlyLimitLabels = ["Monthly spend limit", "Monthly limit", "Monatliches Ausgabenlimit", "Monatliches Limit"]
+        let balanceLabels = ["Current balance", "Balance", "Aktueller Kontostand", "Aktuelles Guthaben", "Guthaben"]
         guard
             let currentSessionIndex = firstIndex(in: lines, containingAny: ["Current session", "Aktuelle Sitzung", "Sitzung"]),
             let allModelsIndex = firstIndex(in: lines, containingAny: ["All models", "Alle Modelle"]),
             let extraUsageIndex = firstIndex(in: lines, containingAny: ["Extra usage", "Zusätzliche Nutzung", "Zusätzliche Verwendung"]),
-            let monthlyLimitIndex = firstIndex(in: lines, containingAny: ["Monthly spend limit", "Monatliches Ausgabenlimit", "Monatliches Limit"]),
-            let balanceIndex = firstIndex(in: lines, containingAny: ["Current balance", "Aktueller Kontostand", "Aktuelles Guthaben", "Guthaben"]),
+            let monthlyLimitIndex = firstIndex(in: lines, containingAny: monthlyLimitLabels),
+            let balanceIndex = firstIndex(in: lines, containingAny: balanceLabels),
             let currentSessionValue = firstLine(after: currentSessionIndex, in: lines, matching: isUsageUsedValue),
             let allModelsValue = firstLine(after: allModelsIndex, in: lines, matching: isUsageUsedValue),
             let allModelsReset = firstLine(after: allModelsIndex, in: lines, matching: isResetLine),
             let extraUsageSpent = firstLine(after: extraUsageIndex, in: lines, matching: isSpentLine),
             let extraUsageReset = firstLine(after: extraUsageIndex, in: lines, matching: isResetLine),
             let extraUsagePercent = firstLine(after: extraUsageIndex, in: lines, matching: isUsageUsedValue),
-            let monthlyLimitValue = previousLine(before: monthlyLimitIndex, in: lines),
-            let currentBalanceValue = previousLine(before: balanceIndex, in: lines),
+            let monthlyLimitValue = claudeMoneyValue(near: monthlyLimitIndex, in: lines, occurrence: monthlyLimitIndex == balanceIndex ? 0 : nil),
+            let currentBalanceValue = claudeMoneyValue(near: balanceIndex, in: lines, occurrence: monthlyLimitIndex == balanceIndex ? 1 : nil),
             isClaudeMoneyValue(monthlyLimitValue),
             isClaudeMoneyValue(currentBalanceValue)
         else {
@@ -427,6 +429,48 @@ private func isClaudeMoneyValue(_ text: String) -> Bool {
     ]
     return patterns.contains { pattern in
         normalized.range(of: pattern, options: .regularExpression) != nil
+    }
+}
+
+private func claudeMoneyValue(near index: Int, in lines: [String], occurrence: Int?) -> String? {
+    let candidateIndexes = [
+        index - 1,
+        index,
+        index + 1,
+        index + 2
+    ].filter(lines.indices.contains)
+
+    let values = candidateIndexes.flatMap { claudeMoneyValues(in: lines[$0]) }
+
+    if let occurrence, values.indices.contains(occurrence) {
+        return values[occurrence]
+    }
+
+    return values.first
+}
+
+private func claudeMoneyValues(in text: String) -> [String] {
+    let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+
+    if isClaudeMoneyValue(normalized) {
+        return [normalized]
+    }
+
+    let separatedValues = normalized
+        .split(separator: "/")
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        .filter(isClaudeMoneyValue)
+    if !separatedValues.isEmpty {
+        return separatedValues
+    }
+
+    guard let regex = try? NSRegularExpression(pattern: #"(?:[$€]\s?\d+(?:[.,]\d+)?|\d+(?:[.,]\d+)?\s?€)"#) else {
+        return []
+    }
+
+    let range = NSRange(normalized.startIndex..<normalized.endIndex, in: normalized)
+    return regex.matches(in: normalized, options: [], range: range).compactMap { match in
+        Range(match.range, in: normalized).map { String(normalized[$0]) }
     }
 }
 
