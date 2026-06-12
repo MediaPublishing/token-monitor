@@ -18,9 +18,9 @@ Success means:
 
 Verified locally:
 
-- `swift test` passes with 38 tests.
+- `swift test` passes with 39 tests.
 - `scripts/build-app.sh` builds `dist/TokenMonitor.app`.
-- Current local direct-DMG build is `1.0.24` build `25` and is ad hoc signed when no `TOKEN_MONITOR_CODESIGN_IDENTITY` is provided.
+- Current local direct-DMG build is `1.0.25` build `26` and is ad hoc signed when no `TOKEN_MONITOR_CODESIGN_IDENTITY` is provided.
 - Verified 2026-05-12: `spctl --assess --type execute --verbose=4 dist/TokenMonitor.app` rejects the ad hoc build, as expected.
 - Verified 2026-05-12: `spctl` rejects `dist/TokenMonitor-macOS.dmg` because it has no usable signature, and `xcrun stapler validate` reports no stapled ticket.
 - Verified 2026-05-12: GitHub repository `MediaPublishing/token-monitor` is public.
@@ -48,7 +48,7 @@ Verified locally:
 - `scripts/verify-public-release.sh` can verify the public DMG, GitHub release ZIP, and public Sparkle update ZIP together when `TOKEN_MONITOR_VERIFY_DMG_SIGNATURE=1` is set.
 - `scripts/audit-apple-distribution.sh` provides a safe consolidated audit command; use `--require-complete --run-tests` only after Apple credentials and human approvals exist.
 - `scripts/check-github-release-channel.sh` verifies that the configured public release tag exists, is published, is marked as a prerelease before Developer ID signing is available, and that no stable GitHub Release is published while the public builds are unsigned.
-- `scripts/build-mas-app.sh` produces a separate `1.0.24` build `25` MAS candidate.
+- `scripts/build-mas-app.sh` produces a separate `1.0.25` build `26` MAS candidate.
 - `scripts/verify-mas-build.sh` verifies the MAS candidate has no Sparkle files, no Sparkle binary link, no `SU*` update keys, sandbox/network entitlements, and a valid local signature. Use `--require-apple-distribution` before App Store submission.
 - `scripts/package-mas-pkg.sh` packages the Apple Distribution signed MAS app as `dist/mas/TokenMonitor-macOS-AppStore.pkg` with a Mac App Store installer distribution identity.
 - `scripts/check-app-store-upload-readiness.sh` checks the final upload handoff without uploading anything: signed package presence, local upload tool availability, and approved upload authentication inputs.
@@ -220,8 +220,8 @@ Triage workflow:
 
 Prepared and verified repo artifacts:
 
-- Current public GitHub/Sparkle preview release: `v1.0.24` / build `25`.
-- Public release verification command for this preview line: `./scripts/verify-public-release.sh v1.0.24 1.0.24 25`.
+- Current public GitHub/Sparkle preview release: `v1.0.25` / build `26`.
+- Public release verification command for this preview line: `./scripts/verify-public-release.sh v1.0.25 1.0.25 26`.
 - Direct Developer ID distribution docs: `docs/apple-distribution-readiness.md`.
 - Prompt-to-artifact completion audit: `docs/apple-distribution-completion-audit.md`.
 - Apple credential setup: `docs/apple-credential-runbook.md`.
@@ -236,8 +236,8 @@ Prepared and verified repo artifacts:
 - GitHub release variable checker: `scripts/check-github-release-variables.sh`.
 - GitHub signed release workflow: `.github/workflows/release.yml`.
 - Consolidated Apple distribution audit: `scripts/audit-apple-distribution.sh`.
-- Current GitHub preview release: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.24`.
-- Current release workflow evidence: run `gh run list --repo MediaPublishing/token-monitor --workflow Release --limit 1` after publishing and confirm the `v1.0.24` release run passed.
+- Current GitHub preview release: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.25`.
+- Current release workflow evidence: run `gh run list --repo MediaPublishing/token-monitor --workflow Release --limit 1` after publishing and confirm the `v1.0.25` release run passed.
 - Current main CI evidence: run `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` and confirm the latest `main` run passed.
 - Release list verification should show `v1.0.0` through the current preview release marked as prerelease until Developer ID signing/notarization is available.
 - GitHub CI workflow: `.github/workflows/ci.yml` runs release script smoke checks, tests, direct app build, MAS build, MAS build verification, and MAS readiness checks.
@@ -262,7 +262,7 @@ Prepared and verified repo artifacts:
 - Public parser issue form with privacy warnings: `.github/ISSUE_TEMPLATE/parser-layout-bug.yml`.
 - Public install/update issue form with Apple credential and debug dump warnings: `.github/ISSUE_TEMPLATE/install-update-bug.yml`.
 - Public issue triage runbook: `docs/issue-triage-runbook.md`.
-- Regression coverage: `swift test` passes with 38 tests.
+- Regression coverage: `swift test` passes with 39 tests.
 - Earlier release workflow: `https://github.com/MediaPublishing/token-monitor/actions/runs/25496438297` passed for `v1.0.20`.
 - Current CI evidence: run `gh run list --repo MediaPublishing/token-monitor --branch main --limit 1` and confirm the latest `main` run passed release script smoke checks, tests, direct app build, MAS build, MAS verification, and MAS readiness.
 
@@ -274,7 +274,7 @@ Current blockers:
 - No Apple Distribution certificate is installed locally.
 - No Mac App Store installer distribution certificate is installed locally.
 - No local `TOKEN_MONITOR_NOTARY_PROFILE` is configured.
-- The current `dist/TokenMonitor.app` is version `1.0.24` build `25` and ad hoc signed.
+- The current `dist/TokenMonitor.app` is version `1.0.25` build `26` and ad hoc signed.
 - Gatekeeper rejects the current local app and DMG.
 - The current DMG has no stapled notarization ticket.
 - GitHub has `SPARKLE_PRIVATE_KEY` configured, but Developer ID signing/notarization secrets are not configured with real Apple credentials.

@@ -24,7 +24,7 @@ public struct ClaudeUsageParser: UsageParsing {
         guard
             let currentSessionIndex = firstIndex(in: lines, containingAny: ["Current session", "Aktuelle Sitzung", "Sitzung"]),
             let allModelsIndex = firstIndex(in: lines, containingAny: ["All models", "Alle Modelle"]),
-            let extraUsageIndex = firstIndex(in: lines, containingAny: ["Extra usage", "Zusätzliche Nutzung", "Zusätzliche Verwendung"]),
+            let extraUsageIndex = firstIndex(in: lines, containingAny: ["Extra usage", "Usage credits", "Zusätzliche Nutzung", "Zusätzliche Verwendung", "Nutzungsguthaben"]),
             let monthlyLimitIndex = firstIndex(in: lines, containingAny: monthlyLimitLabels),
             let balanceIndex = firstIndex(in: lines, containingAny: balanceLabels),
             let currentSessionValue = firstLine(after: currentSessionIndex, in: lines, matching: isUsageUsedValue),

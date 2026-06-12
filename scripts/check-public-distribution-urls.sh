@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PACKET_PATH="${TOKEN_MONITOR_APP_STORE_PACKET:-$ROOT_DIR/docs/app-store-submission-packet.md}"
-PUBLIC_RELEASE_TAG="${TOKEN_MONITOR_PUBLIC_RELEASE_TAG:-v1.0.24}"
+PUBLIC_RELEASE_TAG="${TOKEN_MONITOR_PUBLIC_RELEASE_TAG:-v1.0.25}"
 failure_count=0
 
 usage() {

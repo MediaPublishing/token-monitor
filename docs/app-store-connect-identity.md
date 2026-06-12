@@ -22,8 +22,8 @@ These values come from `Sources/TokenMonitorApp/Resources/Info.plist`:
 | Bundle ID | `com.mediapublishing.tokenmonitor` |
 | App Store category | `public.app-category.productivity` |
 | Minimum macOS version | `14.0` |
-| Version | `1.0.24` |
-| Build | `25` |
+| Version | `1.0.25` |
+| Build | `26` |
 
 ## Values That Need Human Approval
 
