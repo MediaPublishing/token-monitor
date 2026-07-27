@@ -6,6 +6,7 @@ import WebKit
 enum SessionControllerError: LocalizedError {
     case controllerMissing(String)
     case refreshAlreadyInProgress
+    case refreshTimedOut
     case invalidPayload
     case emptyUsagePage
 
@@ -15,6 +16,8 @@ enum SessionControllerError: LocalizedError {
             return "Missing session controller for \(service)"
         case .refreshAlreadyInProgress:
             return "Refresh already in progress"
+        case .refreshTimedOut:
+            return "Usage page refresh timed out"
         case .invalidPayload:
             return "The usage page returned an unreadable payload"
         case .emptyUsagePage:
@@ -35,6 +38,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private var pendingContinuation: CheckedContinuation<ServiceSnapshot, Error>?
     private var currentLoadToken = UUID()
     private var extractionScheduled = false
+    private var refreshTimeoutTask: Task<Void, Never>?
 
     init(service: ServiceKind, diagnosticsStore: DiagnosticsStore) {
         self.service = service
@@ -59,6 +63,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
 
         return try await withCheckedThrowingContinuation { continuation in
             pendingContinuation = continuation
+            scheduleRefreshTimeout(loadToken: currentLoadToken)
             let request = URLRequest(
                 url: service.usageURL,
                 cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
@@ -66,6 +71,17 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             )
             backgroundWebView.load(request)
         }
+    }
+
+    func cancelRefresh() {
+        guard pendingContinuation != nil else {
+            return
+        }
+
+        currentLoadToken = UUID()
+        extractionScheduled = false
+        backgroundWebView.stopLoading()
+        finishRefresh(with: .failure(CancellationError()))
     }
 
     func showLoginWindow(
@@ -283,6 +299,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
 
     private func finishRefresh(with result: Result<ServiceSnapshot, Error>) {
         extractionScheduled = false
+        refreshTimeoutTask?.cancel()
+        refreshTimeoutTask = nil
 
         guard let continuation = pendingContinuation else {
             return
@@ -295,6 +313,34 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             continuation.resume(returning: snapshot)
         case let .failure(error):
             continuation.resume(throwing: error)
+        }
+    }
+
+    private func scheduleRefreshTimeout(loadToken: UUID) {
+        refreshTimeoutTask?.cancel()
+        refreshTimeoutTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 75_000_000_000)
+
+            guard !Task.isCancelled,
+                  let self,
+                  loadToken == self.currentLoadToken,
+                  self.pendingContinuation != nil else {
+                return
+            }
+
+            self.backgroundWebView.stopLoading()
+            self.writeDebugRecord(
+                from: ServicePageExtract(
+                    service: self.service,
+                    pageTitle: self.backgroundWebView.title ?? "",
+                    url: self.backgroundWebView.url?.absoluteString ?? self.service.usageURL.absoluteString,
+                    bodyText: "",
+                    segments: []
+                ),
+                outcome: .transportFailure,
+                message: SessionControllerError.refreshTimedOut.localizedDescription
+            )
+            self.finishRefresh(with: .failure(SessionControllerError.refreshTimedOut))
         }
     }
 

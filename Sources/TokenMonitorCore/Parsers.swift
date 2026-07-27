@@ -20,23 +20,13 @@ public struct ClaudeUsageParser: UsageParsing {
 
         let lines = claudeCandidateLines(from: extract)
         let monthlyLimitLabels = ["Monthly spend limit", "Monthly limit", "Monatliches Ausgabenlimit", "Monatliches Limit"]
-        let balanceLabels = ["Current balance", "Balance", "Aktueller Kontostand", "Aktuelles Guthaben", "Guthaben"]
+        let balanceLabels = ["Current balance", "Balance", "Aktueller Kontostand", "Aktuelles Guthaben"]
         guard
             let currentSessionIndex = firstIndex(in: lines, containingAny: ["Current session", "Aktuelle Sitzung", "Sitzung"]),
             let allModelsIndex = firstIndex(in: lines, containingAny: ["All models", "Alle Modelle"]),
-            let extraUsageIndex = firstIndex(in: lines, containingAny: ["Extra usage", "Usage credits", "Zusätzliche Nutzung", "Zusätzliche Verwendung", "Nutzungsguthaben"]),
-            let monthlyLimitIndex = firstIndex(in: lines, containingAny: monthlyLimitLabels),
-            let balanceIndex = firstIndex(in: lines, containingAny: balanceLabels),
             let currentSessionValue = firstLine(after: currentSessionIndex, in: lines, matching: isUsageUsedValue),
             let allModelsValue = firstLine(after: allModelsIndex, in: lines, matching: isUsageUsedValue),
-            let allModelsReset = firstLine(after: allModelsIndex, in: lines, matching: isResetLine),
-            let extraUsageSpent = firstLine(after: extraUsageIndex, in: lines, matching: isSpentLine),
-            let extraUsageReset = firstLine(after: extraUsageIndex, in: lines, matching: isResetLine),
-            let extraUsagePercent = firstLine(after: extraUsageIndex, in: lines, matching: isUsageUsedValue),
-            let monthlyLimitValue = claudeMoneyValue(near: monthlyLimitIndex, in: lines, occurrence: monthlyLimitIndex == balanceIndex ? 0 : nil),
-            let currentBalanceValue = claudeMoneyValue(near: balanceIndex, in: lines, occurrence: monthlyLimitIndex == balanceIndex ? 1 : nil),
-            isClaudeMoneyValue(monthlyLimitValue),
-            isClaudeMoneyValue(currentBalanceValue)
+            let allModelsReset = firstLine(after: allModelsIndex, in: lines, matching: isResetLine)
         else {
             throw UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")
         }
@@ -57,30 +47,6 @@ public struct ClaudeUsageParser: UsageParsing {
                 subtitle: allModelsReset,
                 progress: remainingProgress(fromUsedText: allModelsValue),
                 style: .progress
-            ),
-            UsageMetric(
-                key: "extra-usage-spend",
-                title: "Extra usage",
-                valueText: extraUsageSpent,
-                subtitle: extraUsageReset,
-                progress: percentage(from: extraUsagePercent),
-                style: .progress
-            ),
-            UsageMetric(
-                key: "monthly-spend-limit",
-                title: "Monthly spend limit",
-                valueText: monthlyLimitValue,
-                subtitle: nil,
-                progress: nil,
-                style: .stat
-            ),
-            UsageMetric(
-                key: "current-balance",
-                title: "Current balance",
-                valueText: currentBalanceValue,
-                subtitle: nil,
-                progress: nil,
-                style: .stat
             )
         ]
 
@@ -101,6 +67,77 @@ public struct ClaudeUsageParser: UsageParsing {
         ) {
             let insertIndex = metrics.firstIndex { $0.key == "extra-usage-spend" } ?? metrics.endIndex
             metrics.insert(claudeDesignMetric, at: insertIndex)
+        }
+
+        if let fableMetric = optionalClaudeUsageMetric(
+            key: "weekly-fable",
+            title: "Fable",
+            lines: lines,
+            labels: ["Fable"],
+            requiresExactLabel: true
+        ) {
+            metrics.append(fableMetric)
+        }
+
+        if let extraUsageIndex = firstIndex(
+            in: lines,
+            containingAny: ["Extra usage", "Usage credits", "Zusätzliche Nutzung", "Zusätzliche Verwendung", "Nutzungsguthaben"]
+        ),
+           let extraUsageSpent = firstLine(after: extraUsageIndex, in: lines, matching: isSpentLine),
+           let extraUsageReset = firstLine(after: extraUsageIndex, in: lines, matching: isResetLine),
+           let extraUsagePercent = firstLine(after: extraUsageIndex, in: lines, matching: isUsageUsedValue) {
+            metrics.append(
+                UsageMetric(
+                    key: "extra-usage-spend",
+                    title: "Extra usage",
+                    valueText: extraUsageSpent,
+                    subtitle: extraUsageReset,
+                    progress: percentage(from: extraUsagePercent),
+                    style: .progress
+                )
+            )
+        }
+
+        let monthlyLimitIndex = firstIndex(in: lines, containingAny: monthlyLimitLabels)
+        let balanceIndex = firstIndex(in: lines, containingAny: balanceLabels)
+            ?? firstIndex(in: lines, exactlyMatchingAny: ["Guthaben"])
+
+        if let monthlyLimitIndex,
+           let monthlyLimitValue = claudeMoneyValue(
+               near: monthlyLimitIndex,
+               in: lines,
+               occurrence: monthlyLimitIndex == balanceIndex ? 0 : nil
+           ),
+           isClaudeMoneyValue(monthlyLimitValue) {
+            metrics.append(
+                UsageMetric(
+                    key: "monthly-spend-limit",
+                    title: "Monthly spend limit",
+                    valueText: monthlyLimitValue,
+                    subtitle: nil,
+                    progress: nil,
+                    style: .stat
+                )
+            )
+        }
+
+        if let balanceIndex,
+           let currentBalanceValue = claudeMoneyValue(
+               near: balanceIndex,
+               in: lines,
+               occurrence: monthlyLimitIndex == balanceIndex ? 1 : nil
+           ),
+           isClaudeMoneyValue(currentBalanceValue) {
+            metrics.append(
+                UsageMetric(
+                    key: "current-balance",
+                    title: "Current balance",
+                    valueText: currentBalanceValue,
+                    subtitle: nil,
+                    progress: nil,
+                    style: .stat
+                )
+            )
         }
 
         return ServiceSnapshot(
@@ -489,6 +526,7 @@ private func isResetLine(_ text: String) -> Bool {
     let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
     return normalized.localizedCaseInsensitiveContains("Resets")
         || normalized.localizedCaseInsensitiveContains("Reset")
+        || normalized.localizedCaseInsensitiveContains("Zurücksetzung")
         || normalized.localizedCaseInsensitiveContains("Zurücksetzen")
         || normalized.localizedCaseInsensitiveContains("zurückgesetzt")
         || normalized.localizedCaseInsensitiveContains("Setzt zurück")
@@ -496,13 +534,25 @@ private func isResetLine(_ text: String) -> Bool {
 
 private func isSpentLine(_ text: String) -> Bool {
     let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-    return normalized.localizedCaseInsensitiveContains("spent")
+    let containsSpentLabel = normalized.localizedCaseInsensitiveContains("spent")
         || normalized.localizedCaseInsensitiveContains("ausgegeben")
         || normalized.localizedCaseInsensitiveContains("verbraucht")
+        || normalized.localizedCaseInsensitiveContains("verwendet")
+    return containsSpentLabel && !claudeMoneyValues(in: normalized).isEmpty
 }
 
-private func optionalClaudeUsageMetric(key: String, title: String, lines: [String], labels: [String]) -> UsageMetric? {
-    guard let titleIndex = firstIndex(in: lines, containingAny: labels),
+private func optionalClaudeUsageMetric(
+    key: String,
+    title: String,
+    lines: [String],
+    labels: [String],
+    requiresExactLabel: Bool = false
+) -> UsageMetric? {
+    let titleIndex = requiresExactLabel
+        ? firstIndex(in: lines, exactlyMatchingAny: labels)
+        : firstIndex(in: lines, containingAny: labels)
+
+    guard let titleIndex,
           let value = firstLine(after: titleIndex, in: lines, matching: isUsageUsedValue) else {
         return nil
     }
@@ -567,6 +617,12 @@ private func firstIndex(in lines: [String], containingAny needles: [String]) -> 
     }
 }
 
+private func firstIndex(in lines: [String], exactlyMatchingAny needles: [String]) -> Int? {
+    lines.firstIndex { line in
+        needles.contains { line.compare($0, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame }
+    }
+}
+
 private func firstLine(after index: Int, in lines: [String], matching predicate: (String) -> Bool = { _ in true }) -> String? {
     guard index < lines.endIndex else {
         return nil
@@ -612,11 +668,13 @@ private func remainingProgress(fromUsedText valueText: String) -> Double? {
 }
 
 private func percentage(from valueText: String) -> Double? {
-    guard let range = valueText.range(of: #"(\d+(?:[.,]\d+)?)%"#, options: .regularExpression) else {
+    guard let range = valueText.range(of: #"(\d+(?:[.,]\d+)?)\s*%"#, options: .regularExpression) else {
         return nil
     }
 
-    let numberText = String(valueText[range]).replacingOccurrences(of: "%", with: "")
+    let numberText = String(valueText[range])
+        .replacingOccurrences(of: "%", with: "")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
     guard let value = Double(numberText.replacingOccurrences(of: ",", with: ".")) else {
         return nil
     }

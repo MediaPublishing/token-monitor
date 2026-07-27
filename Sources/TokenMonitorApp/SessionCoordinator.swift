@@ -19,6 +19,10 @@ final class SessionCoordinator {
         return try await controller.refresh()
     }
 
+    func cancelRefresh(service: ServiceKind) {
+        controllers[service]?.cancelRefresh()
+    }
+
     func showLoginWindow(
         for service: ServiceKind,
         onAuthenticated: @escaping @MainActor () -> Void,

@@ -296,7 +296,55 @@ struct ClaudeUsageParserTests {
         #expect(snapshot.metric(for: "current-balance")?.valueText == "$10.01")
     }
 
-    @Test func rejectsClaudeExtractWhileBalanceIsStillLoading() throws {
+    @Test func parsesGermanClaudeFableLayout() throws {
+        let extract = ServicePageExtract(
+            service: .claude,
+            pageTitle: "Claude",
+            url: "https://claude.ai/settings/usage",
+            bodyText: "",
+            segments: [
+                """
+                Plan-Nutzungslimits
+                Max (5x)
+                Aktuelle Sitzung
+                Zurücksetzung in 2 Std. 25 Min.
+                30 % verwendet
+                Wöchentliche Limits
+                Fable 5 ist weiterhin in deinem Max-Abo enthalten.
+                Alle Modelle
+                Zurücksetzung Do. 19:00
+                15 % verwendet
+                Fable
+                Du hast Fable noch nicht verwendet
+                0 % verwendet
+                """,
+                """
+                Nutzungsguthaben
+                0,00 € verwendet
+                Zurücksetzung 1. Aug.
+                0 % verwendet
+                200,00 €
+                Monatliches Ausgabenlimit
+                10,01 €
+                Aktueller Kontostand
+                """
+            ]
+        )
+
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: Date(timeIntervalSince1970: 1_700_000_000))
+
+        #expect(snapshot.metric(for: "current-session")?.valueText == "70% remaining")
+        #expect(snapshot.metric(for: "current-session")?.subtitle == "Zurücksetzung in 2 Std. 25 Min.")
+        #expect(snapshot.metric(for: "weekly-all-models")?.valueText == "85% remaining")
+        #expect(snapshot.metric(for: "weekly-all-models")?.subtitle == "Zurücksetzung Do. 19:00")
+        #expect(snapshot.metric(for: "weekly-fable")?.valueText == "100% remaining")
+        #expect(snapshot.metric(for: "extra-usage-spend")?.valueText == "0,00 € verwendet")
+        #expect(snapshot.metric(for: "extra-usage-spend")?.subtitle == "Zurücksetzung 1. Aug.")
+        #expect(snapshot.metric(for: "monthly-spend-limit")?.valueText == "200,00 €")
+        #expect(snapshot.metric(for: "current-balance")?.valueText == "10,01 €")
+    }
+
+    @Test func keepsCoreClaudeMetricsWhileBalanceIsStillLoading() throws {
         let extract = ServicePageExtract(
             service: .claude,
             pageTitle: "Claude",
@@ -310,9 +358,14 @@ struct ClaudeUsageParserTests {
             ]
         )
 
-        #expect(throws: UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")) {
-            try ClaudeUsageParser().parse(extract: extract, now: .now)
-        }
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: .now)
+
+        #expect(snapshot.metric(for: "current-session")?.valueText == "100% remaining")
+        #expect(snapshot.metric(for: "weekly-all-models")?.valueText == "92% remaining")
+        #expect(snapshot.metric(for: "weekly-sonnet")?.valueText == "94% remaining")
+        #expect(snapshot.metric(for: "extra-usage-spend")?.valueText == "$200.23 spent")
+        #expect(snapshot.metric(for: "monthly-spend-limit")?.valueText == "$200")
+        #expect(snapshot.metric(for: "current-balance") == nil)
     }
 
     @Test func throwsAuthRequiredForClaudeLoginPage() throws {

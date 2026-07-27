@@ -36,6 +36,7 @@ final class AppModel: ObservableObject {
     private let sessionCoordinator: SessionCoordinator
     private let updateController: AppUpdateController
     private var refreshTasks: [ServiceKind: Task<Void, Never>] = [:]
+    private var pendingForcedRefreshes: [ServiceKind: RefreshTrigger] = [:]
     private var backgroundRefreshTimer: Timer?
 
     private init(
@@ -118,7 +119,10 @@ final class AppModel: ObservableObject {
     }
 
     func refresh(_ service: ServiceKind, trigger: RefreshTrigger, force: Bool = false) {
-        if !force, refreshTasks[service] != nil {
+        if refreshTasks[service] != nil {
+            if force {
+                pendingForcedRefreshes[service] = trigger
+            }
             return
         }
 
@@ -136,6 +140,9 @@ final class AppModel: ObservableObject {
             defer {
                 Task { @MainActor in
                     self.refreshTasks[service] = nil
+                    if let pendingTrigger = self.pendingForcedRefreshes.removeValue(forKey: service) {
+                        self.refresh(service, trigger: pendingTrigger)
+                    }
                 }
             }
 
@@ -152,6 +159,8 @@ final class AppModel: ObservableObject {
                 await MainActor.run {
                     self.applyParseError(parseError, for: service)
                 }
+            } catch is CancellationError {
+                return
             } catch {
                 await MainActor.run {
                     DashboardReducer.reduce(
@@ -166,6 +175,7 @@ final class AppModel: ObservableObject {
     }
 
     func openLogin(for service: ServiceKind) {
+        sessionCoordinator.cancelRefresh(service: service)
         DashboardReducer.reduce(&dashboardState, event: .service(service, .refreshStarted(trigger: .login)))
         sessionCoordinator.showLoginWindow(
             for: service,

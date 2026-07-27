@@ -140,4 +140,32 @@ struct AppSourceBehaviorTests {
         #expect(sessionController.contains("Aktuelle Sitzung"))
         #expect(sessionController.contains("€"))
     }
+
+    @Test func reconnectRecoversFromAStuckProviderRefresh() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let appModel = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/AppModel.swift"),
+            encoding: .utf8
+        )
+        let sessionCoordinator = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/SessionCoordinator.swift"),
+            encoding: .utf8
+        )
+        let sessionController = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/ServiceSessionController.swift"),
+            encoding: .utf8
+        )
+
+        #expect(appModel.contains("pendingForcedRefreshes"))
+        #expect(appModel.contains("sessionCoordinator.cancelRefresh(service: service)"))
+        #expect(appModel.contains("catch is CancellationError"))
+        #expect(sessionCoordinator.contains("func cancelRefresh(service: ServiceKind)"))
+        #expect(sessionController.contains("func cancelRefresh()"))
+        #expect(sessionController.contains("scheduleRefreshTimeout"))
+        #expect(sessionController.contains("Usage page refresh timed out"))
+    }
 }
