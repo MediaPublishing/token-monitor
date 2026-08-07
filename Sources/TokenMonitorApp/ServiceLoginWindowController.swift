@@ -13,6 +13,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     private var didNotifyAuthenticated = false
     private var didAutoRetryBlankChatGPTPage = false
     private var blankPageCheckTask: Task<Void, Never>?
+    private var openCodeGoReadinessTask: Task<Void, Never>?
 
     var onAuthenticated: (@MainActor () -> Void)?
     var onAuthenticationDismissed: (@MainActor () -> Void)?
@@ -83,6 +84,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
     func showWindowAndActivate() {
         didAutoRetryBlankChatGPTPage = false
+        openCodeGoReadinessTask?.cancel()
         showStatusBannerIfNeeded("Loading ChatGPT connection page...")
         loadUsagePage()
         showWindow(nil)
@@ -96,12 +98,14 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     ) {
         didNotifyAuthenticated = false
         didAutoRetryBlankChatGPTPage = false
+        openCodeGoReadinessTask?.cancel()
         onAuthenticated = callback
         onAuthenticationDismissed = onDismissed
     }
 
     func loadUsagePage() {
         blankPageCheckTask?.cancel()
+        openCodeGoReadinessTask?.cancel()
         let request = URLRequest(url: service.usageURL, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 60)
         webView.load(request)
     }
@@ -114,6 +118,11 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
         if service == .chatGPT {
             scheduleChatGPTBlankPageCheck(currentURL: currentURL)
+            return
+        }
+
+        if service == .openCodeGo {
+            scheduleOpenCodeGoAuthenticationCheck(currentURL: currentURL)
             return
         }
 
@@ -167,8 +176,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     private func finishLoadedPage(currentURL: String) {
-        if currentURL.contains(service.usageURL.host() ?? ""),
-           currentURL.contains(service.usageURL.path),
+        if isAuthenticatedUsagePageURL(currentURL),
            !didNotifyAuthenticated {
             didNotifyAuthenticated = true
             let callback = onAuthenticated
@@ -236,6 +244,68 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         Task { @MainActor in
             loadUsagePage()
         }
+    }
+
+    private func scheduleOpenCodeGoAuthenticationCheck(currentURL: String) {
+        openCodeGoReadinessTask?.cancel()
+        openCodeGoReadinessTask = Task { @MainActor in
+            for attempt in 0..<5 {
+                if attempt > 0 {
+                    try? await Task.sleep(nanoseconds: 1_000_000_000)
+                }
+
+                guard !Task.isCancelled else {
+                    return
+                }
+
+                guard let readiness = await readOpenCodeGoPageReadiness() else {
+                    continue
+                }
+
+                if readiness.isAuthenticated {
+                    finishLoadedPage(currentURL: webView.url?.absoluteString ?? currentURL)
+                    return
+                }
+            }
+        }
+    }
+
+    private func readOpenCodeGoPageReadiness() async -> OpenCodeGoPageReadiness? {
+        let payload = try? await evaluateJavaScript(
+            """
+            JSON.stringify({
+              url: location.href,
+              bodyText: ((document.body && (document.body.innerText || document.body.textContent)) || "").trim(),
+              hasUsageLabels: ["Rolling Usage", "Weekly Usage", "Monthly Usage"].every(label => (document.body?.innerText || "").toLowerCase().includes(label.toLowerCase())),
+              hasWorkspaceLink: Array.from(document.querySelectorAll('a[href]')).some(node => {
+                try { return new URL(node.getAttribute('href'), location.href).pathname.match(/^\\/workspace\\/[^/]+\\/go\\/?$/) !== null; } catch (_) { return false; }
+              })
+            })
+            """
+        )
+
+        guard let payload, let data = payload.data(using: .utf8) else {
+            return nil
+        }
+
+        return try? JSONDecoder().decode(OpenCodeGoPageReadiness.self, from: data)
+    }
+
+    private func isAuthenticatedUsagePageURL(_ currentURL: String) -> Bool {
+        guard let url = URL(string: currentURL) else {
+            return false
+        }
+
+        if service == .openCodeGo {
+            guard url.host == ServiceKind.openCodeGo.usageURL.host() else {
+                return false
+            }
+
+            return url.path == "/go" || isOpenCodeGoWorkspaceURL(currentURL)
+        }
+
+        return currentURL.contains(service.usageURL.host() ?? "")
+            && currentURL.contains(service.usageURL.path)
     }
 
     private func configureStatusBanner() {
@@ -309,6 +379,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         blankPageCheckTask?.cancel()
+        openCodeGoReadinessTask?.cancel()
         sender.orderOut(nil)
         let dismissCallback = onAuthenticationDismissed
         onAuthenticationDismissed = nil
@@ -327,6 +398,34 @@ private struct ChatGPTPageReadiness: Decodable {
         let visibleText = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
         return visibleText.isEmpty
     }
+}
+
+private struct OpenCodeGoPageReadiness: Decodable {
+    let url: String
+    let bodyText: String
+    let hasUsageLabels: Bool
+    let hasWorkspaceLink: Bool
+
+    var isAuthenticated: Bool {
+        let hasWorkspaceUsageURL = isOpenCodeGoWorkspaceURL(url)
+        let hasSubscriptionMessage = bodyText.localizedCaseInsensitiveContains("You are subscribed to OpenCode Go")
+            || bodyText.localizedCaseInsensitiveContains("Du hast OpenCode Go abonniert")
+
+        return hasUsageLabels || hasWorkspaceUsageURL || hasSubscriptionMessage
+            || (hasWorkspaceLink && hasSubscriptionMessage)
+    }
+}
+
+private func isOpenCodeGoWorkspaceURL(_ value: String) -> Bool {
+    guard let url = URL(string: value),
+          url.host == ServiceKind.openCodeGo.usageURL.host(),
+          url.pathComponents.count >= 4,
+          url.pathComponents[1] == "workspace",
+          url.pathComponents.last == "go" else {
+        return false
+    }
+
+    return true
 }
 
 @MainActor

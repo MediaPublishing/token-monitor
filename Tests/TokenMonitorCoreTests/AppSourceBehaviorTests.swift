@@ -59,17 +59,31 @@ struct AppSourceBehaviorTests {
         #expect(dashboardView.contains("return .red"))
         #expect(dashboardView.contains("1 - clamped"))
         #expect(dashboardView.contains("ProgressTrack(progress: progress, tint: tintColor)"))
+        #expect(dashboardView.contains("Text(displayValueText)"))
+        #expect(dashboardView.contains("isUsedPercentageMetric"))
+        #expect(dashboardView.contains("% remaining"))
         #expect(!dashboardView.contains("showsProgressPercentage"))
+        #expect(!dashboardView.contains("ScrollView"))
+        #expect(dashboardView.contains("ServiceSectionView(status: status)"))
+        #expect(dashboardView.contains("count: 3"))
+        #expect(dashboardView.contains("Image(systemName: \"arrow.clockwise\")"))
+        #expect(dashboardView.contains("minHeight: 58"))
+        #expect(dashboardView.contains("model.showUsageDetails"))
+        #expect(dashboardView.contains("extra-usage-spend"))
+        #expect(dashboardView.contains("monthly-spend-limit"))
+        #expect(dashboardView.contains("current-balance"))
         #expect(dashboardView.contains("monthly-limit-balance"))
         #expect(dashboardView.contains("Monthly limit / Balance"))
         #expect(appDelegate.contains("model.statusMenuUsesColor"))
         #expect(appDelegate.contains("model.statusMenuShowsPercentages"))
         #expect(appDelegate.contains("model.statusMenuShowsPercentages ? 84 : 20"))
-        #expect(appDelegate.contains("model.statusMenuTotalScore(for: .claude)"))
-        #expect(appDelegate.contains("model.statusMenuSessionScore(for: .chatGPT)"))
-        #expect(appDelegate.contains("NSRect(x: 0, y: 8, width: 25, height: 8)"))
-        #expect(appDelegate.contains("NSRect(x: 29, y: 9, width: 24, height: 6)"))
-        #expect(appDelegate.contains("NSRect(x: 57, y: 8, width: 27, height: 8)"))
+        #expect(appDelegate.contains("model.statusMenuShowsPercentages ? 21 : 18"))
+        #expect(appDelegate.contains("services.count > 2 ? 5 : 6"))
+        #expect(appDelegate.contains("model.statusMenuServices"))
+        #expect(appDelegate.contains("model.statusMenuTotalScore(for: service)"))
+        #expect(appDelegate.contains("model.statusMenuSessionScore(for: service)"))
+        #expect(appDelegate.contains("let rowHeight"))
+        #expect(appDelegate.contains("let barHeight"))
         #expect(appDelegate.contains("alignment: .left"))
         #expect(appDelegate.contains("drawStatusValue"))
         #expect(appDelegate.contains("button.effectiveAppearance"))
@@ -107,6 +121,7 @@ struct AppSourceBehaviorTests {
         #expect(appModel.contains("Keys.debugModeEnabled: false"))
         #expect(appModel.contains("Keys.statusMenuUsesColor: true"))
         #expect(appModel.contains("Keys.statusMenuShowsPercentages: false"))
+        #expect(appModel.contains("Keys.showUsageDetails: false"))
         #expect(!appModel.contains("dashboardShowsProgressPercentages"))
         #expect(appModel.contains("openGitHubDebugReportDraft"))
         #expect(appModel.contains("openEmailDebugReportDraft"))
@@ -115,6 +130,7 @@ struct AppSourceBehaviorTests {
         #expect(settingsView.contains("Status menu"))
         #expect(settingsView.contains("Use colored status bars"))
         #expect(settingsView.contains("Show percentages in menu bar"))
+        #expect(settingsView.contains("Show usage details"))
         #expect(!settingsView.contains("Show percentages in dashboard bars"))
         #expect(settingsView.contains("GitHub Issue Draft"))
         #expect(settingsView.contains("Email Draft"))
@@ -131,7 +147,6 @@ struct AppSourceBehaviorTests {
             contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/ServiceSessionController.swift"),
             encoding: .utf8
         )
-
         #expect(sessionController.contains("emptyUsagePage"))
         #expect(sessionController.contains("Usage page returned no readable text"))
         #expect(sessionController.contains("document.documentElement"))
@@ -167,5 +182,39 @@ struct AppSourceBehaviorTests {
         #expect(sessionController.contains("func cancelRefresh()"))
         #expect(sessionController.contains("scheduleRefreshTimeout"))
         #expect(sessionController.contains("Usage page refresh timed out"))
+    }
+
+    @Test func openCodeGoIsOptInAndHiddenUntilItHasASnapshot() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let appModel = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/AppModel.swift"),
+            encoding: .utf8
+        )
+        let settingsView = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/SettingsView.swift"),
+            encoding: .utf8
+        )
+        let sessionController = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/ServiceSessionController.swift"),
+            encoding: .utf8
+        )
+        let loginController = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/ServiceLoginWindowController.swift"),
+            encoding: .utf8
+        )
+
+        #expect(appModel.contains("Keys.openCodeGoEnabled: false"))
+        #expect(appModel.contains("!openCodeGoEnabled || status.snapshot == nil"))
+        #expect(appModel.contains("service != .openCodeGo || openCodeGoEnabled"))
+        #expect(settingsView.contains("status.service.displayName"))
+        #expect(settingsView.contains("settingsProviderStatuses"))
+        #expect(sessionController.contains("extract.openCodeGoWorkspaceURL"))
+        #expect(sessionController.contains("OpenCodeGoUsageParser()"))
+        #expect(loginController.contains("isOpenCodeGoWorkspaceURL(currentURL)"))
+        #expect(loginController.contains("hasSubscriptionMessage"))
     }
 }

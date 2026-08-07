@@ -3,6 +3,7 @@ import Foundation
 public enum ServiceKind: String, CaseIterable, Codable, Sendable {
     case claude
     case chatGPT = "chatgpt"
+    case openCodeGo = "opencode-go"
 
     public var displayOrder: Int {
         switch self {
@@ -10,6 +11,8 @@ public enum ServiceKind: String, CaseIterable, Codable, Sendable {
             return 0
         case .chatGPT:
             return 1
+        case .openCodeGo:
+            return 2
         }
     }
 
@@ -19,6 +22,8 @@ public enum ServiceKind: String, CaseIterable, Codable, Sendable {
             return "Claude"
         case .chatGPT:
             return "ChatGPT"
+        case .openCodeGo:
+            return "OpenCode Go"
         }
     }
 
@@ -28,6 +33,8 @@ public enum ServiceKind: String, CaseIterable, Codable, Sendable {
             return URL(string: "https://claude.ai/settings/usage")!
         case .chatGPT:
             return URL(string: "https://chatgpt.com/codex/cloud/settings/usage")!
+        case .openCodeGo:
+            return URL(string: "https://opencode.ai/go")!
         }
     }
 
@@ -37,6 +44,8 @@ public enum ServiceKind: String, CaseIterable, Codable, Sendable {
             return "Claude login required"
         case .chatGPT:
             return "ChatGPT login required"
+        case .openCodeGo:
+            return "OpenCode Go login required"
         }
     }
 
@@ -46,6 +55,8 @@ public enum ServiceKind: String, CaseIterable, Codable, Sendable {
             return UUID(uuidString: "E54F2F77-0C8B-4A14-A177-74DF3065A38F")!
         case .chatGPT:
             return UUID(uuidString: "2AA8D9AD-9434-4CE0-8329-F51C5FA36627")!
+        case .openCodeGo:
+            return UUID(uuidString: "C4BBE7F3-4F4D-4CA4-97D9-B28ECF4316A2")!
         }
     }
 }
@@ -56,13 +67,41 @@ public struct ServicePageExtract: Codable, Equatable, Sendable {
     public let url: String
     public let bodyText: String
     public let segments: [String]
+    public let links: [String]
 
-    public init(service: ServiceKind, pageTitle: String, url: String, bodyText: String, segments: [String]) {
+    public init(
+        service: ServiceKind,
+        pageTitle: String,
+        url: String,
+        bodyText: String,
+        segments: [String],
+        links: [String] = []
+    ) {
         self.service = service
         self.pageTitle = pageTitle
         self.url = url
         self.bodyText = bodyText
         self.segments = segments
+        self.links = links
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case service
+        case pageTitle
+        case url
+        case bodyText
+        case segments
+        case links
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        service = try container.decode(ServiceKind.self, forKey: .service)
+        pageTitle = try container.decode(String.self, forKey: .pageTitle)
+        url = try container.decode(String.self, forKey: .url)
+        bodyText = try container.decode(String.self, forKey: .bodyText)
+        segments = try container.decode([String].self, forKey: .segments)
+        links = try container.decodeIfPresent([String].self, forKey: .links) ?? []
     }
 }
 
@@ -174,6 +213,8 @@ public struct ServiceSnapshot: Codable, Equatable, Sendable {
             return remainingScore(for: "weekly-limit") ?? remainingScore(for: "spark-weekly-limit") ?? capacityScore
         case .claude:
             return remainingScore(for: "weekly-all-models") ?? capacityScore
+        case .openCodeGo:
+            return remainingScore(for: "weekly-usage") ?? capacityScore
         }
     }
 
@@ -183,6 +224,8 @@ public struct ServiceSnapshot: Codable, Equatable, Sendable {
             return remainingScore(for: "five-hour-limit") ?? remainingScore(for: "spark-five-hour-limit") ?? capacityScore
         case .claude:
             return remainingScore(for: "current-session") ?? capacityScore
+        case .openCodeGo:
+            return remainingScore(for: "rolling-usage") ?? capacityScore
         }
     }
 
@@ -193,6 +236,8 @@ public struct ServiceSnapshot: Codable, Equatable, Sendable {
             relevantKeys = ["five-hour-limit", "weekly-limit", "spark-five-hour-limit", "spark-weekly-limit"]
         case .claude:
             relevantKeys = ["current-session", "weekly-all-models", "weekly-sonnet", "claude-design"]
+        case .openCodeGo:
+            relevantKeys = ["rolling-usage", "weekly-usage", "monthly-usage"]
         }
 
         let scores = relevantKeys.compactMap { key -> Double? in

@@ -1,8 +1,8 @@
 # Token Monitor
 
-**Token Monitor** is a native macOS menu bar companion for Claude and ChatGPT/Codex usage: provider-specific limits, isolated sessions, and background refresh in one lightweight desktop app.
+**Token Monitor** is a native macOS menu bar companion for Claude, ChatGPT/Codex, and optional OpenCode Go usage: provider-specific limits, isolated sessions, and background refresh in one lightweight desktop app.
 
-**Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude- und ChatGPT/Codex-Nutzung: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
+**Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
   <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.26/TokenMonitor-macOS.dmg">
@@ -20,9 +20,9 @@
 ### Dashboard
 ![Token Monitor dashboard screenshot](assets/screenshots/app/dashboard.png)
 
-Watch Claude and ChatGPT/Codex side by side from the macOS menu bar.
+Watch Claude and ChatGPT/Codex side by side from the macOS menu bar. Enable OpenCode Go in Settings when you want to track its Rolling, Weekly, and Monthly usage too.
 
-Claude und ChatGPT/Codex bleiben direkt in der macOS-Menüleiste nebeneinander sichtbar.
+Claude und ChatGPT/Codex bleiben direkt in der macOS-Menüleiste nebeneinander sichtbar. OpenCode Go lässt sich in den Settings optional zuschalten.
 
 ### Claude Usage
 ![Token Monitor Claude usage screenshot](assets/screenshots/app/claude.png)
@@ -47,6 +47,7 @@ ChatGPT Daily, Weekly, Codex und Credits bleiben sichtbar, ohne Browser-Tab-Such
 If your work depends on Claude and ChatGPT, the limiting factor is often not the model quality but whether you still have room left in the current window. Token Monitor closes that gap from the menu bar.
 
 - View Claude and ChatGPT/Codex in one compact popover
+- Optionally add OpenCode Go after connecting the account
 - Keep each provider in its own persistent WebKit session
 - Refresh on launch, on demand, and in the background
 - Preserve source-native metrics instead of inventing a combined score
@@ -57,6 +58,7 @@ If your work depends on Claude and ChatGPT, the limiting factor is often not the
 - macOS 14.0 or newer
 - Swift 6 toolchain / Command Line Tools for source builds
 - Claude and/or ChatGPT account access
+- Optional OpenCode Go subscription access
 
 ### Installation
 
@@ -66,6 +68,7 @@ Normal users should install from the GitHub Release DMG:
 2. Open the disk image.
 3. Drag `TokenMonitor.app` onto the Applications shortcut.
 4. Open Token Monitor and connect Claude and ChatGPT from Settings.
+5. Optional: open Settings, enable **Monitor OpenCode Go**, and connect the OpenCode Go account. Its bars appear after the first successful refresh.
 
 Current preview release download:
 
@@ -104,6 +107,10 @@ Token Monitor tries to register itself as a login item when **Launch at login** 
 #### Updates
 
 Token Monitor checks for updates only when you click **Check for Updates...** in Settings. Automatic update checks are off by default from version `1.0.22`. If you enable **Automatically check for updates**, macOS may show an update prompt later without you clicking the manual update button.
+
+#### Optional OpenCode Go
+
+OpenCode Go monitoring is off by default. In Settings, enable **Monitor OpenCode Go**, click **Connect OpenCode Go**, and sign in on the OpenCode page. Token Monitor follows the authenticated workspace page and reads **Rolling Usage**, **Weekly Usage**, and **Monthly Usage**. The OpenCode Go section and its menu bar indicator appear only after a successful connection and refresh.
 
 ### Build From Source
 
@@ -148,6 +155,7 @@ Debug mode is off by default. When enabled in Settings, Token Monitor stores red
 Wenn deine Arbeit von Claude und ChatGPT abhängt, ist oft nicht die Modellqualität der Engpass, sondern ob im aktuellen Fenster noch Kapazität übrig ist. Token Monitor schließt genau diese Lücke in der Menüleiste.
 
 - Claude und ChatGPT/Codex in einem kompakten Popover sehen
+- OpenCode Go bei Bedarf optional hinzufügen
 - Jeden Provider in einer eigenen persistenten WebKit-Session halten
 - Beim Start, manuell und im Hintergrund aktualisieren
 - Quellnahe Metriken behalten statt einen künstlichen Gesamtscore zu bauen
@@ -158,6 +166,7 @@ Wenn deine Arbeit von Claude und ChatGPT abhängt, ist oft nicht die Modellquali
 - macOS 14.0 oder neuer
 - Swift 6 Toolchain / Command Line Tools für Source-Builds
 - Claude- und/oder ChatGPT-Account-Zugriff
+- Optional: OpenCode-Go-Abonnement
 
 ### Installation
 
@@ -167,6 +176,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 2. Disk Image öffnen.
 3. `TokenMonitor.app` auf die Applications-Verknüpfung ziehen.
 4. Token Monitor öffnen und Claude sowie ChatGPT in den Settings verbinden.
+5. Optional: In den Settings **Monitor OpenCode Go** aktivieren und OpenCode Go verbinden. Die Balken erscheinen nach dem ersten erfolgreichen Refresh.
 
 Aktueller Preview-Release-Download:
 
@@ -205,6 +215,10 @@ Token Monitor versucht, sich als Login Item zu registrieren, wenn **Launch at lo
 #### Updates
 
 Token Monitor sucht nur dann nach Updates, wenn du in den Settings **Check for Updates...** klickst. Automatische Update-Prüfungen sind ab Version `1.0.22` standardmäßig aus. Wenn du **Automatically check for updates** aktivierst, kann macOS später ein Update-Fenster anzeigen, ohne dass du den manuellen Update-Button geklickt hast.
+
+#### Optionales OpenCode Go
+
+Die OpenCode-Go-Überwachung ist standardmäßig deaktiviert. Aktiviere in den Settings **Monitor OpenCode Go**, klicke auf **Connect OpenCode Go** und melde dich auf der OpenCode-Seite an. Token Monitor folgt der authentifizierten Workspace-Seite und liest **Rolling Usage**, **Weekly Usage** und **Monthly Usage**. Der OpenCode-Go-Bereich und sein Menüleisten-Balken erscheinen erst nach erfolgreicher Verbindung und Aktualisierung.
 
 ### Aus dem Source Code bauen
 

@@ -3,7 +3,7 @@ import Testing
 @testable import TokenMonitorCore
 
 struct PresentationHeuristicsTests {
-    @Test func dashboardOrdersClaudeBeforeChatGPT() {
+    @Test func dashboardOrdersClaudeChatGPTBeforeOptionalOpenCodeGo() {
         let chatGPTSnapshot = ServiceSnapshot(
             service: .chatGPT,
             capturedAt: .now,
@@ -24,7 +24,7 @@ struct PresentationHeuristicsTests {
             .claude: claudeSnapshot
         ])
 
-        #expect(state.services.map(\.service) == [.claude, .chatGPT])
+        #expect(state.services.map(\.service) == [.claude, .chatGPT, .openCodeGo])
     }
 
     @Test func capacityScoreUsesMostConstrainedMetricForClaude() {
@@ -93,6 +93,24 @@ struct PresentationHeuristicsTests {
 
         #expect(snapshot.statusMenuTotalScore == 0.67)
         #expect(snapshot.statusMenuSessionScore == 0.55)
+    }
+
+    @Test func statusMenuUsesWeeklyAndRollingScoresForOpenCodeGo() {
+        let snapshot = ServiceSnapshot(
+            service: .openCodeGo,
+            capturedAt: .now,
+            pageTitle: "OpenCode Go",
+            url: "https://opencode.ai/workspace/example/go",
+            metrics: [
+                UsageMetric(key: "rolling-usage", title: "Rolling Usage", valueText: "84% remaining", subtitle: nil, progress: 0.84, style: .progress),
+                UsageMetric(key: "weekly-usage", title: "Weekly Usage", valueText: "94% remaining", subtitle: nil, progress: 0.94, style: .progress),
+                UsageMetric(key: "monthly-usage", title: "Monthly Usage", valueText: "97% remaining", subtitle: nil, progress: 0.97, style: .progress)
+            ]
+        )
+
+        #expect(snapshot.capacityScore == 0.84)
+        #expect(snapshot.statusMenuTotalScore == 0.94)
+        #expect(snapshot.statusMenuSessionScore == 0.84)
     }
 
     @Test func displaySubtitleUsesCompactTwentyFourHourResetTimes() {

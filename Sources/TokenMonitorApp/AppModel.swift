@@ -17,6 +17,8 @@ final class AppModel: ObservableObject {
         static let debugModeEnabled = "debugModeEnabled"
         static let statusMenuUsesColor = "statusMenuUsesColor"
         static let statusMenuShowsPercentages = "statusMenuShowsPercentages"
+        static let showUsageDetails = "showUsageDetails"
+        static let openCodeGoEnabled = "openCodeGoEnabled"
     }
 
     @Published private(set) var dashboardState: DashboardState
@@ -27,6 +29,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var debugModeEnabled: Bool
     @Published private(set) var statusMenuUsesColor: Bool
     @Published private(set) var statusMenuShowsPercentages: Bool
+    @Published private(set) var showUsageDetails: Bool
+    @Published private(set) var openCodeGoEnabled: Bool
 
     let snapshotDirectoryURL: URL
     let diagnosticsDirectoryURL: URL
@@ -49,13 +53,17 @@ final class AppModel: ObservableObject {
             Keys.launchAtLoginEnabled: true,
             Keys.debugModeEnabled: false,
             Keys.statusMenuUsesColor: true,
-            Keys.statusMenuShowsPercentages: false
+            Keys.statusMenuShowsPercentages: false,
+            Keys.showUsageDetails: false,
+            Keys.openCodeGoEnabled: false
         ])
         launchAtLoginEnabled = UserDefaults.standard.bool(forKey: Keys.launchAtLoginEnabled)
         let initialDebugModeEnabled = UserDefaults.standard.bool(forKey: Keys.debugModeEnabled)
         debugModeEnabled = initialDebugModeEnabled
         statusMenuUsesColor = UserDefaults.standard.bool(forKey: Keys.statusMenuUsesColor)
         statusMenuShowsPercentages = UserDefaults.standard.bool(forKey: Keys.statusMenuShowsPercentages)
+        showUsageDetails = UserDefaults.standard.bool(forKey: Keys.showUsageDetails)
+        openCodeGoEnabled = UserDefaults.standard.bool(forKey: Keys.openCodeGoEnabled)
         automaticallyChecksForUpdates = updateController.automaticallyChecksForUpdates
         let snapshots = (try? snapshotStore.loadSnapshots()) ?? [:]
         dashboardState = DashboardState.initial(lastSnapshots: snapshots)
@@ -109,9 +117,32 @@ final class AppModel: ObservableObject {
     }
 
     func refreshAll(trigger: RefreshTrigger) {
-        for service in ServiceKind.allCases {
+        for service in enabledServices {
             refresh(service, trigger: trigger, force: trigger == .manual)
         }
+    }
+
+    var dashboardServices: [ServiceStatus] {
+        let order: [ServiceKind] = [.chatGPT, .claude, .openCodeGo]
+        return order.compactMap { service in
+            let status = dashboardState.service(service)
+            if service == .openCodeGo && (!openCodeGoEnabled || status.snapshot == nil) {
+                return nil
+            }
+            return status
+        }
+    }
+
+    var providerSettingsServices: [ServiceStatus] {
+        [.chatGPT, .claude].map { dashboardState.service($0) }
+    }
+
+    var statusMenuServices: [ServiceKind] {
+        var services: [ServiceKind] = [.chatGPT, .claude]
+        if openCodeGoEnabled {
+            services.append(.openCodeGo)
+        }
+        return services
     }
 
     var isRefreshing: Bool {
@@ -119,6 +150,10 @@ final class AppModel: ObservableObject {
     }
 
     func refresh(_ service: ServiceKind, trigger: RefreshTrigger, force: Bool = false) {
+        guard service != .openCodeGo || openCodeGoEnabled else {
+            return
+        }
+
         if refreshTasks[service] != nil {
             if force {
                 pendingForcedRefreshes[service] = trigger
@@ -260,6 +295,31 @@ final class AppModel: ObservableObject {
         UserDefaults.standard.set(enabled, forKey: Keys.statusMenuShowsPercentages)
     }
 
+    func setShowUsageDetails(_ enabled: Bool) {
+        guard showUsageDetails != enabled else {
+            return
+        }
+
+        showUsageDetails = enabled
+        UserDefaults.standard.set(enabled, forKey: Keys.showUsageDetails)
+    }
+
+    func setOpenCodeGoEnabled(_ enabled: Bool) {
+        guard openCodeGoEnabled != enabled else {
+            return
+        }
+
+        openCodeGoEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: Keys.openCodeGoEnabled)
+
+        if enabled {
+            refresh(.openCodeGo, trigger: .manual, force: true)
+        } else {
+            pendingForcedRefreshes[.openCodeGo] = nil
+            sessionCoordinator.cancelRefresh(service: .openCodeGo)
+        }
+    }
+
     func checkForUpdates() {
         updateController.checkForUpdates()
     }
@@ -336,7 +396,11 @@ final class AppModel: ObservableObject {
     }
 
     var lastRefreshText: String {
-        guard let lastRefresh = dashboardState.lastRefresh else {
+        let lastRefresh = enabledServices
+            .compactMap { dashboardState.service($0).lastSuccessfulRefresh }
+            .max()
+
+        guard let lastRefresh else {
             return "No successful refresh yet"
         }
 
@@ -352,7 +416,7 @@ final class AppModel: ObservableObject {
     }
 
     var overallConnectionStatus: ServiceConnectionStatus {
-        let states = dashboardState.services.map(\.connectionStatus)
+        let states = enabledServices.map { dashboardState.service($0).connectionStatus }
         if states.contains(.error) {
             return .error
         }
@@ -436,6 +500,12 @@ final class AppModel: ObservableObject {
         }
     }
 
+    private var enabledServices: [ServiceKind] {
+        ServiceKind.allCases.filter { service in
+            service != .openCodeGo || openCodeGoEnabled
+        }
+    }
+
     private func userVisibleMessage(for error: Error) -> String {
         if let localized = error as? LocalizedError, let description = localized.errorDescription, !description.isEmpty {
             return description
@@ -460,7 +530,8 @@ final class AppModel: ObservableObject {
             "## Current status"
         ]
 
-        for status in dashboardState.services {
+        for service in enabledServices {
+            let status = dashboardState.service(service)
             lines.append("- \(status.service.displayName): \(status.connectionStatus.rawValue) - \(stateDescription(for: status))")
         }
 

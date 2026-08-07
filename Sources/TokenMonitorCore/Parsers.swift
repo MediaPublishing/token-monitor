@@ -235,6 +235,123 @@ public struct ChatGPTUsageParser: UsageParsing {
     }
 }
 
+public struct OpenCodeGoUsageParser: UsageParsing {
+    public init() {}
+
+    public func parse(extract: ServicePageExtract, now: Date) throws -> ServiceSnapshot {
+        if extractLooksLikeLogin(extract, keywords: [
+            "sign in",
+            "log in",
+            "login",
+            "anmelden",
+            "einloggen",
+            "continue with google",
+            "continue with github",
+            "create an account",
+            "konto erstellen",
+            "/auth"
+        ]) {
+            throw UsageParseError.authRequired(ServiceKind.openCodeGo.loginRequiredMessage)
+        }
+
+        let specs = [
+            OpenCodeGoMetricSpec(
+                key: "rolling-usage",
+                title: "Rolling Usage",
+                labels: ["Rolling Usage", "Fortlaufende Nutzung"]
+            ),
+            OpenCodeGoMetricSpec(
+                key: "weekly-usage",
+                title: "Weekly Usage",
+                labels: ["Weekly Usage", "Wöchentliche Nutzung"]
+            ),
+            OpenCodeGoMetricSpec(
+                key: "monthly-usage",
+                title: "Monthly Usage",
+                labels: ["Monthly Usage", "Monatliche Nutzung"]
+            )
+        ]
+        let labels = specs.flatMap(\.labels)
+        let lines = openCodeCandidateLines(from: extract, splittingAt: labels)
+        let metrics = specs.compactMap { parseOpenCodeGoMetric($0, from: lines, stoppingAt: labels) }
+
+        guard metrics.count >= 2 else {
+            throw UsageParseError.unsupportedLayout("OpenCode Go usage layout could not be parsed")
+        }
+
+        return ServiceSnapshot(
+            service: .openCodeGo,
+            capturedAt: now,
+            pageTitle: extract.pageTitle,
+            url: extract.url,
+            metrics: metrics
+        )
+    }
+}
+
+private struct OpenCodeGoMetricSpec {
+    let key: String
+    let title: String
+    let labels: [String]
+}
+
+private func parseOpenCodeGoMetric(
+    _ spec: OpenCodeGoMetricSpec,
+    from lines: [String],
+    stoppingAt labels: [String]
+) -> UsageMetric? {
+    guard let titleIndex = firstIndex(in: lines, containingAny: spec.labels) else {
+        return nil
+    }
+
+    let nextTitleIndex = firstIndex(after: titleIndex, in: lines, containingAny: labels)
+    let searchEndIndex = min(nextTitleIndex ?? lines.endIndex, titleIndex + 5)
+    let value: String?
+    if let valueOnTitle = normalizedOpenCodeGoPercentage(lines[titleIndex]) {
+        value = valueOnTitle
+    } else if titleIndex + 1 < searchEndIndex {
+        value = lines[(titleIndex + 1)..<searchEndIndex].compactMap(normalizedOpenCodeGoPercentage).first
+    } else {
+        value = nil
+    }
+    guard let value,
+          let rawProgress = percentage(from: value) else {
+        return nil
+    }
+
+    let progress = value.localizedCaseInsensitiveContains("remaining")
+        ? rawProgress
+        : max(0, min(1, 1 - rawProgress))
+    let remainingText = "\(Int((progress * 100).rounded()))% remaining"
+
+    return UsageMetric(
+        key: spec.key,
+        title: spec.title,
+        valueText: remainingText,
+        subtitle: nearbyOpenCodeGoLine(
+            after: titleIndex,
+            before: searchEndIndex,
+            in: lines,
+            matching: isResetLine
+        ),
+        progress: progress,
+        style: .progress
+    )
+}
+
+private func nearbyOpenCodeGoLine(
+    after index: Int,
+    before endIndex: Int,
+    in lines: [String],
+    matching predicate: (String) -> Bool
+) -> String? {
+    guard index + 1 < endIndex else {
+        return nil
+    }
+
+    return lines[(index + 1)..<endIndex].first(where: predicate)
+}
+
 private struct ChatGPTMetricSpec {
     let key: String
     let kind: UsageMetricStyle
@@ -404,6 +521,41 @@ private func chatGPTCandidateLines(from extract: ServicePageExtract) -> [String]
     }
 
     return result
+}
+
+private func openCodeCandidateLines(from extract: ServicePageExtract, splittingAt labels: [String]) -> [String] {
+    var result: [String] = []
+    var seen: Set<String> = []
+    let sources = extract.segments + [extract.bodyText]
+
+    for source in sources {
+        for line in normalizedLines(from: source) {
+            for candidate in splitOpenCodeGoLine(line, labels: labels) {
+                guard seen.insert(candidate).inserted else {
+                    continue
+                }
+                result.append(candidate)
+            }
+        }
+    }
+
+    return result
+}
+
+private func splitOpenCodeGoLine(_ line: String, labels: [String]) -> [String] {
+    let ranges = labels.compactMap { label in
+        line.range(of: label, options: [.caseInsensitive, .diacriticInsensitive])
+    }
+    .sorted { $0.lowerBound < $1.lowerBound }
+
+    guard ranges.count > 1 else {
+        return [line]
+    }
+
+    return ranges.enumerated().map { index, range in
+        let end = index + 1 < ranges.count ? ranges[index + 1].lowerBound : line.endIndex
+        return String(line[range.lowerBound..<end]).trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 private func claudeCandidateLines(from extract: ServicePageExtract) -> [String] {
@@ -597,6 +749,30 @@ private func normalizedProgressValue(_ text: String) -> String? {
     return nil
 }
 
+private func normalizedOpenCodeGoPercentage(_ text: String) -> String? {
+    let normalized = text
+        .replacingOccurrences(of: "\n", with: " ")
+        .replacingOccurrences(of: "  ", with: " ")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    guard let range = normalized.range(
+        of: #"(\d+(?:[.,]\d+)?)\s*%"#,
+        options: .regularExpression
+    ) else {
+        return nil
+    }
+
+    let value = normalized[range]
+        .replacingOccurrences(of: " ", with: "")
+        .replacingOccurrences(of: ",", with: ".")
+
+    if normalized.localizedCaseInsensitiveContains("remaining") {
+        return "\(value) remaining"
+    }
+
+    return "\(value) used"
+}
+
 private func normalizedStatValue(_ text: String) -> String? {
     let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -614,6 +790,12 @@ private func firstIndex(in lines: [String], containing needle: String) -> Int? {
 private func firstIndex(in lines: [String], containingAny needles: [String]) -> Int? {
     lines.firstIndex { line in
         needles.contains { line.localizedCaseInsensitiveContains($0) }
+    }
+}
+
+private func firstIndex(after index: Int, in lines: [String], containingAny needles: [String]) -> Int? {
+    lines.indices.first { candidateIndex in
+        candidateIndex > index && needles.contains { lines[candidateIndex].localizedCaseInsensitiveContains($0) }
     }
 }
 

@@ -48,6 +48,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             parser = ClaudeUsageParser()
         case .chatGPT:
             parser = ChatGPTUsageParser()
+        case .openCodeGo:
+            parser = OpenCodeGoUsageParser()
         }
         dataStore = WKWebsiteDataStore.default()
         super.init()
@@ -219,6 +221,21 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
 
             do {
                 let extract = try await evaluateCurrentPage()
+
+                if service == .openCodeGo,
+                   let workspaceURL = extract.openCodeGoWorkspaceURL,
+                   !isOpenCodeGoWorkspaceURL(URL(string: extract.url)) {
+                    extractionScheduled = false
+                    backgroundWebView.load(
+                        URLRequest(
+                            url: workspaceURL,
+                            cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+                            timeoutInterval: 60
+                        )
+                    )
+                    return
+                }
+
                 latestExtract = extract
                 if extract.isEmptyUsagePayload {
                     if index == delays.count - 1 {
@@ -447,6 +464,26 @@ private extension ServicePageExtract {
             && bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && segments.allSatisfy { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
+
+    var openCodeGoWorkspaceURL: URL? {
+        guard service == .openCodeGo else {
+            return nil
+        }
+
+        return links.compactMap(URL.init(string:)).first(where: isOpenCodeGoWorkspaceURL)
+    }
+}
+
+private func isOpenCodeGoWorkspaceURL(_ url: URL?) -> Bool {
+    guard let url,
+          url.host == ServiceKind.openCodeGo.usageURL.host(),
+          url.pathComponents.count >= 4,
+          url.pathComponents[1] == "workspace",
+          url.pathComponents.last == "go" else {
+        return false
+    }
+
+    return true
 }
 
 private func extractionScript(for service: ServiceKind) -> String {
@@ -495,7 +532,8 @@ private func extractionScript(for service: ServiceKind) -> String {
             pageTitle: document.title || "",
             url: location.href,
             bodyText,
-            segments: Array.from(new Set(interesting)).slice(0, 200)
+            segments: Array.from(new Set(interesting)).slice(0, 200),
+            links: []
           });
         })();
         """
@@ -523,7 +561,41 @@ private func extractionScript(for service: ServiceKind) -> String {
             pageTitle: document.title || "",
             url: location.href,
             bodyText: [bodyText].concat(cardTexts).join("\\n"),
-            segments: Array.from(new Set(interesting.concat(cardTexts))).slice(0, 240)
+            segments: Array.from(new Set(interesting.concat(cardTexts))).slice(0, 240),
+            links: []
+          });
+        })();
+        """
+
+    case .openCodeGo:
+        return """
+        (() => {
+          const readableText = (root) => {
+            if (!root) return "";
+            const clone = root.cloneNode(true);
+            clone.querySelectorAll('script, style, noscript, template').forEach(node => node.remove());
+            return clone.innerText || clone.textContent || "";
+          };
+          const bodyText = readableText(document.body);
+          const usageItems = Array.from(document.querySelectorAll('[data-slot="usage-item"]'))
+            .map(node => (node.innerText || node.textContent || '').trim())
+            .filter(text => text.length > 0 && text.length < 800);
+          const interesting = Array.from(document.querySelectorAll('main, main *, section, article, div, span, p, h1, h2, h3'))
+            .map(node => (node.innerText || node.textContent || '').trim())
+            .filter(text => text.length > 0 && text.length < 320)
+            .filter(text => /%|rolling\\s+usage|weekly\\s+usage|monthly\\s+usage|resets?\\s+in/i.test(text));
+          const links = Array.from(document.querySelectorAll('a[href]'))
+            .map(node => {
+              try { return new URL(node.getAttribute('href'), location.href).href; } catch (_) { return ''; }
+            })
+            .filter(url => /https:\\/\\/opencode\\.ai\\/workspace\\/[^/]+\\/go(?:[/?#]|$)/i.test(url));
+          return JSON.stringify({
+            service: "\(service.rawValue)",
+            pageTitle: document.title || "",
+            url: location.href,
+            bodyText: [bodyText].concat(usageItems).join("\\n"),
+            segments: Array.from(new Set(interesting.concat(usageItems))).slice(0, 240),
+            links: Array.from(new Set(links)).slice(0, 20)
           });
         })();
         """

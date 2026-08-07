@@ -21,7 +21,7 @@ struct PopoverHeaderView: View {
             })
             .opacity(model.isRefreshing ? 0.5 : 1.0)
             .disabled(model.isRefreshing)
-            .help("Refresh both services")
+            .help("Refresh connected services")
 
             headerButton(
                 systemImage: "chart.bar.xaxis",

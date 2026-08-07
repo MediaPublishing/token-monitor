@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Token Monitor - Claude and ChatGPT usage in your macOS menu bar</title>
-  <meta name="description" content="Token Monitor is a native macOS menu bar app for watching Claude and ChatGPT usage side by side with isolated local WebKit sessions." />
+  <title>Token Monitor - Claude, ChatGPT, and optional OpenCode Go usage in your macOS menu bar</title>
+  <meta name="description" content="Token Monitor is a native macOS menu bar app for watching Claude and ChatGPT usage side by side, with optional OpenCode Go monitoring and isolated local WebKit sessions." />
   <link rel="icon" type="image/png" href="../assets/branding/token-monitor-logo.png" />
   <link rel="apple-touch-icon" href="../assets/branding/token-monitor-logo.png" />
 
@@ -728,7 +728,7 @@
         <div>
           <div class="eyebrow" data-i18n="hero.eyebrow">Track. Refresh. Stay ahead.</div>
           <h1 data-i18n="hero.title">Know your AI usage before it stops you.</h1>
-          <p class="sub" data-i18n="hero.sub">Token Monitor keeps Claude and ChatGPT usage visible in your macOS menu bar, with separate local sessions and source-native limits for each provider.</p>
+          <p class="sub" data-i18n="hero.sub">Token Monitor keeps Claude and ChatGPT usage visible in your macOS menu bar, with optional OpenCode Go monitoring and separate local sessions for each provider.</p>
 
           <div class="cta">
             <a class="btn btn-download" href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.26/TokenMonitor-macOS.dmg" target="_blank" rel="noopener noreferrer" data-i18n="hero.ctaPrimary">Download macOS DMG</a>
@@ -777,7 +777,7 @@
         <article class="step">
           <div class="num" data-i18n="steps.two.num">Step 02</div>
           <h3 data-i18n="steps.two.title">Connect providers</h3>
-          <p data-i18n="steps.two.body">Log in once for Claude and ChatGPT inside their isolated WebKit sessions.</p>
+          <p data-i18n="steps.two.body">Log in once for Claude and ChatGPT inside their isolated WebKit sessions; add OpenCode Go from Settings when needed.</p>
         </article>
         <article class="step">
           <div class="num" data-i18n="steps.three.num">Step 03</div>
@@ -797,7 +797,7 @@
         <article class="workflow-card">
           <div class="workflow-head">
             <h3 data-i18n="workflow.dashboard.title">One menu bar view</h3>
-            <p data-i18n="workflow.dashboard.body">A compact status board keeps Claude and ChatGPT side by side.</p>
+            <p data-i18n="workflow.dashboard.body">A compact status board keeps Claude and ChatGPT side by side, with OpenCode Go available as an optional third provider.</p>
           </div>
           <div class="workflow-image-wrap">
             <img class="workflow-shot zoomable" src="../assets/screenshots/app/dashboard.png" alt="Token Monitor full dashboard screenshot" data-label="Dashboard" data-i18n-attr="alt:alt.dashboardFull;data-label:label.dashboardView" />
@@ -844,7 +844,7 @@
         <div class="native-grid">
           <div class="native-stat">
             <strong data-i18n="native.stat.one.title">Provider rules stay intact</strong>
-            <span data-i18n="native.stat.one.body">Claude remains Claude. ChatGPT remains ChatGPT.</span>
+          <span data-i18n="native.stat.one.body">Claude remains Claude. ChatGPT remains ChatGPT. OpenCode Go stays optional.</span>
           </div>
           <div class="native-stat">
             <strong data-i18n="native.stat.two.title">Menu bar first</strong>
@@ -944,8 +944,8 @@
     (function () {
       const translations = {
         en: {
-          'meta.title': 'Token Monitor - Claude and ChatGPT usage in your macOS menu bar',
-          'meta.description': 'Token Monitor is a native macOS menu bar app for watching Claude and ChatGPT usage side by side with isolated local WebKit sessions.',
+          'meta.title': 'Token Monitor - Claude, ChatGPT, and optional OpenCode Go usage in your macOS menu bar',
+          'meta.description': 'Token Monitor is a native macOS menu bar app for watching Claude and ChatGPT usage side by side, with optional OpenCode Go monitoring and isolated local WebKit sessions.',
           'alt.logo': 'Token Monitor logo',
           'alt.dashboard': 'Token Monitor dashboard screenshot',
           'alt.claude': 'Token Monitor Claude usage screenshot',
@@ -964,7 +964,7 @@
           'nav.preview': 'GitHub Preview',
           'hero.eyebrow': 'Track. Refresh. Stay ahead.',
           'hero.title': 'Know your AI usage before it stops you.',
-          'hero.sub': 'Token Monitor keeps Claude and ChatGPT usage visible in your macOS menu bar, with separate local sessions and source-native limits for each provider.',
+          'hero.sub': 'Token Monitor keeps Claude and ChatGPT usage visible in your macOS menu bar, with optional OpenCode Go monitoring and separate local sessions for each provider.',
           'hero.ctaPrimary': 'Download macOS DMG',
           'hero.ctaSecondary': 'Explore Source Code',
           'hero.microcopy': 'Public preview build. Install once from the DMG, then keep Token Monitor in the menu bar.',
@@ -987,14 +987,14 @@
           'steps.one.body': 'Download the DMG, open it, and drag Token Monitor onto Applications.',
           'steps.two.num': 'Step 02',
           'steps.two.title': 'Connect providers',
-          'steps.two.body': 'Log in once for Claude and ChatGPT inside their isolated WebKit sessions.',
+          'steps.two.body': 'Log in once for Claude and ChatGPT inside their isolated WebKit sessions; add OpenCode Go from Settings when needed.',
           'steps.three.num': 'Step 03',
           'steps.three.title': 'Watch limits',
           'steps.three.body': 'Open the menu bar popover when you need the current provider-specific capacity.',
           'workflow.title': 'See usage clearly',
           'workflow.sub': 'Each provider keeps its own numbers and reset windows. Click images to inspect details.',
           'workflow.dashboard.title': 'One menu bar view',
-          'workflow.dashboard.body': 'A compact status board keeps Claude and ChatGPT side by side.',
+          'workflow.dashboard.body': 'A compact status board keeps Claude and ChatGPT side by side, with OpenCode Go available as an optional third provider.',
           'workflow.dashboard.caption': 'Dashboard - provider overview',
           'workflow.claude.title': 'Claude usage as Claude reports it',
           'workflow.claude.body': 'Session, model, Sonnet, extra usage, balance, and reset timing stay source-native.',
@@ -1011,14 +1011,14 @@
           'native.point.four': 'Only the latest successful snapshots are stored locally',
           'native.point.five': 'Optional debug reports open as drafts for review',
           'native.stat.one.title': 'Provider rules stay intact',
-          'native.stat.one.body': 'Claude remains Claude. ChatGPT remains ChatGPT.',
+          'native.stat.one.body': 'Claude remains Claude. ChatGPT remains ChatGPT. OpenCode Go stays optional.',
           'native.stat.two.title': 'Menu bar first',
           'native.stat.two.body': 'Usage status stays one click away.',
           'faq.title': 'FAQ + screenshot gallery',
           'faq.one.q': 'Do I need to compile anything to use Token Monitor?',
           'faq.one.a': 'No. Download the DMG, open it, and drag the app onto Applications.',
           'faq.two.q': 'Does it reuse my browser cookies?',
-          'faq.two.a': 'No. Claude and ChatGPT use separate persistent WebKit sessions inside the app.',
+          'faq.two.a': 'No. Claude, ChatGPT, and optional OpenCode Go use separate persistent WebKit sessions inside the app.',
           'faq.three.q': 'Where can I inspect the UI before installing?',
           'faq.three.a': 'All screenshots are real Token Monitor views. Click any of them to open an enlarged preview.',
           'faq.five.q': 'Why can macOS show a Gatekeeper warning?',
@@ -1038,12 +1038,12 @@
           'faq.eight.a': 'From version 1.0.22, automatic update checks are off by default. Token Monitor checks for updates when you click Check for Updates in Settings. If you enable automatic update checks, macOS may show an update prompt later without another click.',
           'repo.title': 'Repository',
           'repo.cta': 'Open GitHub Repo',
-          'footer.tagline': 'Token Monitor - Claude and ChatGPT usage for macOS',
+          'footer.tagline': 'Token Monitor - Claude, ChatGPT, and optional OpenCode Go usage for macOS',
           'modal.close': 'Close'
         },
         de: {
-          'meta.title': 'Token Monitor - Claude- und ChatGPT-Nutzung in der macOS-Menüleiste',
-          'meta.description': 'Token Monitor ist eine native macOS-Menüleisten-App für Claude- und ChatGPT-Nutzung mit getrennten lokalen WebKit-Sessions.',
+          'meta.title': 'Token Monitor - Claude-, ChatGPT- und optional OpenCode-Go-Nutzung in der macOS-Menüleiste',
+          'meta.description': 'Token Monitor ist eine native macOS-Menüleisten-App für Claude- und ChatGPT-Nutzung mit optionalem OpenCode Go und getrennten lokalen WebKit-Sessions.',
           'alt.logo': 'Token Monitor Logo',
           'alt.dashboard': 'Token Monitor Dashboard-Screenshot',
           'alt.claude': 'Token Monitor Screenshot der Claude-Nutzung',
@@ -1062,7 +1062,7 @@
           'nav.preview': 'GitHub Preview',
           'hero.eyebrow': 'Tracken. Aktualisieren. Vorne bleiben.',
           'hero.title': 'Kenne deine AI-Nutzung, bevor sie dich stoppt.',
-          'hero.sub': 'Token Monitor hält Claude- und ChatGPT-Nutzung in deiner macOS-Menüleiste sichtbar, mit getrennten lokalen Sessions und originalen Limits je Provider.',
+          'hero.sub': 'Token Monitor hält Claude- und ChatGPT-Nutzung in deiner macOS-Menüleiste sichtbar, mit optionalem OpenCode Go und getrennten lokalen Sessions je Provider.',
           'hero.ctaPrimary': 'macOS DMG herunterladen',
           'hero.ctaSecondary': 'Source Code ansehen',
           'hero.microcopy': 'Öffentlicher Preview-Build. Einmal aus dem DMG installieren, danach bleibt Token Monitor in der Menüleiste.',
@@ -1085,14 +1085,14 @@
           'steps.one.body': 'DMG laden, öffnen und Token Monitor auf Applications ziehen.',
           'steps.two.num': 'Schritt 02',
           'steps.two.title': 'Provider verbinden',
-          'steps.two.body': 'Einmal für Claude und ChatGPT in den getrennten WebKit-Sessions anmelden.',
+          'steps.two.body': 'Einmal für Claude und ChatGPT in den getrennten WebKit-Sessions anmelden; OpenCode Go bei Bedarf in den Settings hinzufügen.',
           'steps.three.num': 'Schritt 03',
           'steps.three.title': 'Limits im Blick behalten',
           'steps.three.body': 'Öffne das Menüleisten-Popover, wenn du die aktuelle provider-spezifische Kapazität brauchst.',
           'workflow.title': 'Nutzung klar sehen',
           'workflow.sub': 'Jeder Provider behält eigene Werte und Reset-Fenster. Klicke Bilder an, um Details zu prüfen.',
           'workflow.dashboard.title': 'Eine Menüleisten-Ansicht',
-          'workflow.dashboard.body': 'Ein kompaktes Status-Board hält Claude und ChatGPT nebeneinander sichtbar.',
+          'workflow.dashboard.body': 'Ein kompaktes Status-Board hält Claude und ChatGPT nebeneinander sichtbar; OpenCode Go kann optional als dritter Provider dazukommen.',
           'workflow.dashboard.caption': 'Dashboard - Provider-Übersicht',
           'workflow.claude.title': 'Claude-Nutzung wie Claude sie meldet',
           'workflow.claude.body': 'Session, Modelle, Sonnet, Extra Usage, Balance und Reset-Zeit bleiben quellnah.',
@@ -1109,14 +1109,14 @@
           'native.point.four': 'Nur die letzten erfolgreichen Snapshots werden lokal gespeichert',
           'native.point.five': 'Optionale Debug-Reports öffnen nur als prüfbare Entwürfe',
           'native.stat.one.title': 'Provider-Regeln bleiben intakt',
-          'native.stat.one.body': 'Claude bleibt Claude. ChatGPT bleibt ChatGPT.',
+          'native.stat.one.body': 'Claude bleibt Claude. ChatGPT bleibt ChatGPT. OpenCode Go bleibt optional.',
           'native.stat.two.title': 'Menüleiste zuerst',
           'native.stat.two.body': 'Der Usage-Status bleibt einen Klick entfernt.',
           'faq.title': 'FAQ + Screenshot-Galerie',
           'faq.one.q': 'Muss ich etwas kompilieren, um Token Monitor zu nutzen?',
           'faq.one.a': 'Nein. DMG laden, öffnen und die App auf Applications ziehen.',
           'faq.two.q': 'Nutzt die App meine Browser-Cookies?',
-          'faq.two.a': 'Nein. Claude und ChatGPT nutzen getrennte persistente WebKit-Sessions in der App.',
+          'faq.two.a': 'Nein. Claude, ChatGPT und das optionale OpenCode Go nutzen getrennte persistente WebKit-Sessions in der App.',
           'faq.three.q': 'Wo kann ich die UI vor der Installation ansehen?',
           'faq.three.a': 'Alle Screenshots sind echte Token-Monitor-Ansichten. Klicke sie an, um eine vergrößerte Vorschau zu öffnen.',
           'faq.five.q': 'Warum kann macOS eine Gatekeeper-Warnung zeigen?',
@@ -1136,7 +1136,7 @@
           'faq.eight.a': 'Ab Version 1.0.22 sind automatische Update-Prüfungen standardmäßig aus. Token Monitor sucht nach Updates, wenn du in den Settings Check for Updates klickst. Wenn du automatische Update-Prüfungen aktivierst, kann macOS später ein Update-Fenster anzeigen, ohne dass du erneut klickst.',
           'repo.title': 'Repository',
           'repo.cta': 'GitHub Repo öffnen',
-          'footer.tagline': 'Token Monitor - Claude- und ChatGPT-Nutzung für macOS',
+          'footer.tagline': 'Token Monitor - Claude-, ChatGPT- und optional OpenCode-Go-Nutzung für macOS',
           'modal.close': 'Schließen'
         }
       };

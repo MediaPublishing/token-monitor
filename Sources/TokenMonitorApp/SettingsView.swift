@@ -11,269 +11,250 @@ struct SettingsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: compact ? 14 : 20) {
+            VStack(alignment: .leading, spacing: compact ? 10 : 18) {
                 PopoverHeaderView()
 
-            if compact {
-                HStack {
-                    Spacer()
-
-                    Button("Quit App") {
-                        model.quitApplication()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-            }
-
-            VStack(alignment: .leading, spacing: 6) {
-                if !compact {
-                    Text("Token Monitor Settings")
-                        .font(.title3.weight(.semibold))
-                } else {
-                    Text("Provider settings")
-                        .font(.headline.weight(.semibold))
-                }
-                Text("Token Monitor uses a persistent WebKit session that is kept across app updates. Browser cookies from Chrome or Arc are never reused.")
-                    .font(compact ? .caption : .subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Toggle(isOn: launchAtLoginBinding) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Launch at login")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Open Token Monitor automatically after each restart.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-            .controlSize(compact ? .small : .regular)
-            .padding(.vertical, compact ? 2 : 4)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text(model.launchAtLoginStatusText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                Button("Open Login Items...") {
-                    model.openLoginItemsSettings()
-                }
-                .buttonStyle(.bordered)
-                .controlSize(compact ? .small : .regular)
-            }
-            .padding(.bottom, compact ? 2 : 4)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Status menu")
-                    .font(.headline)
-
-                Toggle(isOn: statusMenuColorBinding) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Use colored status bars")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Turn off for a black-and-white menu bar icon.")
-                            .font(.caption)
+                HStack(alignment: .top, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(compact ? "Settings" : "Token Monitor Settings")
+                            .font(compact ? .headline.weight(.semibold) : .title3.weight(.semibold))
+                        Text("Persistent WebKit sessions are kept across updates. Browser cookies are never reused.")
+                            .font(compact ? .caption : .subheadline)
                             .foregroundStyle(.secondary)
+                            .lineLimit(compact ? 2 : nil)
                     }
-                }
-                .toggleStyle(.switch)
-                .controlSize(compact ? .small : .regular)
 
-                Toggle(isOn: statusMenuPercentagesBinding) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Show percentages in menu bar")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Shows compact Claude and ChatGPT values to the left of the status bars.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .toggleStyle(.switch)
-                .controlSize(compact ? .small : .regular)
-            }
-            .padding(compact ? 10 : 14)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(nsColor: .textBackgroundColor))
-            )
+                    Spacer(minLength: 0)
 
-            #if MAS_BUILD
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Updates")
-                    .font(.subheadline.weight(.semibold))
-                Text("Updates are delivered by the Mac App Store.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.vertical, compact ? 2 : 4)
-            #else
-            Toggle(isOn: automaticUpdateChecksBinding) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Automatically check for updates")
-                        .font(.subheadline.weight(.semibold))
-                    Text("When enabled, Token Monitor can show update prompts without you clicking Check for Updates.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-            .controlSize(compact ? .small : .regular)
-            .padding(.vertical, compact ? 2 : 4)
-
-            Button("Check for Updates...") {
-                model.checkForUpdates()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(compact ? .small : .regular)
-            #endif
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Debugging")
-                    .font(.headline)
-
-                Toggle(isOn: debugModeBinding) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Enable debug mode")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Store redacted refresh diagnostics locally when a provider refresh runs.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .toggleStyle(.switch)
-                .controlSize(compact ? .small : .regular)
-
-                Text("Reports open as drafts. Review before submitting because usage values and page text can still be account-specific.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                HStack(spacing: 8) {
-                    Button("GitHub Issue Draft") {
-                        model.openGitHubDebugReportDraft()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(compact ? .small : .regular)
-
-                    Button("Email Draft") {
-                        model.openEmailDebugReportDraft()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(compact ? .small : .regular)
-
-                    Button("Open Folder") {
-                        model.openDiagnosticsFolder()
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(compact ? .small : .regular)
-                }
-            }
-            .padding(compact ? 10 : 14)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(nsColor: .textBackgroundColor))
-            )
-
-            ForEach(model.dashboardState.services, id: \.service) { status in
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(alignment: .top, spacing: 14) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(status.service.displayName)
-                                .font(.headline)
-                            Text(model.stateDescription(for: status))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        Spacer()
-
-                        Button(status.connectionStatus == .authRequired ? "Connect" : "Reconnect") {
-                            model.openLogin(for: status.service)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(compact ? .small : .regular)
-
-                        Button("Refresh") {
-                            model.refresh(status.service, trigger: .manual, force: true)
+                    if compact {
+                        Button("Quit App") {
+                            model.quitApplication()
                         }
                         .buttonStyle(.bordered)
-                        .controlSize(compact ? .small : .regular)
-                    }
-
-                    if status.service == .claude {
-                        Text("Claude note: “Continue with Google” can fail inside embedded app webviews. Use “Continue with email” and enter the same Gmail address instead. If your Claude account is Google-only with no email-password fallback, this in-app Claude login path will not work reliably.")
-                            .font(compact ? .caption2 : .caption)
-                            .foregroundStyle(.secondary)
-
-                        HStack(spacing: 8) {
-                            Button("Open Claude In Browser") {
-                                model.openUsagePageInDefaultBrowser(for: .claude)
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(compact ? .small : .regular)
-
-                            if !compact {
-                                Button("Quit App") {
-                                    model.quitApplication()
-                                }
-                                .buttonStyle(.bordered)
-                            }
-                        }
-                    } else {
-                        HStack(spacing: 8) {
-                            Button("Open In Browser") {
-                                model.openUsagePageInDefaultBrowser(for: status.service)
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(compact ? .small : .regular)
-
-                            if !compact {
-                                Button("Quit App") {
-                                    model.quitApplication()
-                                }
-                                .buttonStyle(.bordered)
-                            }
-                        }
+                        .controlSize(.small)
                     }
                 }
-                .padding(compact ? 10 : 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color(nsColor: .textBackgroundColor))
-                )
-            }
 
-            if !compact {
-                Divider()
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Local storage")
-                        .font(.headline)
-                    Text("Snapshots are stored at:")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(model.snapshotPathText)
-                        .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
-
-                    Text("Debug dumps are stored at:")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 4)
-                    Text(model.diagnosticsPathText)
-                        .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 10),
+                        GridItem(.flexible(), spacing: 10)
+                    ],
+                    alignment: .leading,
+                    spacing: 10
+                ) {
+                    appSettingsCard
+                    providerSettingsCard
+                    statusMenuSettingsCard
+                    usageDetailsSettingsCard
+                    updatesSettingsCard
+                    debuggingSettingsCard
                 }
-            }
 
                 Spacer(minLength: 0)
             }
             .padding(compact ? 10 : 22)
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: compact ? 620 : 620, alignment: .topLeading)
+        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: 620, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    private func settingsCard<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+            content()
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(nsColor: .textBackgroundColor))
+        )
+    }
+
+    private var appSettingsCard: some View {
+        settingsCard("App") {
+            Toggle(isOn: launchAtLoginBinding) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Launch at login")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Start Token Monitor automatically after restart.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(compact ? .small : .regular)
+
+            Text(model.launchAtLoginStatusText)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+
+            Button("Open Login Items...") {
+                model.openLoginItemsSettings()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(compact ? .mini : .small)
+        }
+    }
+
+    private var providerSettingsCard: some View {
+        settingsCard("Providers") {
+            Text("Manage your connected providers")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            ForEach(settingsProviderStatuses, id: \.service) { status in
+                Button {
+                    if status.service == .openCodeGo && !model.openCodeGoEnabled {
+                        model.setOpenCodeGoEnabled(true)
+                    }
+                    model.openLogin(for: status.service)
+                } label: {
+                    HStack(spacing: 8) {
+                        Text(status.service.displayName)
+                            .font(.subheadline)
+                        Spacer(minLength: 0)
+                        Text(providerStatusLabel(for: status))
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(providerStatusColor(for: status))
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                if status.service != .openCodeGo {
+                    Divider()
+                }
+            }
+        }
+    }
+
+    private var statusMenuSettingsCard: some View {
+        settingsCard("Status menu") {
+            Toggle(isOn: statusMenuColorBinding) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Use colored status bars")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Turn off for a black-and-white menu bar icon.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(compact ? .small : .regular)
+
+            Toggle(isOn: statusMenuPercentagesBinding) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Show percentages in menu bar")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Show Claude and ChatGPT values next to the bars.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(compact ? .small : .regular)
+        }
+    }
+
+    private var usageDetailsSettingsCard: some View {
+        settingsCard("Usage details") {
+            Toggle(isOn: showUsageDetailsBinding) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Show usage details")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Show Extra usage and Monthly limit / Balance in the overview.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(compact ? .small : .regular)
+
+            Text("Turn this off to keep the dashboard focused on remaining capacity and reset times.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private var updatesSettingsCard: some View {
+        #if MAS_BUILD
+        settingsCard("Updates") {
+            Text("Updates are delivered by the Mac App Store.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        #else
+        settingsCard("Updates") {
+            Toggle(isOn: automaticUpdateChecksBinding) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Automatically check for updates")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Show update prompts automatically.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(compact ? .small : .regular)
+
+            Button("Check for Updates...") {
+                model.checkForUpdates()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(compact ? .mini : .small)
+        }
+        #endif
+    }
+
+    private var debuggingSettingsCard: some View {
+        settingsCard("Debugging") {
+            Toggle(isOn: debugModeBinding) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Enable debug mode")
+                        .font(.subheadline.weight(.semibold))
+                    Text("Store redacted refresh diagnostics locally.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(compact ? .small : .regular)
+
+            Text("Reports open as drafts for review before submitting.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 4) {
+                Button("GitHub Issue Draft") {
+                    model.openGitHubDebugReportDraft()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(compact ? .mini : .small)
+
+                Button("Email Draft") {
+                    model.openEmailDebugReportDraft()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(compact ? .mini : .small)
+            }
+
+            Button("Open Folder") {
+                model.openDiagnosticsFolder()
+            }
+            .buttonStyle(.bordered)
+            .controlSize(compact ? .mini : .small)
+        }
     }
 
     private var launchAtLoginBinding: Binding<Bool> {
@@ -309,6 +290,61 @@ struct SettingsView: View {
             get: { model.statusMenuShowsPercentages },
             set: { model.setStatusMenuShowsPercentages($0) }
         )
+    }
+
+    private var showUsageDetailsBinding: Binding<Bool> {
+        Binding(
+            get: { model.showUsageDetails },
+            set: { model.setShowUsageDetails($0) }
+        )
+    }
+
+    private var settingsProviderStatuses: [ServiceStatus] {
+        model.providerSettingsServices + [model.dashboardState.service(.openCodeGo)]
+    }
+
+    private func providerStatusLabel(for status: ServiceStatus) -> String {
+        if status.service == .openCodeGo && !model.openCodeGoEnabled {
+            return "Not connected"
+        }
+        return connectionLabel(for: status.connectionStatus)
+    }
+
+    private func providerStatusColor(for status: ServiceStatus) -> Color {
+        if status.service == .openCodeGo && !model.openCodeGoEnabled {
+            return .secondary
+        }
+        return connectionColor(for: status.connectionStatus)
+    }
+
+    private func connectionLabel(for status: ServiceConnectionStatus) -> String {
+        switch status {
+        case .healthy:
+            return "Healthy"
+        case .refreshing:
+            return "Refreshing"
+        case .stale:
+            return "Stale"
+        case .authRequired:
+            return "Needs login"
+        case .error:
+            return "Error"
+        }
+    }
+
+    private func connectionColor(for status: ServiceConnectionStatus) -> Color {
+        switch status {
+        case .healthy:
+            return .green
+        case .refreshing:
+            return .blue
+        case .stale:
+            return .orange
+        case .authRequired:
+            return .yellow
+        case .error:
+            return .red
+        }
     }
 
 }

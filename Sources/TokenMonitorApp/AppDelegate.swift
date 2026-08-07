@@ -113,9 +113,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 self?.updatePopoverSize()
             }
 
-        statusMenuSettingsSubscription = Publishers.CombineLatest(
+        statusMenuSettingsSubscription = Publishers.CombineLatest3(
             model.$statusMenuUsesColor,
-            model.$statusMenuShowsPercentages
+            model.$statusMenuShowsPercentages,
+            model.$openCodeGoEnabled
         )
         .sink { [weak self] _ in
             self?.updateStatusItem()
@@ -133,73 +134,59 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func makeCapacityStatusImage(for appearance: NSAppearance?) -> NSImage? {
+        let services = model.statusMenuServices
         let width: CGFloat = model.statusMenuShowsPercentages ? 84 : 20
-        let size = NSSize(width: width, height: 16)
+        let height: CGFloat = services.count > 2
+            ? (model.statusMenuShowsPercentages ? 21 : 18)
+            : 16
+        let size = NSSize(width: width, height: height)
         let image = NSImage(size: size)
         let foregroundColor = statusBarForegroundColor(for: appearance)
         let trackColor = statusBarTrackColor(for: appearance)
+        let statusValueFontSize: CGFloat = services.count > 2 ? 6 : 7
         image.lockFocus()
 
         NSColor.clear.setFill()
         NSBezierPath(rect: NSRect(origin: .zero, size: size)).fill()
 
-        if model.statusMenuShowsPercentages {
-            let claudeTotalScore = model.statusMenuTotalScore(for: .claude)
-            let claudeSessionScore = model.statusMenuSessionScore(for: .claude)
-            let chatGPTTotalScore = model.statusMenuTotalScore(for: .chatGPT)
-            let chatGPTSessionScore = model.statusMenuSessionScore(for: .chatGPT)
+        let rowHeight = size.height / CGFloat(max(services.count, 1))
+        let barHeight: CGFloat = services.count > 2 ? 5 : 6
 
-            drawStatusValue(
-                for: claudeTotalScore,
-                in: NSRect(x: 0, y: 8, width: 25, height: 8),
-                foregroundColor: foregroundColor
-            )
-            drawStatusValue(
-                for: chatGPTTotalScore,
-                in: NSRect(x: 0, y: 0, width: 25, height: 8),
-                foregroundColor: foregroundColor
-            )
-            drawBar(
-                in: NSRect(x: 29, y: 9, width: 24, height: 6),
-                score: claudeTotalScore,
-                status: model.dashboardState.service(.claude).connectionStatus,
-                foregroundColor: foregroundColor,
-                trackColor: trackColor
-            )
-            drawBar(
-                in: NSRect(x: 29, y: 1, width: 24, height: 6),
-                score: chatGPTTotalScore,
-                status: model.dashboardState.service(.chatGPT).connectionStatus,
-                foregroundColor: foregroundColor,
-                trackColor: trackColor
-            )
-            drawStatusValue(
-                for: claudeSessionScore,
-                in: NSRect(x: 57, y: 8, width: 27, height: 8),
-                alignment: .left,
-                foregroundColor: foregroundColor
-            )
-            drawStatusValue(
-                for: chatGPTSessionScore,
-                in: NSRect(x: 57, y: 0, width: 27, height: 8),
-                alignment: .left,
-                foregroundColor: foregroundColor
-            )
-        } else {
-            drawBar(
-                in: NSRect(x: 1, y: 9, width: width - 2, height: 6),
-                score: model.capacityScore(for: .claude),
-                status: model.dashboardState.service(.claude).connectionStatus,
-                foregroundColor: foregroundColor,
-                trackColor: trackColor
-            )
-            drawBar(
-                in: NSRect(x: 1, y: 1, width: width - 2, height: 6),
-                score: model.capacityScore(for: .chatGPT),
-                status: model.dashboardState.service(.chatGPT).connectionStatus,
-                foregroundColor: foregroundColor,
-                trackColor: trackColor
-            )
+        for (index, service) in services.enumerated() {
+            let rowY = CGFloat(services.count - index - 1) * rowHeight
+            let barY = rowY + (rowHeight - barHeight) / 2
+            let status = model.dashboardState.service(service).connectionStatus
+
+            if model.statusMenuShowsPercentages {
+                drawStatusValue(
+                    for: model.statusMenuTotalScore(for: service),
+                    in: NSRect(x: 0, y: rowY, width: 25, height: rowHeight),
+                    foregroundColor: foregroundColor,
+                    fontSize: statusValueFontSize
+                )
+                drawBar(
+                    in: NSRect(x: 29, y: barY, width: 24, height: barHeight),
+                    score: model.statusMenuTotalScore(for: service),
+                    status: status,
+                    foregroundColor: foregroundColor,
+                    trackColor: trackColor
+                )
+                drawStatusValue(
+                    for: model.statusMenuSessionScore(for: service),
+                    in: NSRect(x: 57, y: rowY, width: 27, height: rowHeight),
+                    alignment: .left,
+                    foregroundColor: foregroundColor,
+                    fontSize: statusValueFontSize
+                )
+            } else {
+                drawBar(
+                    in: NSRect(x: 1, y: barY, width: width - 2, height: barHeight),
+                    score: model.capacityScore(for: service),
+                    status: status,
+                    foregroundColor: foregroundColor,
+                    trackColor: trackColor
+                )
+            }
         }
 
         image.unlockFocus()
@@ -238,13 +225,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         for score: Double?,
         in rect: NSRect,
         alignment: NSTextAlignment = .right,
-        foregroundColor: NSColor
+        foregroundColor: NSColor,
+        fontSize: CGFloat
     ) {
         let label = score.map { "\(Int((max(0, min($0, 1)) * 100).rounded()))%" } ?? "--"
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = alignment
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.monospacedDigitSystemFont(ofSize: 7, weight: .semibold),
+            .font: NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .semibold),
             .foregroundColor: foregroundColor,
             .paragraphStyle: paragraph
         ]
@@ -310,8 +298,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func tooltipText() -> String {
-        let statuses = model.dashboardState.services.map { status in
-            "\(status.service.displayName): \(model.stateDescription(for: status))"
+        let statuses = model.statusMenuServices.map { service in
+            let status = model.dashboardState.service(service)
+            return "\(service.displayName): \(model.stateDescription(for: status))"
         }
         return (["Token Monitor", model.lastRefreshText] + statuses).joined(separator: "\n")
     }
