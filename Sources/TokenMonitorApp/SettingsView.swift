@@ -18,7 +18,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(compact ? "Settings" : "Token Monitor Settings")
                             .font(compact ? .headline.weight(.semibold) : .title3.weight(.semibold))
-                        Text("Persistent WebKit sessions are kept across updates. Browser cookies are never reused.")
+                        Text("Provider sessions stay signed in across app updates.")
                             .font(compact ? .caption : .subheadline)
                             .foregroundStyle(.secondary)
                             .lineLimit(compact ? 2 : nil)
@@ -35,20 +35,19 @@ struct SettingsView: View {
                     }
                 }
 
-                LazyVGrid(
-                    columns: [
-                        GridItem(.flexible(), spacing: 10),
-                        GridItem(.flexible(), spacing: 10)
-                    ],
-                    alignment: .leading,
-                    spacing: 10
-                ) {
-                    appSettingsCard
-                    providerSettingsCard
-                    statusMenuSettingsCard
-                    usageDetailsSettingsCard
-                    updatesSettingsCard
-                    debuggingSettingsCard
+                VStack(spacing: 10) {
+                    settingsRow(height: 152) {
+                        appSettingsCard
+                        providerSettingsCard
+                    }
+                    settingsRow(height: 205) {
+                        statusMenuSettingsCard
+                        usageDetailsSettingsCard
+                    }
+                    settingsRow(height: 174) {
+                        updatesSettingsCard
+                        debuggingSettingsCard
+                    }
                 }
 
                 Spacer(minLength: 0)
@@ -56,7 +55,7 @@ struct SettingsView: View {
             .padding(compact ? 10 : 22)
             .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: 620, alignment: .topLeading)
+        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: 700, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
@@ -70,26 +69,57 @@ struct SettingsView: View {
             content()
         }
         .padding(10)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color(nsColor: .textBackgroundColor))
         )
     }
 
+    private func settingsRow<Left: View, Right: View>(
+        height: CGFloat,
+        @ViewBuilder content: () -> TupleView<(Left, Right)>
+    ) -> some View {
+        let views = content().value
+        return HStack(alignment: .top, spacing: 10) {
+            views.0
+                .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .topLeading)
+            views.1
+                .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .topLeading)
+        }
+    }
+
+    private func settingsToggle(
+        _ title: String,
+        description: String,
+        isOn: Binding<Bool>
+    ) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(compact ? .small : .regular)
+                .fixedSize()
+        }
+    }
+
     private var appSettingsCard: some View {
         settingsCard("App") {
-            Toggle(isOn: launchAtLoginBinding) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Launch at login")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Start Token Monitor automatically after restart.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-            .controlSize(compact ? .small : .regular)
+            settingsToggle(
+                "Launch at login",
+                description: "Start Token Monitor automatically after restart.",
+                isOn: launchAtLoginBinding
+            )
 
             Text(model.launchAtLoginStatusText)
                 .font(.caption2)
@@ -140,45 +170,47 @@ struct SettingsView: View {
 
     private var statusMenuSettingsCard: some View {
         settingsCard("Status menu") {
-            Toggle(isOn: statusMenuColorBinding) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Use colored status bars")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Turn off for a black-and-white menu bar icon.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-            .controlSize(compact ? .small : .regular)
+            settingsToggle(
+                "Use colored status bars",
+                description: "Turn off for a black-and-white menu bar icon.",
+                isOn: statusMenuColorBinding
+            )
 
-            Toggle(isOn: statusMenuPercentagesBinding) {
+            settingsToggle(
+                "Show percentages in menu bar",
+                description: "Show the selected limit next to every status bar.",
+                isOn: statusMenuPercentagesBinding
+            )
+
+            VStack(alignment: .leading, spacing: 5) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Show percentages in menu bar")
+                    Text("Limit display")
                         .font(.subheadline.weight(.semibold))
-                    Text("Show Claude and ChatGPT values next to the bars.")
+                    Text("Use Session, Total, or both for every provider.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Picker("Limit display", selection: statusMenuLimitDisplayBinding) {
+                    ForEach(StatusMenuLimitDisplay.allCases) { display in
+                        Text(display.title).tag(display)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(maxWidth: .infinity)
             }
-            .toggleStyle(.switch)
-            .controlSize(compact ? .small : .regular)
         }
     }
 
     private var usageDetailsSettingsCard: some View {
         settingsCard("Usage details") {
-            Toggle(isOn: showUsageDetailsBinding) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Show usage details")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Show Extra usage and Monthly limit / Balance in the overview.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-            .controlSize(compact ? .small : .regular)
+            settingsToggle(
+                "Show usage details",
+                description: "Show Extra usage and Monthly limit / Balance in the overview.",
+                isOn: showUsageDetailsBinding
+            )
 
             Text("Turn this off to keep the dashboard focused on remaining capacity and reset times.")
                 .font(.caption)
@@ -196,17 +228,11 @@ struct SettingsView: View {
         }
         #else
         settingsCard("Updates") {
-            Toggle(isOn: automaticUpdateChecksBinding) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Automatically check for updates")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Show update prompts automatically.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-            .controlSize(compact ? .small : .regular)
+            settingsToggle(
+                "Automatically check for updates",
+                description: "Show update prompts automatically.",
+                isOn: automaticUpdateChecksBinding
+            )
 
             Button("Check for Updates...") {
                 model.checkForUpdates()
@@ -219,17 +245,11 @@ struct SettingsView: View {
 
     private var debuggingSettingsCard: some View {
         settingsCard("Debugging") {
-            Toggle(isOn: debugModeBinding) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Enable debug mode")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Store redacted refresh diagnostics locally.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .toggleStyle(.switch)
-            .controlSize(compact ? .small : .regular)
+            settingsToggle(
+                "Enable debug mode",
+                description: "Store redacted refresh diagnostics locally.",
+                isOn: debugModeBinding
+            )
 
             Text("Reports open as drafts for review before submitting.")
                 .font(.caption)
@@ -289,6 +309,13 @@ struct SettingsView: View {
         Binding(
             get: { model.statusMenuShowsPercentages },
             set: { model.setStatusMenuShowsPercentages($0) }
+        )
+    }
+
+    private var statusMenuLimitDisplayBinding: Binding<StatusMenuLimitDisplay> {
+        Binding(
+            get: { model.statusMenuLimitDisplay },
+            set: { model.setStatusMenuLimitDisplay($0) }
         )
     }
 

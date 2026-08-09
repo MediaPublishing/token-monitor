@@ -9,6 +9,25 @@ enum PopoverScreen {
     case settings
 }
 
+enum StatusMenuLimitDisplay: String, CaseIterable, Identifiable {
+    case session
+    case total
+    case both
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .session:
+            return "Session"
+        case .total:
+            return "Total"
+        case .both:
+            return "Both"
+        }
+    }
+}
+
 @MainActor
 final class AppModel: ObservableObject {
     static let shared = AppModel()
@@ -17,6 +36,7 @@ final class AppModel: ObservableObject {
         static let debugModeEnabled = "debugModeEnabled"
         static let statusMenuUsesColor = "statusMenuUsesColor"
         static let statusMenuShowsPercentages = "statusMenuShowsPercentages"
+        static let statusMenuLimitDisplay = "statusMenuLimitDisplay"
         static let showUsageDetails = "showUsageDetails"
         static let openCodeGoEnabled = "openCodeGoEnabled"
     }
@@ -29,6 +49,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var debugModeEnabled: Bool
     @Published private(set) var statusMenuUsesColor: Bool
     @Published private(set) var statusMenuShowsPercentages: Bool
+    @Published private(set) var statusMenuLimitDisplay: StatusMenuLimitDisplay
     @Published private(set) var showUsageDetails: Bool
     @Published private(set) var openCodeGoEnabled: Bool
 
@@ -54,6 +75,7 @@ final class AppModel: ObservableObject {
             Keys.debugModeEnabled: false,
             Keys.statusMenuUsesColor: true,
             Keys.statusMenuShowsPercentages: false,
+            Keys.statusMenuLimitDisplay: StatusMenuLimitDisplay.total.rawValue,
             Keys.showUsageDetails: false,
             Keys.openCodeGoEnabled: false
         ])
@@ -62,6 +84,9 @@ final class AppModel: ObservableObject {
         debugModeEnabled = initialDebugModeEnabled
         statusMenuUsesColor = UserDefaults.standard.bool(forKey: Keys.statusMenuUsesColor)
         statusMenuShowsPercentages = UserDefaults.standard.bool(forKey: Keys.statusMenuShowsPercentages)
+        statusMenuLimitDisplay = StatusMenuLimitDisplay(
+            rawValue: UserDefaults.standard.string(forKey: Keys.statusMenuLimitDisplay) ?? ""
+        ) ?? .total
         showUsageDetails = UserDefaults.standard.bool(forKey: Keys.showUsageDetails)
         openCodeGoEnabled = UserDefaults.standard.bool(forKey: Keys.openCodeGoEnabled)
         automaticallyChecksForUpdates = updateController.automaticallyChecksForUpdates
@@ -238,9 +263,9 @@ final class AppModel: ObservableObject {
     func desiredPopoverHeight() -> CGFloat {
         switch popoverScreen {
         case .dashboard:
-            return 540
+            return showUsageDetails ? 650 : 540
         case .settings:
-            return 620
+            return 700
         }
     }
 
@@ -293,6 +318,15 @@ final class AppModel: ObservableObject {
 
         statusMenuShowsPercentages = enabled
         UserDefaults.standard.set(enabled, forKey: Keys.statusMenuShowsPercentages)
+    }
+
+    func setStatusMenuLimitDisplay(_ display: StatusMenuLimitDisplay) {
+        guard statusMenuLimitDisplay != display else {
+            return
+        }
+
+        statusMenuLimitDisplay = display
+        UserDefaults.standard.set(display.rawValue, forKey: Keys.statusMenuLimitDisplay)
     }
 
     func setShowUsageDetails(_ enabled: Bool) {
@@ -432,25 +466,11 @@ final class AppModel: ObservableObject {
         return .healthy
     }
 
-    func capacityScore(for service: ServiceKind) -> Double? {
+    func statusMenuScores(for service: ServiceKind) -> (session: Double?, total: Double?) {
         guard let snapshot = dashboardState.service(service).snapshot else {
-            return nil
+            return (nil, nil)
         }
-        return snapshot.capacityScore
-    }
-
-    func statusMenuTotalScore(for service: ServiceKind) -> Double? {
-        guard let snapshot = dashboardState.service(service).snapshot else {
-            return nil
-        }
-        return snapshot.statusMenuTotalScore
-    }
-
-    func statusMenuSessionScore(for service: ServiceKind) -> Double? {
-        guard let snapshot = dashboardState.service(service).snapshot else {
-            return nil
-        }
-        return snapshot.statusMenuSessionScore
+        return (snapshot.statusMenuSessionScore, snapshot.statusMenuTotalScore)
     }
 
     private func persistSnapshots() {

@@ -108,14 +108,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 self?.updateStatusItem()
             }
 
-        popoverScreenSubscription = model.$popoverScreen
+        popoverScreenSubscription = Publishers.CombineLatest(
+            model.$popoverScreen,
+            model.$showUsageDetails
+        )
             .sink { [weak self] _ in
                 self?.updatePopoverSize()
             }
 
-        statusMenuSettingsSubscription = Publishers.CombineLatest3(
+        statusMenuSettingsSubscription = Publishers.CombineLatest4(
             model.$statusMenuUsesColor,
             model.$statusMenuShowsPercentages,
+            model.$statusMenuLimitDisplay,
             model.$openCodeGoEnabled
         )
         .sink { [weak self] _ in
@@ -135,7 +139,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     private func makeCapacityStatusImage(for appearance: NSAppearance?) -> NSImage? {
         let services = model.statusMenuServices
-        let width: CGFloat = model.statusMenuShowsPercentages ? 84 : 20
+        let showsBothLimits = model.statusMenuLimitDisplay == .both
+        let width: CGFloat = model.statusMenuShowsPercentages
+            ? (showsBothLimits ? 74 : 56)
+            : 20
         let height: CGFloat = services.count > 2
             ? (model.statusMenuShowsPercentages ? 21 : 18)
             : 16
@@ -156,32 +163,56 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             let rowY = CGFloat(services.count - index - 1) * rowHeight
             let barY = rowY + (rowHeight - barHeight) / 2
             let status = model.dashboardState.service(service).connectionStatus
+            let scores = model.statusMenuScores(for: service)
+            let selectedScore = model.statusMenuLimitDisplay == .session
+                ? scores.session
+                : scores.total
 
             if model.statusMenuShowsPercentages {
-                drawStatusValue(
-                    for: model.statusMenuTotalScore(for: service),
-                    in: NSRect(x: 0, y: rowY, width: 25, height: rowHeight),
-                    foregroundColor: foregroundColor,
-                    fontSize: statusValueFontSize
-                )
-                drawBar(
-                    in: NSRect(x: 29, y: barY, width: 24, height: barHeight),
-                    score: model.statusMenuTotalScore(for: service),
+                if showsBothLimits {
+                    drawStatusPair(
+                        session: scores.session,
+                        total: scores.total,
+                        in: NSRect(x: 0, y: rowY, width: 39, height: rowHeight),
+                        foregroundColor: foregroundColor,
+                        fontSize: statusValueFontSize
+                    )
+                    drawCombinedBar(
+                        in: NSRect(x: 43, y: barY, width: width - 44, height: barHeight),
+                        sessionScore: scores.session,
+                        totalScore: scores.total,
+                        status: status,
+                        foregroundColor: foregroundColor,
+                        trackColor: trackColor
+                    )
+                } else {
+                    drawStatusValue(
+                        for: selectedScore,
+                        in: NSRect(x: 0, y: rowY, width: 25, height: rowHeight),
+                        foregroundColor: foregroundColor,
+                        fontSize: statusValueFontSize
+                    )
+                    drawBar(
+                        in: NSRect(x: 29, y: barY, width: width - 30, height: barHeight),
+                        score: selectedScore,
+                        status: status,
+                        foregroundColor: foregroundColor,
+                        trackColor: trackColor
+                    )
+                }
+            } else if showsBothLimits {
+                drawCombinedBar(
+                    in: NSRect(x: 1, y: barY, width: width - 2, height: barHeight),
+                    sessionScore: scores.session,
+                    totalScore: scores.total,
                     status: status,
                     foregroundColor: foregroundColor,
                     trackColor: trackColor
                 )
-                drawStatusValue(
-                    for: model.statusMenuSessionScore(for: service),
-                    in: NSRect(x: 57, y: rowY, width: 27, height: rowHeight),
-                    alignment: .left,
-                    foregroundColor: foregroundColor,
-                    fontSize: statusValueFontSize
-                )
             } else {
                 drawBar(
                     in: NSRect(x: 1, y: barY, width: width - 2, height: barHeight),
-                    score: model.capacityScore(for: service),
+                    score: selectedScore,
                     status: status,
                     foregroundColor: foregroundColor,
                     trackColor: trackColor
@@ -237,6 +268,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             .paragraphStyle: paragraph
         ]
         (label as NSString).draw(in: rect, withAttributes: attributes)
+    }
+
+    private func drawStatusPair(
+        session: Double?,
+        total: Double?,
+        in rect: NSRect,
+        foregroundColor: NSColor,
+        fontSize: CGFloat
+    ) {
+        func percentage(_ score: Double?) -> String {
+            score.map { String(Int((max(0, min($0, 1)) * 100).rounded())) } ?? "--"
+        }
+
+        let label = "\(percentage(session))/\(percentage(total))%"
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.alignment = .right
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .semibold),
+            .foregroundColor: foregroundColor,
+            .paragraphStyle: paragraph
+        ]
+        (label as NSString).draw(in: rect, withAttributes: attributes)
+    }
+
+    private func drawCombinedBar(
+        in rect: NSRect,
+        sessionScore: Double?,
+        totalScore: Double?,
+        status: ServiceConnectionStatus,
+        foregroundColor: NSColor,
+        trackColor: NSColor
+    ) {
+        let trackPath = NSBezierPath(roundedRect: rect, xRadius: 2.5, yRadius: 2.5)
+        trackColor.setFill()
+        trackPath.fill()
+
+        func drawLayer(_ score: Double?, alpha: CGFloat) {
+            guard let score else {
+                return
+            }
+            let clamped = max(0.08, min(score, 1))
+            let fillRect = NSRect(x: rect.minX, y: rect.minY, width: rect.width * clamped, height: rect.height)
+            let fillPath = NSBezierPath(roundedRect: fillRect, xRadius: 2.5, yRadius: 2.5)
+            capacityColor(for: score, status: status, foregroundColor: foregroundColor)
+                .withAlphaComponent(alpha)
+                .setFill()
+            fillPath.fill()
+        }
+
+        drawLayer(totalScore, alpha: 0.62)
+        drawLayer(sessionScore, alpha: 0.62)
+
+        func drawEndpoint(_ score: Double?, upperHalf: Bool) {
+            guard let score else {
+                return
+            }
+            let x = rect.minX + rect.width * max(0, min(score, 1))
+            let marker = NSBezierPath()
+            marker.move(to: NSPoint(x: x, y: upperHalf ? rect.midY : rect.minY))
+            marker.line(to: NSPoint(x: x, y: upperHalf ? rect.maxY : rect.midY))
+            foregroundColor.withAlphaComponent(0.9).setStroke()
+            marker.lineWidth = 0.75
+            marker.stroke()
+        }
+
+        drawEndpoint(sessionScore, upperHalf: true)
+        drawEndpoint(totalScore, upperHalf: false)
     }
 
     private func statusBarForegroundColor(for appearance: NSAppearance?) -> NSColor {
@@ -302,7 +400,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             let status = model.dashboardState.service(service)
             return "\(service.displayName): \(model.stateDescription(for: status))"
         }
-        return (["Token Monitor", model.lastRefreshText] + statuses).joined(separator: "\n")
+        let limitDescription = model.statusMenuLimitDisplay == .both
+            ? "Menu bar: Session / Total"
+            : "Menu bar: \(model.statusMenuLimitDisplay.title)"
+        return (["Token Monitor", model.lastRefreshText, limitDescription] + statuses).joined(separator: "\n")
     }
 
     private func updatePopoverSize() {

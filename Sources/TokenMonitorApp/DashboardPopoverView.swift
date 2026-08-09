@@ -15,7 +15,7 @@ struct DashboardPopoverView: View {
             Spacer(minLength: 0)
         }
         .padding(10)
-        .frame(width: AppDelegate.popoverWidth, height: 540, alignment: .top)
+        .frame(width: AppDelegate.popoverWidth, height: model.desiredPopoverHeight(), alignment: .top)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 

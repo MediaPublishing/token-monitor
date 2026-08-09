@@ -411,8 +411,7 @@ private struct OpenCodeGoPageReadiness: Decodable {
         let hasSubscriptionMessage = bodyText.localizedCaseInsensitiveContains("You are subscribed to OpenCode Go")
             || bodyText.localizedCaseInsensitiveContains("Du hast OpenCode Go abonniert")
 
-        return hasUsageLabels || hasWorkspaceUsageURL || hasSubscriptionMessage
-            || (hasWorkspaceLink && hasSubscriptionMessage)
+        return hasUsageLabels || hasWorkspaceUsageURL || hasSubscriptionMessage || hasWorkspaceLink
     }
 }
 
