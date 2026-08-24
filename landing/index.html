@@ -1,1227 +1,408 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Token Monitor - Claude, ChatGPT, and optional OpenCode Go usage in your macOS menu bar</title>
-  <meta name="description" content="Token Monitor is a native macOS menu bar app for watching Claude and ChatGPT usage side by side, with optional OpenCode Go monitoring and isolated local WebKit sessions." />
-  <link rel="icon" type="image/png" href="../assets/branding/token-monitor-logo.png" />
-  <link rel="apple-touch-icon" href="../assets/branding/token-monitor-logo.png" />
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet" />
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Token Monitor for macOS | Claude, ChatGPT &amp; Codex usage</title>
+  <meta name="description" content="See Claude, ChatGPT, Codex, and optional OpenCode Go usage from one local macOS menu bar app. Check limits, reset windows, and connection status without opening multiple dashboards.">
+  <meta name="theme-color" content="#090b13">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Token Monitor for macOS">
+  <meta property="og:description" content="Your AI usage limits, one click away in the macOS menu bar.">
+  <meta property="og:image" content="../assets/screenshots/app/dashboard.png">
+  <link rel="icon" type="image/png" href="../assets/branding/token-monitor-logo.png">
+  <link rel="apple-touch-icon" href="../assets/branding/token-monitor-logo.png">
   <style>
     :root {
-      --bg: #0d0f1a;
-      --bg-soft: #13172a;
-      --surface: #171c31;
-      --surface-2: #1f2641;
-      --stroke: rgba(177, 163, 255, 0.27);
-      --text: #f4f1ff;
-      --muted: #bcb3df;
-      --accent: #7c3aed;
-      --accent-2: #a78bfa;
-      --ok: #66e6ad;
-      --warn: #ff5c74;
-      --radius-xl: 24px;
-      --radius-lg: 18px;
-      --radius-md: 14px;
-      --shadow: 0 26px 56px rgba(7, 8, 14, 0.58);
+      color-scheme: dark;
+      --bg: #090b13;
+      --surface: #121725;
+      --line: rgba(210, 219, 255, .13);
+      --line-strong: rgba(210, 219, 255, .22);
+      --text: #f7f7fb;
+      --muted: #aab1c4;
+      --purple: #8b5cf6;
+      --purple-light: #c4b5fd;
+      --green: #5ee0a0;
+      --blue: #65b9ff;
+      --max: 1180px;
+      --radius-lg: 28px;
+      --radius-md: 18px;
+      --shadow: 0 30px 80px rgba(0, 0, 0, .4);
     }
-
     * { box-sizing: border-box; }
-
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
-      font-family: "Source Sans 3", system-ui, sans-serif;
       color: var(--text);
       background:
-        radial-gradient(840px 520px at 6% -8%, rgba(124, 58, 237, 0.34), transparent 66%),
-        radial-gradient(920px 560px at 100% 0%, rgba(52, 211, 153, 0.17), transparent 67%),
-        linear-gradient(174deg, #0c0f1b 0%, #0a0c16 100%);
-      line-height: 1.5;
+        radial-gradient(900px 600px at 82% -8%, rgba(52, 211, 153, .10), transparent 67%),
+        radial-gradient(760px 620px at 12% 5%, rgba(139, 92, 246, .17), transparent 70%),
+        var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
-
-    .wrap {
-      width: min(1180px, 92vw);
-      margin: 0 auto;
-    }
+    img { max-width: 100%; }
+    a { color: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+    .shell { width: min(var(--max), calc(100% - 40px)); margin: 0 auto; }
+    .skip-link { position: fixed; left: 16px; top: -80px; z-index: 100; padding: 10px 14px; background: #fff; color: #111; border-radius: 8px; }
+    .skip-link:focus { top: 16px; }
 
     header {
       position: sticky;
       top: 0;
-      z-index: 30;
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      background: linear-gradient(to bottom, rgba(13, 15, 26, 0.95), rgba(13, 15, 26, 0.76));
+      z-index: 50;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      background: rgba(9, 11, 19, .78);
+      backdrop-filter: blur(18px);
     }
+    .nav { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; font-weight: 750; letter-spacing: -.01em; }
+    .brand img { width: 36px; height: 36px; border-radius: 11px; box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 8px 24px rgba(0,0,0,.3); }
+    .nav-side, .nav-links { display: flex; align-items: center; gap: 20px; }
+    .nav-links a { color: var(--muted); font-size: .91rem; text-decoration: none; }
+    .nav-links a:hover { color: var(--text); }
+    .language { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.035); }
+    .language button { border: 0; border-radius: 7px; padding: 5px 8px; color: var(--muted); background: transparent; font: 700 .72rem inherit; cursor: pointer; }
+    .language button[aria-pressed="true"] { color: #fff; background: var(--purple); box-shadow: 0 4px 14px rgba(139,92,246,.35); }
 
-    .nav {
-      min-height: 74px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-    }
+    .hero { padding: 88px 0 76px; overflow: hidden; }
+    .hero-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 64px; align-items: center; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 20px; color: var(--purple-light); font-size: .76rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 16px var(--green); }
+    h1, h2, h3 { margin: 0; line-height: 1.08; letter-spacing: -.035em; }
+    h1 { max-width: 10.5ch; font-size: clamp(3rem, 5.8vw, 5.25rem); font-weight: 820; }
+    h2 { font-size: clamp(2.15rem, 3.6vw, 3.45rem); font-weight: 790; }
+    h3 { font-size: 1.18rem; font-weight: 720; letter-spacing: -.015em; }
+    .hero-copy { margin: 24px 0 28px; max-width: 55ch; color: var(--muted); font-size: 1.16rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .button { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 12px 18px; border: 1px solid transparent; border-radius: 13px; text-decoration: none; font-weight: 750; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+    .button:hover { transform: translateY(-2px); }
+    .button-primary { color: #fff; background: linear-gradient(135deg, #9368fb, #6d45e8); box-shadow: 0 14px 34px rgba(109, 69, 232, .31); }
+    .button-secondary { border-color: var(--line-strong); background: rgba(255,255,255,.045); }
+    .button-secondary:hover { border-color: rgba(255,255,255,.38); background: rgba(255,255,255,.07); }
+    .hero-note { margin: 16px 0 0; color: #7f879b; font-size: .89rem; }
+    .hero-note > span:first-child { color: var(--green); }
 
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 11px;
-      font-family: "Outfit", system-ui, sans-serif;
-      font-weight: 700;
-      letter-spacing: .01em;
-      font-size: 1.08rem;
-    }
-
-    .brand span { white-space: nowrap; }
-
-    .brand img {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22);
-    }
-
-    .pill {
-      border: 1px solid var(--stroke);
-      color: var(--muted);
-      border-radius: 999px;
-      text-decoration: none;
-      padding: 7px 12px;
-      font-size: .83rem;
-      background: rgba(255, 255, 255, .03);
-      transition: border-color .18s ease, transform .18s ease;
-    }
-
-    .pill:hover {
-      border-color: rgba(255, 255, 255, 0.35);
-      transform: translateY(-1px);
-    }
-
-    .nav-actions {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .language-switch {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px;
-      border: 1px solid var(--stroke);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, .04);
-    }
-
-    .language-switch button {
-      border: 0;
-      border-radius: 6px;
-      padding: 5px 8px;
-      background: transparent;
-      color: var(--muted);
-      font: 700 .75rem "Outfit", system-ui, sans-serif;
-      cursor: pointer;
-    }
-
-    .language-switch button[aria-pressed="true"] {
-      color: #fff;
-      background: var(--accent);
-      box-shadow: 0 8px 18px rgba(124, 58, 237, .24);
-    }
-
-    main { padding: 34px 0 82px; }
-
-    .hero {
-      background: linear-gradient(180deg, rgba(35, 30, 61, 0.9), rgba(20, 25, 44, 0.88));
-      border: 1px solid var(--stroke);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow);
-      padding: clamp(22px, 3vw, 40px);
-      overflow: hidden;
+    .app-stage { position: relative; min-height: 520px; display: grid; place-items: center; }
+    .orb { position: absolute; width: 500px; height: 500px; border-radius: 50%; background: radial-gradient(circle, rgba(139,92,246,.34), rgba(75,46,155,.12) 45%, transparent 72%); filter: blur(8px); }
+    .window {
       position: relative;
-    }
-
-    .hero::after {
-      content: "";
-      position: absolute;
-      width: 460px;
-      height: 460px;
-      right: -170px;
-      top: -220px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(167, 139, 250, .34), transparent 70%);
-      pointer-events: none;
-      filter: blur(10px);
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1.05fr .95fr;
-      gap: 24px;
-      align-items: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    h1, h2, h3 {
-      margin: 0;
-      line-height: 1.08;
-      font-family: "Outfit", system-ui, sans-serif;
-      letter-spacing: .01em;
-    }
-
-    h1 {
-      font-size: clamp(2rem, 4.4vw, 3.4rem);
-      margin: 10px 0 14px;
-      max-width: 12ch;
-    }
-
-    .eyebrow {
-      color: var(--accent-2);
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      font-size: .76rem;
-    }
-
-    .sub {
-      margin: 0 0 20px;
-      color: var(--muted);
-      font-size: 1.06rem;
-      max-width: 56ch;
-    }
-
-    .cta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .btn {
-      text-decoration: none;
-      border-radius: 12px;
-      padding: 12px 17px;
-      font-weight: 700;
-      font-family: "Outfit", system-ui, sans-serif;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-    }
-
-    .btn-download {
-      background: linear-gradient(135deg, var(--accent), #6a49e7);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, .18);
-      box-shadow: 0 10px 22px rgba(124, 58, 237, .37);
-    }
-
-    .btn-download:hover { transform: translateY(-2px); box-shadow: 0 16px 28px rgba(124, 58, 237, .45); }
-
-    .btn-source {
-      color: var(--text);
-      border: 1px solid var(--stroke);
-      background: rgba(255, 255, 255, .04);
-    }
-
-    .btn-source:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.35); }
-
-    .microcopy {
-      margin: 0;
-      color: var(--muted);
-      font-size: .95rem;
-    }
-
-    .hero-surface {
-      background: linear-gradient(180deg, rgba(14, 17, 31, 0.96), rgba(10, 12, 23, 0.96));
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: var(--radius-lg);
+      width: min(100%, 620px);
       padding: 14px;
-      box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.16), 0 16px 40px rgba(0, 0, 0, .45);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius: 24px;
+      background: linear-gradient(155deg, rgba(28,35,55,.96), rgba(13,17,29,.96));
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.08);
+      transform: rotate(1deg);
     }
+    .window-bar { display: flex; align-items: center; justify-content: space-between; padding: 3px 5px 13px; color: #7f879b; font-size: .75rem; }
+    .traffic { display: flex; gap: 6px; }
+    .traffic i { width: 9px; height: 9px; border-radius: 50%; background: #f35d5d; }
+    .traffic i:nth-child(2) { background: #f2bd4b; }
+    .traffic i:nth-child(3) { background: #58c95b; }
+    .window img { display: block; width: 100%; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; background: #fff; }
+    .provider-chip { position: absolute; z-index: 2; display: flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 999px; background: rgba(17,22,36,.88); box-shadow: 0 14px 34px rgba(0,0,0,.32); backdrop-filter: blur(12px); font-size: .82rem; font-weight: 700; }
+    .provider-chip::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .chip-claude { top: 13%; right: -2%; }
+    .chip-chatgpt { bottom: 15%; left: -4%; }
+    .chip-opencode { right: 4%; bottom: 2%; }
 
-    .hero-topline {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      color: var(--muted);
-      font-size: .8rem;
-      margin-bottom: 10px;
+    .proof { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: rgba(255,255,255,.015); }
+    .proof-grid { min-height: 102px; display: grid; grid-template-columns: repeat(3, 1fr); align-items: center; }
+    .proof-item { padding: 10px 28px; border-left: 1px solid var(--line); }
+    .proof-item:first-child { padding-left: 0; border-left: 0; }
+    .proof-item strong { display: block; font-size: 1rem; }
+    .proof-item span { color: var(--muted); font-size: .9rem; }
+
+    section.content { padding: 108px 0; }
+    .section-intro { max-width: 720px; margin-bottom: 46px; }
+    .section-intro p { max-width: 60ch; margin: 18px 0 0; color: var(--muted); font-size: 1.08rem; }
+    .kicker { margin-bottom: 12px; color: var(--purple-light); font-size: .76rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .feature { min-height: 220px; padding: 26px; border: 1px solid var(--line); border-radius: var(--radius-md); background: linear-gradient(155deg, rgba(23,29,45,.92), rgba(14,18,30,.88)); }
+    .feature-icon { width: 38px; height: 38px; margin-bottom: 38px; display: grid; place-items: center; border-radius: 11px; color: var(--purple-light); background: rgba(139,92,246,.14); font-weight: 800; }
+    .feature p { margin: 10px 0 0; color: var(--muted); }
+
+    .showcase { position: relative; padding: 30px; border: 1px solid var(--line-strong); border-radius: var(--radius-lg); background: linear-gradient(150deg, #171d2f, #0d111d 68%); box-shadow: var(--shadow); overflow: hidden; }
+    .showcase::before { content: ""; position: absolute; width: 500px; height: 500px; right: -180px; top: -250px; border-radius: 50%; background: rgba(139,92,246,.18); filter: blur(45px); }
+    .showcase-top { position: relative; display: flex; align-items: end; justify-content: space-between; gap: 28px; margin-bottom: 24px; }
+    .showcase-top p { max-width: 48ch; margin: 0; color: var(--muted); }
+    .dashboard-frame { position: relative; padding: 12px; border: 1px solid rgba(255,255,255,.12); border-radius: 19px; background: #090c14; }
+    .dashboard-frame img { display: block; width: 100%; max-height: 720px; object-fit: contain; border-radius: 12px; background: #111725; }
+    .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+    .detail { padding: 20px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--surface); }
+    .detail-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    .detail-head span { color: var(--green); font-size: .76rem; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; }
+    .detail img { display: block; width: 100%; border: 1px solid rgba(255,255,255,.10); border-radius: 12px; background: #fff; }
+
+    .privacy-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 64px; align-items: start; }
+    .privacy-copy p { color: var(--muted); font-size: 1.06rem; }
+    .checks { list-style: none; margin: 30px 0 0; padding: 0; }
+    .checks li { position: relative; margin: 14px 0; padding-left: 28px; color: #d9deea; }
+    .checks li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 900; }
+    .privacy-visual { display: grid; gap: 12px; }
+    .privacy-row { display: grid; grid-template-columns: 48px 1fr auto; gap: 14px; align-items: center; padding: 18px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); }
+    .privacy-row .icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: rgba(94,224,160,.1); color: var(--green); font-size: 1.15rem; }
+    .privacy-row strong, .privacy-row small { display: block; }
+    .privacy-row small { color: var(--muted); }
+    .privacy-row > span { color: var(--green); font-size: .78rem; font-weight: 800; text-transform: uppercase; }
+
+    .install-panel { padding: 42px; border: 1px solid var(--line-strong); border-radius: var(--radius-lg); background: linear-gradient(140deg, rgba(139,92,246,.13), rgba(18,23,37,.94) 44%); }
+    .install-top { display: flex; align-items: end; justify-content: space-between; gap: 28px; margin-bottom: 36px; }
+    .install-top p { max-width: 48ch; margin: 0; color: var(--muted); }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .step { padding: 22px; border-top: 1px solid var(--line-strong); }
+    .step b { display: block; margin-bottom: 24px; color: var(--purple-light); font-size: .8rem; letter-spacing: .08em; }
+    .step p { margin: 10px 0 0; color: var(--muted); }
+    .gatekeeper { margin-top: 24px; padding: 18px 20px; display: flex; gap: 16px; border: 1px solid rgba(244,186,82,.22); border-radius: 14px; background: rgba(244,186,82,.06); color: #d9d1be; }
+    .gatekeeper strong { color: #f3cd82; white-space: nowrap; }
+    .gatekeeper p { margin: 0; }
+    .gatekeeper a { color: #fff; }
+    .install-help { margin-top: 14px; background: rgba(255,255,255,.025); }
+    .install-gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+    .install-gallery figure { margin: 0; }
+    .install-gallery img { display: block; width: 100%; border: 1px solid var(--line); border-radius: 9px; background: #111725; }
+    .install-gallery figcaption { margin-top: 6px; color: var(--muted); font-size: .76rem; }
+
+    .faq { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    details { padding: 19px 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+    summary { cursor: pointer; font-weight: 700; }
+    details p { margin: 12px 0 0; color: var(--muted); }
+    .final { padding: 0 0 108px; }
+    .final-panel { padding: 58px; text-align: center; border: 1px solid var(--line-strong); border-radius: var(--radius-lg); background: radial-gradient(600px 280px at 50% 0%, rgba(139,92,246,.25), transparent 70%), var(--surface); }
+    .final-panel h2 { max-width: 16ch; margin: 0 auto; }
+    .final-panel p { max-width: 54ch; margin: 18px auto 26px; color: var(--muted); }
+    .final-panel .actions { justify-content: center; }
+    footer { padding: 28px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: .88rem; }
+    .footer-grid { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+    .footer-links a:hover { color: #fff; }
+    [data-lang] { display: none; }
+    [data-lang].active { display: block; }
+    span[data-lang].active { display: inline; }
+
+    @media (max-width: 920px) {
+      .hero { padding-top: 64px; }
+      .hero-grid, .privacy-grid { grid-template-columns: 1fr; gap: 46px; }
+      h1 { max-width: 12ch; }
+      .app-stage { min-height: auto; }
+      .feature-grid, .steps { grid-template-columns: 1fr; }
+      .feature { min-height: auto; }
+      .feature-icon { margin-bottom: 24px; }
+      .proof-grid { grid-template-columns: 1fr; padding: 18px 0; }
+      .proof-item { padding: 14px 0; border-left: 0; border-top: 1px solid var(--line); }
+      .proof-item:first-child { border-top: 0; }
+      .showcase-top, .install-top { align-items: start; flex-direction: column; }
     }
-
-    .hero-grid-shots {
-      display: grid;
-      grid-template-columns: 1.2fr .8fr;
-      gap: 10px;
+    @media (max-width: 680px) {
+      .shell { width: min(100% - 28px, var(--max)); }
+      .nav { min-height: 64px; }
+      .nav-links { display: none; }
+      .hero { padding: 52px 0 58px; }
+      .hero-grid { gap: 38px; }
+      h1 { font-size: clamp(2.8rem, 14vw, 4.2rem); }
+      h2 { font-size: 2.25rem; }
+      .hero-copy { font-size: 1.05rem; }
+      .actions .button { width: 100%; }
+      .window { transform: none; padding: 9px; border-radius: 19px; }
+      .window img { border-radius: 11px; }
+      .provider-chip { position: static; margin-top: 8px; display: inline-flex; }
+      .chip-chatgpt { margin-left: 5px; }
+      .chip-opencode { display: none; }
+      section.content { padding: 76px 0; }
+      .showcase, .install-panel, .final-panel { padding: 22px; border-radius: 20px; }
+      .showcase-top { margin-bottom: 18px; }
+      .details-grid, .faq { grid-template-columns: 1fr; }
+      .install-gallery { grid-template-columns: 1fr 1fr; }
+      .privacy-row { grid-template-columns: 44px 1fr; }
+      .privacy-row > span { grid-column: 2; }
+      .gatekeeper { flex-direction: column; gap: 5px; }
+      .footer-grid { align-items: flex-start; flex-direction: column; }
     }
-
-    .shot-stack {
-      display: grid;
-      gap: 10px;
-    }
-
-    .screen {
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: #0f1222;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .screen img {
-      width: 100%;
-      height: 100%;
-      display: block;
-      object-fit: cover;
-      background: #0f1222;
-    }
-
-    .screen-main { aspect-ratio: 1200 / 780; }
-    .screen-mini { aspect-ratio: 1143 / 308; }
-
-    .screen-label {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(10, 13, 24, 0.82);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      font-family: "Outfit", system-ui, sans-serif;
-      font-size: .7rem;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      color: #d8cbff;
-    }
-
-    .section { margin-top: 58px; }
-
-    .section-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .section-head p {
-      margin: 0;
-      color: var(--muted);
-      max-width: 48ch;
-    }
-
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 12px;
-    }
-
-    .step {
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: var(--radius-md);
-      padding: 15px;
-    }
-
-    .step .num {
-      font-size: .72rem;
-      color: var(--accent-2);
-      font-family: "Outfit", system-ui, sans-serif;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-
-    .step h3 { margin: 8px 0 8px; font-size: 1.08rem; }
-    .step p { margin: 0; color: var(--muted); }
-
-    .workflow-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .workflow-card {
-      background: linear-gradient(180deg, #171c31, #141a2c);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      display: grid;
-      grid-template-rows: auto auto;
-      min-height: 100%;
-    }
-
-    .workflow-head {
-      padding: 12px 12px 8px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-    }
-
-    .workflow-head h3 {
-      font-size: 1.04rem;
-      margin-bottom: 4px;
-    }
-
-    .workflow-head p {
-      margin: 0;
-      color: var(--muted);
-      font-size: .95rem;
-    }
-
-    .workflow-image-wrap { padding: 12px; }
-
-    .workflow-shot {
-      width: 100%;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: #0f1222;
-      display: block;
-      cursor: zoom-in;
-      transition: transform .16s ease, border-color .16s ease;
-    }
-
-    .workflow-shot:hover {
-      transform: translateY(-2px);
-      border-color: rgba(167, 139, 250, .5);
-    }
-
-    .workflow-caption {
-      margin-top: 7px;
-      color: #9f95c6;
-      font-size: .84rem;
-      text-align: center;
-    }
-
-    .split {
-      display: grid;
-      grid-template-columns: 1.05fr .95fr;
-      gap: 14px;
-    }
-
-    .card {
-      background: var(--surface-2);
-      border: 1px solid rgba(255,255,255,.11);
-      border-radius: var(--radius-md);
-      padding: 16px;
-    }
-
-    .native-card {
-      position: relative;
-      overflow: hidden;
-      min-height: 100%;
-      background:
-        linear-gradient(135deg, rgba(32, 40, 68, .98), rgba(24, 29, 52, .96)),
-        radial-gradient(circle at 100% 0%, rgba(124, 58, 237, .26), transparent 42%);
-    }
-
-    .native-card::after {
-      content: "";
-      position: absolute;
-      inset: auto -44px -68px auto;
-      width: 180px;
-      height: 180px;
-      border-radius: 50%;
-      border: 1px solid rgba(167, 139, 250, .22);
-      background: rgba(255, 255, 255, .025);
-      pointer-events: none;
-    }
-
-    .native-kicker {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      margin-bottom: 12px;
-      padding: 5px 9px;
-      border-radius: 8px;
-      border: 1px solid rgba(102, 230, 173, .24);
-      color: var(--ok);
-      background: rgba(102, 230, 173, .08);
-      font: 700 .76rem "Outfit", system-ui, sans-serif;
-    }
-
-    .native-card h2 { margin-bottom: 10px; }
-
-    .native-card .lede {
-      margin: 0 0 16px;
-      color: #ddd8f6;
-      max-width: 62ch;
-    }
-
-    .native-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 16px;
-    }
-
-    .native-stat {
-      border: 1px solid rgba(255, 255, 255, .12);
-      border-radius: 8px;
-      padding: 10px;
-      background: rgba(7, 10, 20, .22);
-    }
-
-    .native-stat strong {
-      display: block;
-      color: #fff;
-      font-family: "Outfit", system-ui, sans-serif;
-      font-size: .98rem;
-    }
-
-    .native-stat span {
-      color: var(--muted);
-      font-size: .86rem;
-    }
-
-    .check {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .check li {
-      color: var(--muted);
-      margin-bottom: 9px;
-      padding-left: 21px;
-      position: relative;
-    }
-
-    .check li::before {
-      content: "✓";
-      position: absolute;
-      left: 0;
-      color: var(--ok);
-      font-weight: 700;
-    }
-
-    .faq { display: grid; gap: 8px; }
-
-    details {
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 12px;
-      background: rgba(255,255,255,.03);
-      padding: 11px 13px;
-    }
-
-    summary {
-      list-style: none;
-      cursor: pointer;
-      font-family: "Outfit", system-ui, sans-serif;
-      font-weight: 600;
-    }
-
-    summary::-webkit-details-marker { display: none; }
-    details p { margin: 8px 0 0; color: var(--muted); }
-    .gatekeeper-steps {
-      margin: 10px 0 0;
-      padding-left: 20px;
-      color: var(--muted);
-    }
-    .gatekeeper-steps li { margin-bottom: 7px; }
-    .gatekeeper-link {
-      color: var(--accent-2);
-      font-weight: 700;
-      text-decoration: none;
-    }
-    .gatekeeper-link:hover { text-decoration: underline; }
-    .gatekeeper-gallery {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 12px;
-    }
-    .gatekeeper-gallery figure {
-      margin: 0;
-      display: grid;
-      gap: 6px;
-      align-content: start;
-    }
-    .gatekeeper-gallery img {
-      width: 100%;
-      display: block;
-      border-radius: 8px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: #101529;
-      cursor: zoom-in;
-    }
-    .gatekeeper-gallery figcaption {
-      color: var(--muted);
-      font-size: .84rem;
-    }
-
-    .thumbs {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
-      gap: 8px;
-      margin-top: 11px;
-    }
-
-    .thumbs img {
-      width: 100%;
-      display: block;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.14);
-      cursor: zoom-in;
-      background: #0f1222;
-    }
-
-    .repo-box {
-      margin-top: 17px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.16);
-      border-radius: 12px;
-      padding: 12px 14px;
-    }
-
-    code {
-      background: rgba(255,255,255,.07);
-      border-radius: 8px;
-      padding: 4px 7px;
-      color: #e4dcff;
-      font-size: .84rem;
-      word-break: break-all;
-    }
-
-    footer {
-      margin-top: 62px;
-      border-top: 1px solid rgba(255,255,255,.09);
-      padding-top: 20px;
-      color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 10px;
-      font-size: .92rem;
-    }
-
-    a.inline { color: var(--accent-2); }
-
-    .zoom-modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(7, 8, 14, 0.88);
-      backdrop-filter: blur(5px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 24px;
-    }
-
-    .zoom-modal.open { display: flex; }
-
-    .zoom-inner {
-      width: min(1100px, 100%);
-      max-height: calc(100vh - 32px);
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.2);
-      background: #0f1222;
-      overflow: hidden;
-      box-shadow: 0 24px 60px rgba(0,0,0,.58);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .zoom-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 10px 14px;
-      border-bottom: 1px solid rgba(255,255,255,.12);
-      color: var(--muted);
-      font-size: .9rem;
-      flex: 0 0 auto;
-    }
-
-    .zoom-close {
-      border: 1px solid rgba(255,255,255,.2);
-      background: rgba(255,255,255,.05);
-      color: #fff;
-      border-radius: 10px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-family: "Outfit", system-ui, sans-serif;
-    }
-
-    .zoom-media {
-      flex: 1 1 auto;
-      min-height: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 12px;
-      overflow: auto;
-      background: #0f1222;
-    }
-
-    #zoom-image {
-      max-width: 100%;
-      max-height: calc(100vh - 130px);
-      width: auto;
-      height: auto;
-      display: block;
-      object-fit: contain;
-      background: #0f1222;
-      margin: auto;
-    }
-
-    @media (max-width: 1020px) {
-      .hero-grid,
-      .split { grid-template-columns: 1fr; }
-      .workflow-grid,
-      .native-grid { grid-template-columns: 1fr; }
-      .steps { grid-template-columns: 1fr; }
-      .hero-grid-shots { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 640px) {
-      .thumbs { grid-template-columns: 1fr; }
-      .section-head {
-        display: block;
-      }
-      .section-head h2 {
-        margin-bottom: 8px;
-      }
-      .nav {
-        min-height: 68px;
-        align-items: flex-start;
-        padding: 12px 0;
-        flex-wrap: wrap;
-      }
-      .nav-actions { width: 100%; justify-content: space-between; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; }
     }
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#main">Skip to content</a>
   <header>
-    <div class="wrap nav">
-      <div class="brand">
-        <img src="../assets/branding/token-monitor-logo.png" alt="Token Monitor logo" data-i18n-attr="alt:alt.logo" />
+    <div class="shell nav">
+      <a class="brand" href="#top" aria-label="Token Monitor home">
+        <img src="../assets/branding/token-monitor-logo.png" alt="">
         <span>Token Monitor</span>
-      </div>
-      <div class="nav-actions">
-        <div class="language-switch" data-language-switcher aria-label="Language">
-          <button type="button" data-lang-choice="en" aria-pressed="true">EN</button>
-          <button type="button" data-lang-choice="de" aria-pressed="false">DE</button>
+      </a>
+      <div class="nav-side">
+        <nav class="nav-links" aria-label="Primary navigation">
+          <a href="#product"><span data-lang="en" class="active">Product</span><span data-lang="de">Produkt</span></a>
+          <a href="#privacy"><span data-lang="en" class="active">Privacy</span><span data-lang="de">Datenschutz</span></a>
+          <a href="#install"><span data-lang="en" class="active">Install</span><span data-lang="de">Installieren</span></a>
+          <a href="https://github.com/MediaPublishing/token-monitor" target="_blank" rel="noopener noreferrer">GitHub</a>
+        </nav>
+        <div class="language" aria-label="Language">
+          <button type="button" data-language="en" aria-pressed="true">EN</button>
+          <button type="button" data-language="de" aria-pressed="false">DE</button>
         </div>
-        <a class="pill" href="https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.27" target="_blank" rel="noopener noreferrer" data-i18n="nav.preview">GitHub Preview</a>
       </div>
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="hero">
-      <div class="hero-grid">
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="shell hero-grid">
         <div>
-          <div class="eyebrow" data-i18n="hero.eyebrow">Track. Refresh. Stay ahead.</div>
-          <h1 data-i18n="hero.title">Know your AI usage before it stops you.</h1>
-          <p class="sub" data-i18n="hero.sub">Token Monitor keeps Claude and ChatGPT usage visible in your macOS menu bar, with optional OpenCode Go monitoring and separate local sessions for each provider.</p>
-
-          <div class="cta">
-            <a class="btn btn-download" href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.27/TokenMonitor-macOS.dmg" target="_blank" rel="noopener noreferrer" data-i18n="hero.ctaPrimary">Download macOS DMG</a>
-            <a class="btn btn-source" href="https://github.com/MediaPublishing/token-monitor" target="_blank" rel="noopener noreferrer" data-i18n="hero.ctaSecondary">Explore Source Code</a>
+          <div class="eyebrow">Claude · ChatGPT/Codex · OpenCode Go</div>
+          <div data-lang="en" class="active">
+            <h1>Your AI limits. One click away.</h1>
+            <p class="hero-copy">See remaining usage and reset windows before a long task gets interrupted. Token Monitor keeps each provider visible in your macOS menu bar.</p>
           </div>
-
-          <p class="microcopy" data-i18n="hero.microcopy">Public preview build. Install once from the DMG, then keep Token Monitor in the menu bar.</p>
+          <div data-lang="de">
+            <h1>Deine AI-Limits. Einen Klick entfernt.</h1>
+            <p class="hero-copy">Sieh Nutzung und Reset-Zeiten, bevor eine lange Aufgabe ins Limit läuft. Token Monitor hält jeden Provider in deiner macOS-Menüleiste sichtbar.</p>
+          </div>
+          <div class="actions">
+            <a class="button button-primary" href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.28/TokenMonitor-macOS.dmg">
+              <span aria-hidden="true">↓</span>
+              <span data-lang="en" class="active">Download for macOS</span><span data-lang="de">Für macOS laden</span>
+            </a>
+            <a class="button button-secondary" href="#product"><span data-lang="en" class="active">See the app</span><span data-lang="de">App ansehen</span></a>
+          </div>
+          <p class="hero-note"><span>●</span> <span data-lang="en" class="active">Public preview v1.0.28 · macOS 14+</span><span data-lang="de">Öffentliche Preview v1.0.28 · macOS 14+</span></p>
         </div>
 
-        <div class="hero-surface">
-          <div class="hero-topline">
-            <span data-i18n="shots.realViews">Real App Views</span>
-            <span data-i18n="shots.zoomHint">Click any screenshot to zoom</span>
+        <div class="app-stage" aria-label="Token Monitor product preview">
+          <div class="orb" aria-hidden="true"></div>
+          <div class="window">
+            <div class="window-bar"><span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span><span>Token Monitor</span></div>
+            <img src="../assets/screenshots/app/dashboard.png" alt="Token Monitor dashboard showing Claude and ChatGPT usage">
           </div>
-          <div class="hero-grid-shots">
-            <figure class="screen screen-main">
-              <span class="screen-label" data-i18n="label.dashboard">Dashboard</span>
-              <img class="zoomable" src="../assets/screenshots/app/dashboard.png" alt="Token Monitor dashboard screenshot" data-label="Dashboard" data-i18n-attr="alt:alt.dashboard;data-label:label.dashboardView" />
-            </figure>
-            <div class="shot-stack">
-              <figure class="screen screen-mini">
-                <span class="screen-label" data-i18n="label.claude">Claude</span>
-                <img class="zoomable" src="../assets/screenshots/app/claude.png" alt="Token Monitor Claude usage screenshot" data-label="Claude usage" data-i18n-attr="alt:alt.claude;data-label:label.claudeView" />
-              </figure>
-              <figure class="screen screen-mini">
-                <span class="screen-label" data-i18n="label.chatgpt">ChatGPT</span>
-                <img class="zoomable" src="../assets/screenshots/app/chatgpt.png" alt="Token Monitor ChatGPT usage screenshot" data-label="ChatGPT usage" data-i18n-attr="alt:alt.chatgpt;data-label:label.chatgptView" />
-              </figure>
-            </div>
-          </div>
+          <span class="provider-chip chip-claude">Claude</span>
+          <span class="provider-chip chip-chatgpt">ChatGPT + Codex</span>
+          <span class="provider-chip chip-opencode">OpenCode Go</span>
         </div>
       </div>
     </section>
 
-    <section class="section">
-      <div class="section-head">
-        <h2 data-i18n="steps.title">Start in 3 minutes</h2>
-        <p data-i18n="steps.sub">No build tools, no shared browser cookies.</p>
+    <div class="proof">
+      <div class="shell proof-grid">
+        <div class="proof-item"><strong data-lang="en" class="active">One menu bar view</strong><strong data-lang="de">Eine Menüleisten-Ansicht</strong><span data-lang="en" class="active">Instead of multiple usage pages</span><span data-lang="de">Statt mehrerer Usage-Seiten</span></div>
+        <div class="proof-item"><strong data-lang="en" class="active">Provider-native numbers</strong><strong data-lang="de">Provider-eigene Werte</strong><span data-lang="en" class="active">No invented universal score</span><span data-lang="de">Kein erfundener Gesamtscore</span></div>
+        <div class="proof-item"><strong data-lang="en" class="active">Local macOS utility</strong><strong data-lang="de">Lokale macOS-App</strong><span data-lang="en" class="active">No hosted Token Monitor account</span><span data-lang="de">Kein gehostetes Token-Monitor-Konto</span></div>
       </div>
-      <div class="steps">
-        <article class="step">
-          <div class="num" data-i18n="steps.one.num">Step 01</div>
-          <h3 data-i18n="steps.one.title">Install the app</h3>
-          <p data-i18n="steps.one.body">Download the DMG, open it, and drag Token Monitor onto Applications.</p>
-        </article>
-        <article class="step">
-          <div class="num" data-i18n="steps.two.num">Step 02</div>
-          <h3 data-i18n="steps.two.title">Connect providers</h3>
-          <p data-i18n="steps.two.body">Log in once for Claude and ChatGPT inside their isolated WebKit sessions; add OpenCode Go from Settings when needed.</p>
-        </article>
-        <article class="step">
-          <div class="num" data-i18n="steps.three.num">Step 03</div>
-          <h3 data-i18n="steps.three.title">Watch limits</h3>
-          <p data-i18n="steps.three.body">Open the menu bar popover when you need the current provider-specific capacity.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-head">
-        <h2 data-i18n="workflow.title">See usage clearly</h2>
-        <p data-i18n="workflow.sub">Each provider keeps its own numbers and reset windows. Click images to inspect details.</p>
-      </div>
-
-      <div class="workflow-grid">
-        <article class="workflow-card">
-          <div class="workflow-head">
-            <h3 data-i18n="workflow.dashboard.title">One menu bar view</h3>
-            <p data-i18n="workflow.dashboard.body">A compact status board keeps Claude and ChatGPT side by side, with OpenCode Go available as an optional third provider.</p>
-          </div>
-          <div class="workflow-image-wrap">
-            <img class="workflow-shot zoomable" src="../assets/screenshots/app/dashboard.png" alt="Token Monitor full dashboard screenshot" data-label="Dashboard" data-i18n-attr="alt:alt.dashboardFull;data-label:label.dashboardView" />
-            <div class="workflow-caption" data-i18n="workflow.dashboard.caption">Dashboard - provider overview</div>
-          </div>
-        </article>
-
-        <article class="workflow-card">
-          <div class="workflow-head">
-            <h3 data-i18n="workflow.claude.title">Claude usage as Claude reports it</h3>
-            <p data-i18n="workflow.claude.body">Session, model, Sonnet, extra usage, balance, and reset timing stay source-native.</p>
-          </div>
-          <div class="workflow-image-wrap">
-            <img class="workflow-shot zoomable" src="../assets/screenshots/app/claude.png" alt="Token Monitor Claude usage full screenshot" data-label="Claude usage" data-i18n-attr="alt:alt.claudeFull;data-label:label.claudeView" />
-            <div class="workflow-caption" data-i18n="workflow.claude.caption">Claude - session and model limits</div>
-          </div>
-        </article>
-
-        <article class="workflow-card">
-          <div class="workflow-head">
-            <h3 data-i18n="workflow.chatgpt.title">ChatGPT and Codex limits together</h3>
-            <p data-i18n="workflow.chatgpt.body">Daily, weekly, Codex, and credits values stay visible without a browser tab hunt.</p>
-          </div>
-          <div class="workflow-image-wrap">
-            <img class="workflow-shot zoomable" src="../assets/screenshots/app/chatgpt.png" alt="Token Monitor ChatGPT usage full screenshot" data-label="ChatGPT usage" data-i18n-attr="alt:alt.chatgptFull;data-label:label.chatgptView" />
-            <div class="workflow-caption" data-i18n="workflow.chatgpt.caption">ChatGPT - daily, weekly, Codex, credits</div>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="section split">
-      <article class="card native-card">
-        <div class="native-kicker" data-i18n="native.kicker">Local sessions by design</div>
-        <h2 data-i18n="native.title">Why this belongs in the menu bar</h2>
-        <p class="lede" data-i18n="native.lede">Token Monitor keeps the usage check close to your work without merging provider rules into a fake universal score.</p>
-        <ul class="check">
-          <li data-i18n="native.point.one">Separate WebKit storage for each provider</li>
-          <li data-i18n="native.point.two">Source-native metrics instead of invented scoring</li>
-          <li data-i18n="native.point.three">Refresh on launch, on demand, and in the background</li>
-          <li data-i18n="native.point.four">Only the latest successful snapshots are stored locally</li>
-          <li data-i18n="native.point.five">Optional debug reports open as drafts for review</li>
-        </ul>
-        <div class="native-grid">
-          <div class="native-stat">
-            <strong data-i18n="native.stat.one.title">Provider rules stay intact</strong>
-          <span data-i18n="native.stat.one.body">Claude remains Claude. ChatGPT remains ChatGPT. OpenCode Go stays optional.</span>
-          </div>
-          <div class="native-stat">
-            <strong data-i18n="native.stat.two.title">Menu bar first</strong>
-            <span data-i18n="native.stat.two.body">Usage status stays one click away.</span>
-          </div>
-        </div>
-      </article>
-
-      <article class="card">
-        <h2 style="margin-bottom:10px;" data-i18n="faq.title">FAQ + screenshot gallery</h2>
-        <div class="faq">
-          <details>
-            <summary data-i18n="faq.one.q">Do I need to compile anything to use Token Monitor?</summary>
-            <p data-i18n="faq.one.a">No. Download the DMG, open it, and drag the app onto Applications.</p>
-          </details>
-          <details>
-            <summary data-i18n="faq.two.q">Does it reuse my browser cookies?</summary>
-            <p data-i18n="faq.two.a">No. Claude and ChatGPT use separate persistent WebKit sessions inside the app.</p>
-          </details>
-          <details>
-            <summary data-i18n="faq.three.q">Where can I inspect the UI before installing?</summary>
-            <p data-i18n="faq.three.a">All screenshots are real Token Monitor views. Click any of them to open an enlarged preview.</p>
-          </details>
-          <details>
-            <summary data-i18n="faq.five.q">Why can macOS show a Gatekeeper warning?</summary>
-            <p data-i18n="faq.five.a">Preview builds may show Apple's verification warning until Token Monitor is Developer ID signed and notarized. Only continue if you downloaded the DMG from this repository and trust that build.</p>
-            <ol class="gatekeeper-steps">
-              <li data-i18n="faq.five.step.one">Click Done, not Move to Trash.</li>
-              <li data-i18n="faq.five.step.two">Open System Settings > Privacy & Security.</li>
-              <li data-i18n="faq.five.step.three">Scroll to Security and click Open Anyway next to the Token Monitor warning.</li>
-              <li data-i18n="faq.five.step.four">Confirm with your Mac password or Touch ID, then click Open.</li>
-            </ol>
-            <div class="gatekeeper-gallery">
-              <figure>
-                <img class="zoomable" src="../assets/screenshots/install/gatekeeper-blocked.png" alt="Gatekeeper warning with Done button" data-label="Gatekeeper warning" data-i18n-attr="alt:alt.gatekeeperBlocked;data-label:label.gatekeeperBlocked" />
-                <figcaption data-i18n="faq.five.shot.one">1. Click Done.</figcaption>
-              </figure>
-              <figure>
-                <img class="zoomable" src="../assets/screenshots/install/gatekeeper-privacy-security.png" alt="Privacy and Security Open Anyway button" data-label="Privacy and Security" data-i18n-attr="alt:alt.gatekeeperPrivacy;data-label:label.gatekeeperPrivacy" />
-                <figcaption data-i18n="faq.five.shot.two">2. Click Open Anyway in Privacy & Security.</figcaption>
-              </figure>
-              <figure>
-                <img class="zoomable" src="../assets/screenshots/install/gatekeeper-open-anyway.png" alt="Open Anyway confirmation dialog" data-label="Open Anyway confirmation" data-i18n-attr="alt:alt.gatekeeperOpenAnyway;data-label:label.gatekeeperOpenAnyway" />
-                <figcaption data-i18n="faq.five.shot.three">3. Confirm with Open Anyway.</figcaption>
-              </figure>
-              <figure>
-                <img class="zoomable" src="../assets/screenshots/install/gatekeeper-admin-confirm.png" alt="Privacy and Security password confirmation dialog" data-label="Password confirmation" data-i18n-attr="alt:alt.gatekeeperAdmin;data-label:label.gatekeeperAdmin" />
-                <figcaption data-i18n="faq.five.shot.four">4. Enter your Mac password or use Touch ID.</figcaption>
-              </figure>
-            </div>
-            <p><a class="gatekeeper-link" href="https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac" target="_blank" rel="noopener noreferrer" data-i18n="faq.five.apple">Apple's official guide</a></p>
-          </details>
-          <details>
-            <summary data-i18n="faq.seven.q">Why is Token Monitor missing from Login Items?</summary>
-            <p data-i18n="faq.seven.a">Launch at login uses Apple's ServiceManagement API, which expects a code-signed app. Move TokenMonitor.app to Applications, open it once, then enable Launch at login in Token Monitor Settings. If macOS still asks for approval, open Login Items from Token Monitor Settings and allow it there.</p>
-          </details>
-          <details>
-            <summary data-i18n="faq.eight.q">Will Token Monitor show update prompts automatically?</summary>
-            <p data-i18n="faq.eight.a">From version 1.0.22, automatic update checks are off by default. Token Monitor checks for updates when you click Check for Updates in Settings. If you enable automatic update checks, macOS may show an update prompt later without another click.</p>
-          </details>
-        </div>
-        <div class="thumbs">
-          <img class="zoomable" src="../assets/screenshots/app/dashboard.png" alt="App screenshot dashboard" data-label="Dashboard" data-i18n-attr="alt:alt.thumbDashboard;data-label:label.dashboardView" />
-          <img class="zoomable" src="../assets/screenshots/app/claude.png" alt="App screenshot Claude usage" data-label="Claude usage" data-i18n-attr="alt:alt.thumbClaude;data-label:label.claudeView" />
-          <img class="zoomable" src="../assets/screenshots/app/chatgpt.png" alt="App screenshot ChatGPT usage" data-label="ChatGPT usage" data-i18n-attr="alt:alt.thumbChatgpt;data-label:label.chatgptView" />
-        </div>
-      </article>
-    </section>
-
-    <div class="repo-box">
-      <div>
-        <strong data-i18n="repo.title">Repository</strong><br />
-        <code>https://github.com/MediaPublishing/token-monitor</code>
-      </div>
-      <a class="btn btn-source" href="https://github.com/MediaPublishing/token-monitor" target="_blank" rel="noopener noreferrer" data-i18n="repo.cta">Open GitHub Repo</a>
     </div>
 
-    <footer>
-      <span data-i18n="footer.tagline">Token Monitor - Claude and ChatGPT usage for macOS</span>
-      <span>Docs: <a class="inline" href="https://github.com/MediaPublishing/token-monitor/blob/main/README.md" target="_blank" rel="noopener noreferrer">README</a> · <a class="inline" href="https://github.com/MediaPublishing/token-monitor/blob/main/docs/privacy.md" target="_blank" rel="noopener noreferrer">Privacy</a></span>
-    </footer>
+    <section class="content">
+      <div class="shell">
+        <div class="section-intro">
+          <div class="kicker active" data-lang="en">Less dashboard hunting</div><div class="kicker" data-lang="de">Weniger Dashboard-Suche</div>
+          <div data-lang="en" class="active"><h2>Know whether you have room before you start.</h2><p>The useful question is not how many tokens a model has in theory. It is whether your account has enough capacity left for the work in front of you.</p></div>
+          <div data-lang="de"><h2>Wisse vor dem Start, ob noch genug Luft ist.</h2><p>Entscheidend ist nicht, wie viele Tokens ein Modell theoretisch hat. Entscheidend ist, ob dein Account für die nächste Aufgabe noch genug Kapazität hat.</p></div>
+        </div>
+        <div class="feature-grid">
+          <article class="feature"><div class="feature-icon">01</div><h3 data-lang="en" class="active">Check all providers together</h3><h3 data-lang="de">Alle Provider zusammen prüfen</h3><p data-lang="en" class="active">Claude, ChatGPT/Codex, and optional OpenCode Go stay visible without a browser-tab tour.</p><p data-lang="de">Claude, ChatGPT/Codex und optional OpenCode Go bleiben ohne Browser-Tab-Tour sichtbar.</p></article>
+          <article class="feature"><div class="feature-icon">02</div><h3 data-lang="en" class="active">Keep reset windows intact</h3><h3 data-lang="de">Reset-Fenster richtig einordnen</h3><p data-lang="en" class="active">Daily, weekly, session, model, and credit limits stay separate because providers do not measure usage the same way.</p><p data-lang="de">Daily, Weekly, Session, Modell und Credits bleiben getrennt, weil Provider Nutzung unterschiedlich messen.</p></article>
+          <article class="feature"><div class="feature-icon">03</div><h3 data-lang="en" class="active">Refresh without losing focus</h3><h3 data-lang="de">Aktualisieren, ohne den Fokus zu verlieren</h3><p data-lang="en" class="active">Refresh on launch, in the background, or on demand, then return to the work that matters.</p><p data-lang="de">Beim Start, im Hintergrund oder manuell aktualisieren und direkt zur eigentlichen Arbeit zurückkehren.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="content" id="product">
+      <div class="shell">
+        <div class="showcase">
+          <div class="showcase-top">
+            <div><div class="kicker active" data-lang="en">Real app interface</div><div class="kicker" data-lang="de">Echte App-Ansicht</div><h2 data-lang="en" class="active">The current state at a glance.</h2><h2 data-lang="de">Der aktuelle Stand auf einen Blick.</h2></div>
+            <p data-lang="en" class="active">Token Monitor preserves the language and limits of each provider. Green means capacity remains. Authentication and stale states stay visible instead of being hidden.</p><p data-lang="de">Token Monitor bewahrt die Logik und Limits jedes Providers. Grün zeigt verbleibende Kapazität. Login- und veraltete Zustände bleiben sichtbar, statt versteckt zu werden.</p>
+          </div>
+          <div class="dashboard-frame"><img src="../assets/screenshots/app/dashboard.png" alt="Full Token Monitor menu bar dashboard"></div>
+          <div class="details-grid">
+            <article class="detail"><div class="detail-head"><h3>Claude</h3><span data-lang="en" class="active">Session + models</span><span data-lang="de">Session + Modelle</span></div><img src="../assets/screenshots/app/claude.png" alt="Claude usage details in Token Monitor"></article>
+            <article class="detail"><div class="detail-head"><h3>ChatGPT + Codex</h3><span data-lang="en" class="active">Daily + weekly</span><span data-lang="de">Daily + Weekly</span></div><img src="../assets/screenshots/app/chatgpt.png" alt="ChatGPT and Codex usage details in Token Monitor"></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content" id="privacy">
+      <div class="shell privacy-grid">
+        <div class="privacy-copy">
+          <div class="kicker">Local-first</div>
+          <div data-lang="en" class="active"><h2>Your usage check stays on your Mac.</h2><p>Token Monitor uses separate embedded WebKit sessions for each provider. It does not require a hosted Token Monitor account or merge your providers into a remote dashboard.</p></div>
+          <div data-lang="de"><h2>Dein Usage-Check bleibt auf deinem Mac.</h2><p>Token Monitor nutzt getrennte eingebettete WebKit-Sessions für jeden Provider. Die App braucht kein gehostetes Token-Monitor-Konto und führt deine Provider nicht in einem fremden Online-Dashboard zusammen.</p></div>
+          <ul class="checks">
+            <li data-lang="en" class="active">Separate login storage for every provider</li><li data-lang="de">Getrennter Login-Speicher für jeden Provider</li>
+            <li data-lang="en" class="active">Latest successful usage snapshots stored locally</li><li data-lang="de">Letzte erfolgreiche Usage-Snapshots lokal gespeichert</li>
+            <li data-lang="en" class="active">Debug mode off by default</li><li data-lang="de">Debug-Modus standardmäßig aus</li>
+            <li data-lang="en" class="active">Open source and independently inspectable</li><li data-lang="de">Open Source und unabhängig prüfbar</li>
+          </ul>
+        </div>
+        <div class="privacy-visual" aria-label="Local data flow">
+          <div class="privacy-row"><div class="icon">◎</div><div><strong>Claude</strong><small data-lang="en" class="active">Isolated WebKit session</small><small data-lang="de">Getrennte WebKit-Session</small></div><span>Local</span></div>
+          <div class="privacy-row"><div class="icon">◌</div><div><strong>ChatGPT + Codex</strong><small data-lang="en" class="active">Isolated WebKit session</small><small data-lang="de">Getrennte WebKit-Session</small></div><span>Local</span></div>
+          <div class="privacy-row"><div class="icon">◇</div><div><strong>OpenCode Go</strong><small data-lang="en" class="active">Optional provider connection</small><small data-lang="de">Optionale Provider-Verbindung</small></div><span data-lang="en" class="active">Optional</span><span data-lang="de">Optional</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content" id="install">
+      <div class="shell install-panel">
+        <div class="install-top">
+          <div><div class="kicker active" data-lang="en">Three steps</div><div class="kicker" data-lang="de">Drei Schritte</div><h2 data-lang="en" class="active">From download to menu bar.</h2><h2 data-lang="de">Vom Download in die Menüleiste.</h2></div>
+          <p data-lang="en" class="active">No source build is required. Install the DMG, connect the providers you use, and check the current capacity from the menu bar.</p><p data-lang="de">Kein Source-Build nötig. DMG installieren, verwendete Provider verbinden und die aktuelle Kapazität in der Menüleiste prüfen.</p>
+        </div>
+        <div class="steps">
+          <article class="step"><b>01</b><h3 data-lang="en" class="active">Install the app</h3><h3 data-lang="de">App installieren</h3><p data-lang="en" class="active">Download the DMG, open it, and drag TokenMonitor.app into Applications.</p><p data-lang="de">DMG laden, öffnen und TokenMonitor.app in Applications ziehen.</p></article>
+          <article class="step"><b>02</b><h3 data-lang="en" class="active">Connect providers</h3><h3 data-lang="de">Provider verbinden</h3><p data-lang="en" class="active">Sign in to Claude and ChatGPT inside their separate app windows. OpenCode Go remains optional.</p><p data-lang="de">Claude und ChatGPT in ihren getrennten App-Fenstern anmelden. OpenCode Go bleibt optional.</p></article>
+          <article class="step"><b>03</b><h3 data-lang="en" class="active">Check capacity</h3><h3 data-lang="de">Kapazität prüfen</h3><p data-lang="en" class="active">Open the menu bar popover whenever you need the latest provider-specific state.</p><p data-lang="de">Das Menüleisten-Popover öffnen, wenn du den aktuellen Provider-Status brauchst.</p></article>
+        </div>
+        <div class="gatekeeper"><strong data-lang="en" class="active">Gatekeeper preview note</strong><strong data-lang="de">Gatekeeper-Hinweis</strong><p data-lang="en" class="active">This preview can show Apple's verification warning until the app is Developer ID signed and notarized. Download only from this repository and follow <a href="https://support.apple.com/guide/mac-help/open-a-mac-app-from-an-unknown-developer-mh40616/mac" target="_blank" rel="noopener noreferrer">Apple's official “Open Anyway” instructions</a>.</p><p data-lang="de">Diese Preview kann Apples Prüfwarnung zeigen, bis die App mit Developer ID signiert und notarisiert ist. Lade sie nur aus diesem Repository und folge <a href="https://support.apple.com/de-de/guide/mac-help/mh40616/mac" target="_blank" rel="noopener noreferrer">Apples offizieller Anleitung „Dennoch öffnen“</a>.</p></div>
+        <details class="install-help">
+          <summary data-lang="en" class="active">Show the Gatekeeper steps</summary><summary data-lang="de">Gatekeeper-Schritte anzeigen</summary>
+          <div class="install-gallery">
+            <figure><img src="../assets/screenshots/install/gatekeeper-blocked.png" alt="Gatekeeper warning with Done button"><figcaption data-lang="en" class="active">1. Click Done.</figcaption><figcaption data-lang="de">1. Fertig klicken.</figcaption></figure>
+            <figure><img src="../assets/screenshots/install/gatekeeper-privacy-security.png" alt="Privacy and Security with Open Anyway button"><figcaption data-lang="en" class="active">2. Open Privacy &amp; Security.</figcaption><figcaption data-lang="de">2. Datenschutz &amp; Sicherheit öffnen.</figcaption></figure>
+            <figure><img src="../assets/screenshots/install/gatekeeper-open-anyway.png" alt="Open Anyway confirmation"><figcaption data-lang="en" class="active">3. Confirm Open Anyway.</figcaption><figcaption data-lang="de">3. Dennoch öffnen bestätigen.</figcaption></figure>
+            <figure><img src="../assets/screenshots/install/gatekeeper-admin-confirm.png" alt="macOS administrator confirmation"><figcaption data-lang="en" class="active">4. Confirm with password or Touch ID.</figcaption><figcaption data-lang="de">4. Mit Passwort oder Touch ID bestätigen.</figcaption></figure>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="content">
+      <div class="shell">
+        <div class="section-intro"><div class="kicker">FAQ</div><h2 data-lang="en" class="active">Good to know before installing.</h2><h2 data-lang="de">Gut zu wissen vor der Installation.</h2></div>
+        <div class="faq">
+          <details><summary data-lang="en" class="active">Do I need Claude, ChatGPT, and OpenCode Go?</summary><summary data-lang="de">Brauche ich Claude, ChatGPT und OpenCode Go?</summary><p data-lang="en" class="active">No. Connect Claude, ChatGPT, or both. OpenCode Go monitoring is optional and off by default.</p><p data-lang="de">Nein. Verbinde Claude, ChatGPT oder beide. OpenCode Go ist optional und standardmäßig ausgeschaltet.</p></details>
+          <details><summary data-lang="en" class="active">Does Token Monitor reuse browser cookies?</summary><summary data-lang="de">Verwendet Token Monitor meine Browser-Cookies?</summary><p data-lang="en" class="active">No. Every provider uses its own persistent WebKit session inside the app.</p><p data-lang="de">Nein. Jeder Provider nutzt eine eigene persistente WebKit-Session in der App.</p></details>
+          <details><summary data-lang="en" class="active">Can I switch provider accounts?</summary><summary data-lang="de">Kann ich den Provider-Account wechseln?</summary><p data-lang="en" class="active">Yes. Open provider options in Settings to reconnect, switch accounts, or disconnect. Switching clears only the selected provider session and asks Google to show the account chooser when Google sign-in is used.</p><p data-lang="de">Ja. Öffne die Provider-Optionen in den Settings, um neu zu verbinden, den Account zu wechseln oder die Verbindung zu trennen. Beim Wechsel wird nur die ausgewählte Provider-Sitzung gelöscht. Bei Google Sign-in erscheint anschließend die Account-Auswahl.</p></details>
+          <details><summary data-lang="en" class="active">How does Token Monitor update?</summary><summary data-lang="de">Wie wird Token Monitor aktualisiert?</summary><p data-lang="en" class="active">Manual checks are available in Settings. From version 1.0.22, automatic update checks are off by default and can be enabled there.</p><p data-lang="de">Manuelle Prüfungen sind in den Settings verfügbar. Ab Version 1.0.22 sind automatische Update-Prüfungen standardmäßig aus und können dort aktiviert werden.</p></details>
+          <details><summary data-lang="en" class="active">Is this an official Anthropic or OpenAI app?</summary><summary data-lang="de">Ist das eine offizielle App von Anthropic oder OpenAI?</summary><p data-lang="en" class="active">No. Token Monitor is an independent open-source utility and is not affiliated with Anthropic, OpenAI, or Apple.</p><p data-lang="de">Nein. Token Monitor ist ein unabhängiges Open-Source-Werkzeug und nicht mit Anthropic, OpenAI oder Apple verbunden.</p></details>
+          <details><summary data-lang="en" class="active">Why is Token Monitor missing from Login Items?</summary><summary data-lang="de">Warum fehlt Token Monitor bei den Anmeldeobjekten?</summary><p data-lang="en" class="active">Launch at login uses Apple's ServiceManagement API, which expects a code-signed app. Move TokenMonitor.app to Applications, open it once, and enable Launch at login in Settings.</p><p data-lang="de">Launch at login nutzt Apples ServiceManagement-API, die eine signierte App erwartet. Verschiebe TokenMonitor.app nach Applications, öffne sie einmal und aktiviere Launch at login in den Settings.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section class="final">
+      <div class="shell final-panel">
+        <h2 data-lang="en" class="active">Start the next task with the limit in view.</h2><h2 data-lang="de">Starte die nächste Aufgabe mit dem Limit im Blick.</h2>
+        <p data-lang="en" class="active">Download the current public preview for macOS or inspect the complete source code on GitHub.</p><p data-lang="de">Lade die aktuelle öffentliche Preview für macOS oder prüfe den vollständigen Source Code auf GitHub.</p>
+        <div class="actions"><a class="button button-primary" href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.28/TokenMonitor-macOS.dmg"><span aria-hidden="true">↓</span><span data-lang="en" class="active">Download v1.0.28</span><span data-lang="de">v1.0.28 laden</span></a><a class="button button-secondary" href="https://github.com/MediaPublishing/token-monitor" target="_blank" rel="noopener noreferrer">View on GitHub</a></div>
+      </div>
+    </section>
   </main>
 
-  <div id="zoom-modal" class="zoom-modal" aria-hidden="true">
-    <div class="zoom-inner">
-      <div class="zoom-head">
-        <span id="zoom-label">Screenshot</span>
-        <button class="zoom-close" id="zoom-close" type="button" data-i18n="modal.close">Close</button>
-      </div>
-      <div class="zoom-media">
-        <img id="zoom-image" src="" alt="Enlarged screenshot preview" data-i18n-attr="alt:alt.zoom" />
-      </div>
+  <footer>
+    <div class="shell footer-grid">
+      <span>© 2026 Token Monitor · <span data-lang="en" class="active">Open-source macOS utility</span><span data-lang="de">Open-Source-Werkzeug für macOS</span></span>
+      <div class="footer-links"><a href="https://github.com/MediaPublishing/token-monitor/blob/main/docs/privacy.md">Privacy</a><a href="https://github.com/MediaPublishing/token-monitor/blob/main/SUPPORT.md">Support</a><a href="https://github.com/MediaPublishing/token-monitor">Source</a></div>
     </div>
-  </div>
+  </footer>
 
-  <script>
-    (function () {
-      const translations = {
-        en: {
-          'meta.title': 'Token Monitor - Claude, ChatGPT, and optional OpenCode Go usage in your macOS menu bar',
-          'meta.description': 'Token Monitor is a native macOS menu bar app for watching Claude and ChatGPT usage side by side, with optional OpenCode Go monitoring and isolated local WebKit sessions.',
-          'alt.logo': 'Token Monitor logo',
-          'alt.dashboard': 'Token Monitor dashboard screenshot',
-          'alt.claude': 'Token Monitor Claude usage screenshot',
-          'alt.chatgpt': 'Token Monitor ChatGPT usage screenshot',
-          'alt.dashboardFull': 'Token Monitor full dashboard screenshot',
-          'alt.claudeFull': 'Token Monitor Claude usage full screenshot',
-          'alt.chatgptFull': 'Token Monitor ChatGPT usage full screenshot',
-          'alt.thumbDashboard': 'App screenshot dashboard',
-          'alt.thumbClaude': 'App screenshot Claude usage',
-          'alt.thumbChatgpt': 'App screenshot ChatGPT usage',
-          'alt.gatekeeperBlocked': 'Gatekeeper warning with Done button',
-          'alt.gatekeeperPrivacy': 'Privacy and Security Open Anyway button',
-          'alt.gatekeeperOpenAnyway': 'Open Anyway confirmation dialog',
-          'alt.gatekeeperAdmin': 'Privacy and Security password confirmation dialog',
-          'alt.zoom': 'Enlarged screenshot preview',
-          'nav.preview': 'GitHub Preview',
-          'hero.eyebrow': 'Track. Refresh. Stay ahead.',
-          'hero.title': 'Know your AI usage before it stops you.',
-          'hero.sub': 'Token Monitor keeps Claude and ChatGPT usage visible in your macOS menu bar, with optional OpenCode Go monitoring and separate local sessions for each provider.',
-          'hero.ctaPrimary': 'Download macOS DMG',
-          'hero.ctaSecondary': 'Explore Source Code',
-          'hero.microcopy': 'Public preview build. Install once from the DMG, then keep Token Monitor in the menu bar.',
-          'shots.realViews': 'Real App Views',
-          'shots.zoomHint': 'Click any screenshot to zoom',
-          'label.dashboard': 'Dashboard',
-          'label.claude': 'Claude',
-          'label.chatgpt': 'ChatGPT',
-          'label.dashboardView': 'Dashboard',
-          'label.claudeView': 'Claude usage',
-          'label.chatgptView': 'ChatGPT usage',
-          'label.gatekeeperBlocked': 'Gatekeeper warning',
-          'label.gatekeeperPrivacy': 'Privacy and Security',
-          'label.gatekeeperOpenAnyway': 'Open Anyway confirmation',
-          'label.gatekeeperAdmin': 'Password confirmation',
-          'steps.title': 'Start in 3 minutes',
-          'steps.sub': 'No build tools, no shared browser cookies.',
-          'steps.one.num': 'Step 01',
-          'steps.one.title': 'Install the app',
-          'steps.one.body': 'Download the DMG, open it, and drag Token Monitor onto Applications.',
-          'steps.two.num': 'Step 02',
-          'steps.two.title': 'Connect providers',
-          'steps.two.body': 'Log in once for Claude and ChatGPT inside their isolated WebKit sessions; add OpenCode Go from Settings when needed.',
-          'steps.three.num': 'Step 03',
-          'steps.three.title': 'Watch limits',
-          'steps.three.body': 'Open the menu bar popover when you need the current provider-specific capacity.',
-          'workflow.title': 'See usage clearly',
-          'workflow.sub': 'Each provider keeps its own numbers and reset windows. Click images to inspect details.',
-          'workflow.dashboard.title': 'One menu bar view',
-          'workflow.dashboard.body': 'A compact status board keeps Claude and ChatGPT side by side, with OpenCode Go available as an optional third provider.',
-          'workflow.dashboard.caption': 'Dashboard - provider overview',
-          'workflow.claude.title': 'Claude usage as Claude reports it',
-          'workflow.claude.body': 'Session, model, Sonnet, extra usage, balance, and reset timing stay source-native.',
-          'workflow.claude.caption': 'Claude - session and model limits',
-          'workflow.chatgpt.title': 'ChatGPT and Codex limits together',
-          'workflow.chatgpt.body': 'Daily, weekly, Codex, and credits values stay visible without a browser tab hunt.',
-          'workflow.chatgpt.caption': 'ChatGPT - daily, weekly, Codex, credits',
-          'native.kicker': 'Local sessions by design',
-          'native.title': 'Why this belongs in the menu bar',
-          'native.lede': 'Token Monitor keeps the usage check close to your work without merging provider rules into a fake universal score.',
-          'native.point.one': 'Separate WebKit storage for each provider',
-          'native.point.two': 'Source-native metrics instead of invented scoring',
-          'native.point.three': 'Refresh on launch, on demand, and in the background',
-          'native.point.four': 'Only the latest successful snapshots are stored locally',
-          'native.point.five': 'Optional debug reports open as drafts for review',
-          'native.stat.one.title': 'Provider rules stay intact',
-          'native.stat.one.body': 'Claude remains Claude. ChatGPT remains ChatGPT. OpenCode Go stays optional.',
-          'native.stat.two.title': 'Menu bar first',
-          'native.stat.two.body': 'Usage status stays one click away.',
-          'faq.title': 'FAQ + screenshot gallery',
-          'faq.one.q': 'Do I need to compile anything to use Token Monitor?',
-          'faq.one.a': 'No. Download the DMG, open it, and drag the app onto Applications.',
-          'faq.two.q': 'Does it reuse my browser cookies?',
-          'faq.two.a': 'No. Claude, ChatGPT, and optional OpenCode Go use separate persistent WebKit sessions inside the app.',
-          'faq.three.q': 'Where can I inspect the UI before installing?',
-          'faq.three.a': 'All screenshots are real Token Monitor views. Click any of them to open an enlarged preview.',
-          'faq.five.q': 'Why can macOS show a Gatekeeper warning?',
-          'faq.five.a': 'Preview builds may show Apple\\'s verification warning until Token Monitor is Developer ID signed and notarized. Only continue if you downloaded the DMG from this repository and trust that build.',
-          'faq.five.step.one': 'Click Done, not Move to Trash.',
-          'faq.five.step.two': 'Open System Settings > Privacy & Security.',
-          'faq.five.step.three': 'Scroll to Security and click Open Anyway next to the Token Monitor warning.',
-          'faq.five.step.four': 'Confirm with your Mac password or Touch ID, then click Open.',
-          'faq.five.shot.one': '1. Click Done.',
-          'faq.five.shot.two': '2. Click Open Anyway in Privacy & Security.',
-          'faq.five.shot.three': '3. Confirm with Open Anyway.',
-          'faq.five.shot.four': '4. Enter your Mac password or use Touch ID.',
-          'faq.five.apple': 'Apple\\'s official guide',
-          'faq.seven.q': 'Why is Token Monitor missing from Login Items?',
-          'faq.seven.a': 'Launch at login uses Apple\\'s ServiceManagement API, which expects a code-signed app. Move TokenMonitor.app to Applications, open it once, then enable Launch at login in Token Monitor Settings. If macOS still asks for approval, open Login Items from Token Monitor Settings and allow it there.',
-          'faq.eight.q': 'Will Token Monitor show update prompts automatically?',
-          'faq.eight.a': 'From version 1.0.22, automatic update checks are off by default. Token Monitor checks for updates when you click Check for Updates in Settings. If you enable automatic update checks, macOS may show an update prompt later without another click.',
-          'repo.title': 'Repository',
-          'repo.cta': 'Open GitHub Repo',
-          'footer.tagline': 'Token Monitor - Claude, ChatGPT, and optional OpenCode Go usage for macOS',
-          'modal.close': 'Close'
-        },
-        de: {
-          'meta.title': 'Token Monitor - Claude-, ChatGPT- und optional OpenCode-Go-Nutzung in der macOS-Menüleiste',
-          'meta.description': 'Token Monitor ist eine native macOS-Menüleisten-App für Claude- und ChatGPT-Nutzung mit optionalem OpenCode Go und getrennten lokalen WebKit-Sessions.',
-          'alt.logo': 'Token Monitor Logo',
-          'alt.dashboard': 'Token Monitor Dashboard-Screenshot',
-          'alt.claude': 'Token Monitor Screenshot der Claude-Nutzung',
-          'alt.chatgpt': 'Token Monitor Screenshot der ChatGPT-Nutzung',
-          'alt.dashboardFull': 'Token Monitor vollständiger Dashboard-Screenshot',
-          'alt.claudeFull': 'Token Monitor vollständiger Screenshot der Claude-Nutzung',
-          'alt.chatgptFull': 'Token Monitor vollständiger Screenshot der ChatGPT-Nutzung',
-          'alt.thumbDashboard': 'App-Screenshot Dashboard',
-          'alt.thumbClaude': 'App-Screenshot Claude-Nutzung',
-          'alt.thumbChatgpt': 'App-Screenshot ChatGPT-Nutzung',
-          'alt.gatekeeperBlocked': 'Gatekeeper-Warnung mit Fertig-Button',
-          'alt.gatekeeperPrivacy': 'Datenschutz und Sicherheit mit Dennoch-öffnen-Button',
-          'alt.gatekeeperOpenAnyway': 'Open-Anyway-Bestätigungsdialog',
-          'alt.gatekeeperAdmin': 'Datenschutz-und-Sicherheit-Passwortbestätigung',
-          'alt.zoom': 'Vergrößerte Screenshot-Vorschau',
-          'nav.preview': 'GitHub Preview',
-          'hero.eyebrow': 'Tracken. Aktualisieren. Vorne bleiben.',
-          'hero.title': 'Kenne deine AI-Nutzung, bevor sie dich stoppt.',
-          'hero.sub': 'Token Monitor hält Claude- und ChatGPT-Nutzung in deiner macOS-Menüleiste sichtbar, mit optionalem OpenCode Go und getrennten lokalen Sessions je Provider.',
-          'hero.ctaPrimary': 'macOS DMG herunterladen',
-          'hero.ctaSecondary': 'Source Code ansehen',
-          'hero.microcopy': 'Öffentlicher Preview-Build. Einmal aus dem DMG installieren, danach bleibt Token Monitor in der Menüleiste.',
-          'shots.realViews': 'Echte App-Ansichten',
-          'shots.zoomHint': 'Klicke auf Screenshots zum Zoomen',
-          'label.dashboard': 'Dashboard',
-          'label.claude': 'Claude',
-          'label.chatgpt': 'ChatGPT',
-          'label.dashboardView': 'Dashboard',
-          'label.claudeView': 'Claude-Nutzung',
-          'label.chatgptView': 'ChatGPT-Nutzung',
-          'label.gatekeeperBlocked': 'Gatekeeper-Warnung',
-          'label.gatekeeperPrivacy': 'Datenschutz & Sicherheit',
-          'label.gatekeeperOpenAnyway': 'Open-Anyway-Bestätigung',
-          'label.gatekeeperAdmin': 'Passwortbestätigung',
-          'steps.title': 'Start in 3 Minuten',
-          'steps.sub': 'Keine Build-Tools, keine geteilten Browser-Cookies.',
-          'steps.one.num': 'Schritt 01',
-          'steps.one.title': 'App installieren',
-          'steps.one.body': 'DMG laden, öffnen und Token Monitor auf Applications ziehen.',
-          'steps.two.num': 'Schritt 02',
-          'steps.two.title': 'Provider verbinden',
-          'steps.two.body': 'Einmal für Claude und ChatGPT in den getrennten WebKit-Sessions anmelden; OpenCode Go bei Bedarf in den Settings hinzufügen.',
-          'steps.three.num': 'Schritt 03',
-          'steps.three.title': 'Limits im Blick behalten',
-          'steps.three.body': 'Öffne das Menüleisten-Popover, wenn du die aktuelle provider-spezifische Kapazität brauchst.',
-          'workflow.title': 'Nutzung klar sehen',
-          'workflow.sub': 'Jeder Provider behält eigene Werte und Reset-Fenster. Klicke Bilder an, um Details zu prüfen.',
-          'workflow.dashboard.title': 'Eine Menüleisten-Ansicht',
-          'workflow.dashboard.body': 'Ein kompaktes Status-Board hält Claude und ChatGPT nebeneinander sichtbar; OpenCode Go kann optional als dritter Provider dazukommen.',
-          'workflow.dashboard.caption': 'Dashboard - Provider-Übersicht',
-          'workflow.claude.title': 'Claude-Nutzung wie Claude sie meldet',
-          'workflow.claude.body': 'Session, Modelle, Sonnet, Extra Usage, Balance und Reset-Zeit bleiben quellnah.',
-          'workflow.claude.caption': 'Claude - Session- und Modell-Limits',
-          'workflow.chatgpt.title': 'ChatGPT- und Codex-Limits zusammen',
-          'workflow.chatgpt.body': 'Daily, Weekly, Codex und Credits bleiben sichtbar, ohne Browser-Tab-Suche.',
-          'workflow.chatgpt.caption': 'ChatGPT - Daily, Weekly, Codex, Credits',
-          'native.kicker': 'Lokale Sessions by design',
-          'native.title': 'Warum das in die Menüleiste gehört',
-          'native.lede': 'Token Monitor hält den Usage-Check nah an deiner Arbeit, ohne Provider-Regeln in einen künstlichen Gesamtscore zu pressen.',
-          'native.point.one': 'Getrennter WebKit-Speicher je Provider',
-          'native.point.two': 'Quellnahe Metriken statt erfundener Scores',
-          'native.point.three': 'Refresh beim Start, manuell und im Hintergrund',
-          'native.point.four': 'Nur die letzten erfolgreichen Snapshots werden lokal gespeichert',
-          'native.point.five': 'Optionale Debug-Reports öffnen nur als prüfbare Entwürfe',
-          'native.stat.one.title': 'Provider-Regeln bleiben intakt',
-          'native.stat.one.body': 'Claude bleibt Claude. ChatGPT bleibt ChatGPT. OpenCode Go bleibt optional.',
-          'native.stat.two.title': 'Menüleiste zuerst',
-          'native.stat.two.body': 'Der Usage-Status bleibt einen Klick entfernt.',
-          'faq.title': 'FAQ + Screenshot-Galerie',
-          'faq.one.q': 'Muss ich etwas kompilieren, um Token Monitor zu nutzen?',
-          'faq.one.a': 'Nein. DMG laden, öffnen und die App auf Applications ziehen.',
-          'faq.two.q': 'Nutzt die App meine Browser-Cookies?',
-          'faq.two.a': 'Nein. Claude, ChatGPT und das optionale OpenCode Go nutzen getrennte persistente WebKit-Sessions in der App.',
-          'faq.three.q': 'Wo kann ich die UI vor der Installation ansehen?',
-          'faq.three.a': 'Alle Screenshots sind echte Token-Monitor-Ansichten. Klicke sie an, um eine vergrößerte Vorschau zu öffnen.',
-          'faq.five.q': 'Warum kann macOS eine Gatekeeper-Warnung zeigen?',
-          'faq.five.a': 'Preview-Builds können Apples Prüfwarnung zeigen, bis Token Monitor mit Developer ID signiert und notarized ist. Fahre nur fort, wenn du das DMG aus diesem Repository geladen hast und diesem Build vertraust.',
-          'faq.five.step.one': 'Fertig klicken, nicht In den Papierkorb legen.',
-          'faq.five.step.two': 'Systemeinstellungen > Datenschutz & Sicherheit öffnen.',
-          'faq.five.step.three': 'Zu Sicherheit scrollen und neben der Token-Monitor-Warnung Dennoch öffnen klicken.',
-          'faq.five.step.four': 'Mit Mac-Passwort oder Touch ID bestätigen, danach Öffnen klicken.',
-          'faq.five.shot.one': '1. Fertig klicken.',
-          'faq.five.shot.two': '2. In Datenschutz & Sicherheit Dennoch öffnen klicken.',
-          'faq.five.shot.three': '3. Mit Open Anyway bestätigen.',
-          'faq.five.shot.four': '4. Mac-Passwort eingeben oder Touch ID nutzen.',
-          'faq.five.apple': 'Apples offizielle Anleitung',
-          'faq.seven.q': 'Warum fehlt Token Monitor bei den Anmeldeobjekten?',
-          'faq.seven.a': 'Launch at login nutzt Apples ServiceManagement-API, die eine code-signierte App erwartet. Verschiebe TokenMonitor.app nach Applications, öffne die App einmal und aktiviere danach Launch at login in den Token-Monitor-Settings. Wenn macOS weiterhin eine Freigabe verlangt, öffne Anmeldeobjekte aus den Token-Monitor-Settings und erlaube die App dort.',
-          'faq.eight.q': 'Zeigt Token Monitor Update-Fenster automatisch?',
-          'faq.eight.a': 'Ab Version 1.0.22 sind automatische Update-Prüfungen standardmäßig aus. Token Monitor sucht nach Updates, wenn du in den Settings Check for Updates klickst. Wenn du automatische Update-Prüfungen aktivierst, kann macOS später ein Update-Fenster anzeigen, ohne dass du erneut klickst.',
-          'repo.title': 'Repository',
-          'repo.cta': 'GitHub Repo öffnen',
-          'footer.tagline': 'Token Monitor - Claude-, ChatGPT- und optional OpenCode-Go-Nutzung für macOS',
-          'modal.close': 'Schließen'
-        }
-      };
-
-      const metaDescription = document.querySelector('meta[name="description"]');
-      const languageButtons = document.querySelectorAll('[data-lang-choice]');
-      const modal = document.getElementById('zoom-modal');
-      const zoomImage = document.getElementById('zoom-image');
-      const zoomLabel = document.getElementById('zoom-label');
-      const closeBtn = document.getElementById('zoom-close');
-      const zoomables = document.querySelectorAll('.zoomable');
-
-      function t(lang, key) {
-        return translations[lang][key] || translations.en[key] || '';
-      }
-
-      function getInitialLanguage() {
-        const saved = window.localStorage.getItem('tokenmonitor-language');
-        if (saved === 'en' || saved === 'de') return saved;
-
-        const languages = navigator.languages || [navigator.language || 'en'];
-        return languages.some(language => language.toLowerCase().startsWith('de')) ? 'de' : 'en';
-      }
-
-      function applyLanguage(lang) {
-        document.documentElement.lang = lang;
-        document.title = t(lang, 'meta.title');
-        if (metaDescription) metaDescription.setAttribute('content', t(lang, 'meta.description'));
-
-        document.querySelectorAll('[data-i18n]').forEach(element => {
-          element.textContent = t(lang, element.dataset.i18n);
-        });
-
-        document.querySelectorAll('[data-i18n-html]').forEach(element => {
-          element.innerHTML = t(lang, element.dataset.i18nHtml);
-        });
-
-        document.querySelectorAll('[data-i18n-attr]').forEach(element => {
-          element.dataset.i18nAttr.split(';').forEach(pair => {
-            const parts = pair.split(':');
-            if (parts.length !== 2) return;
-            element.setAttribute(parts[0], t(lang, parts[1]));
-          });
-        });
-
-        languageButtons.forEach(button => {
-          button.setAttribute('aria-pressed', String(button.dataset.langChoice === lang));
-        });
-
-        window.localStorage.setItem('tokenmonitor-language', lang);
-      }
-
-      function openModal(src, label) {
-        zoomImage.src = src;
-        zoomLabel.textContent = label || 'Screenshot';
-        modal.classList.add('open');
-        modal.setAttribute('aria-hidden', 'false');
-      }
-
-      function closeModal() {
-        modal.classList.remove('open');
-        modal.setAttribute('aria-hidden', 'true');
-        zoomImage.src = '';
-      }
-
-      zoomables.forEach(img => {
-        img.addEventListener('click', () => {
-          openModal(img.src, img.dataset.label || img.alt);
-        });
-      });
-
-      languageButtons.forEach(button => {
-        button.addEventListener('click', () => applyLanguage(button.dataset.langChoice));
-      });
-
-      closeBtn.addEventListener('click', closeModal);
-      modal.addEventListener('click', (event) => {
-        if (event.target === modal) closeModal();
-      });
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && modal.classList.contains('open')) closeModal();
-      });
-
-      applyLanguage(getInitialLanguage());
-    })();
-  </script>
+  <script src="./app.js" defer></script>
 </body>
 </html>

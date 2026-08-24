@@ -226,4 +226,51 @@ struct AppSourceBehaviorTests {
         #expect(loginController.contains("isOpenCodeGoWorkspaceURL(currentURL)"))
         #expect(loginController.contains("hasSubscriptionMessage"))
     }
+
+    @Test func providersCanDisconnectOrSwitchAccountsWithoutClearingOtherProviders() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let appModel = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/AppModel.swift"),
+            encoding: .utf8
+        )
+        let settingsView = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/SettingsView.swift"),
+            encoding: .utf8
+        )
+        let sessionController = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/ServiceSessionController.swift"),
+            encoding: .utf8
+        )
+        let loginController = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/ServiceLoginWindowController.swift"),
+            encoding: .utf8
+        )
+
+        #expect(settingsView.contains("Switch account..."))
+        #expect(settingsView.contains("Disconnect"))
+        #expect(settingsView.contains("model.switchAccount(for: status.service)"))
+        #expect(appModel.contains("func disconnect(_ service: ServiceKind)"))
+        #expect(appModel.contains("replacingExistingSession: true"))
+        #expect(sessionController.contains("websiteDataBelongsToService"))
+        #expect(sessionController.contains("record.displayName"))
+        #expect(sessionController.contains("cookie.domain"))
+        #expect(sessionController.contains("serviceWebsiteHosts"))
+        #expect(sessionController.contains("openai.com"))
+        #expect(sessionController.contains("anthropic.com"))
+        #expect(sessionController.contains("opencode.ai"))
+        #expect(!sessionController.contains("google.com"))
+        #expect(!sessionController.contains("removeData(ofTypes: dataTypes, modifiedSince:"))
+        #expect(loginController.contains("forcesGoogleAccountSelection = true"))
+        #expect(loginController.contains("prompt"))
+        #expect(loginController.contains("select_account"))
+        #expect(loginController.contains("login_hint"))
+        #expect(loginController.contains("authuser"))
+        #expect(loginController.contains("accounts.google.com"))
+        #expect(settingsView.contains("model.disconnect(status.service)"))
+        #expect(settingsView.contains("providerHasAccountActions"))
+    }
 }

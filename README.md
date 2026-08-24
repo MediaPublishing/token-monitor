@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.27/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.28/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.27`.
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.28`.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -49,6 +49,7 @@ If your work depends on Claude and ChatGPT, the limiting factor is often not the
 - View Claude and ChatGPT/Codex in one compact popover
 - Optionally add OpenCode Go after connecting the account
 - Keep each provider in its own persistent WebKit session
+- Reconnect, switch accounts, or disconnect each provider independently
 - Refresh on launch, on demand, and in the background
 - Preserve source-native metrics instead of inventing a combined score
 - Use the menu bar icon as a quick remaining-capacity signal
@@ -73,7 +74,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.27/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.28/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -157,6 +158,7 @@ Wenn deine Arbeit von Claude und ChatGPT abhängt, ist oft nicht die Modellquali
 - Claude und ChatGPT/Codex in einem kompakten Popover sehen
 - OpenCode Go bei Bedarf optional hinzufügen
 - Jeden Provider in einer eigenen persistenten WebKit-Session halten
+- Jeden Provider unabhängig neu verbinden, wechseln oder trennen
 - Beim Start, manuell und im Hintergrund aktualisieren
 - Quellnahe Metriken behalten statt einen künstlichen Gesamtscore zu bauen
 - Das Menüleisten-Icon als schnelles Restkapazitäts-Signal nutzen
@@ -181,7 +183,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.27/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.28/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -273,6 +275,7 @@ token-monitor/
 ## Documentation
 
 - [Landing page](landing/index.html)
+- [Public landing page](https://token-monitor-landing.pages.dev/)
 - [Current screenshot](docs/token-monitor-screenshot.png)
 - [Support](SUPPORT.md)
 - [Security policy](SECURITY.md)

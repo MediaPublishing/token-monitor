@@ -234,11 +234,21 @@ final class AppModel: ObservableObject {
         refreshTasks[service] = task
     }
 
-    func openLogin(for service: ServiceKind) {
+    func openLogin(for service: ServiceKind, replacingExistingSession: Bool = false) {
         sessionCoordinator.cancelRefresh(service: service)
+
+        if replacingExistingSession {
+            DashboardReducer.reduce(
+                &dashboardState,
+                event: .service(service, .disconnected(message: "Connect account"))
+            )
+            persistSnapshots()
+        }
+
         DashboardReducer.reduce(&dashboardState, event: .service(service, .refreshStarted(trigger: .login)))
         sessionCoordinator.showLoginWindow(
             for: service,
+            replacingExistingSession: replacingExistingSession,
             onAuthenticated: { [weak self] in
                 self?.refresh(service, trigger: .login, force: true)
             },
@@ -254,6 +264,35 @@ final class AppModel: ObservableObject {
                 }
             }
         )
+    }
+
+    func switchAccount(for service: ServiceKind) {
+        if service == .openCodeGo && !openCodeGoEnabled {
+            setOpenCodeGoEnabledWithoutRefreshing(true)
+        }
+        openLogin(for: service, replacingExistingSession: true)
+    }
+
+    func disconnect(_ service: ServiceKind) {
+        pendingForcedRefreshes[service] = nil
+        refreshTasks[service]?.cancel()
+        sessionCoordinator.cancelRefresh(service: service)
+
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+
+            await self.sessionCoordinator.clearSession(for: service)
+            if service == .openCodeGo {
+                self.setOpenCodeGoEnabledWithoutRefreshing(false)
+            }
+            DashboardReducer.reduce(
+                &self.dashboardState,
+                event: .service(service, .disconnected(message: "Connect account"))
+            )
+            self.persistSnapshots()
+        }
     }
 
     func openUsagePageInDefaultBrowser(for service: ServiceKind) {
@@ -352,6 +391,11 @@ final class AppModel: ObservableObject {
             pendingForcedRefreshes[.openCodeGo] = nil
             sessionCoordinator.cancelRefresh(service: .openCodeGo)
         }
+    }
+
+    private func setOpenCodeGoEnabledWithoutRefreshing(_ enabled: Bool) {
+        openCodeGoEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: Keys.openCodeGoEnabled)
     }
 
     func checkForUpdates() {

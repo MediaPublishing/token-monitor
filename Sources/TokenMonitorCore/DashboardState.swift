@@ -43,6 +43,7 @@ public enum ServiceRefreshEvent: Equatable, Sendable {
     case refreshSucceeded(ServiceSnapshot)
     case refreshFailed(message: String)
     case authRequired(message: String)
+    case disconnected(message: String)
 }
 
 public enum DashboardEvent: Equatable, Sendable {
@@ -78,6 +79,10 @@ public enum DashboardReducer {
                 } else {
                     state.services[index].refreshState = .authRequired(message: message)
                 }
+
+            case let .disconnected(message):
+                state.services[index].snapshot = nil
+                state.services[index].refreshState = .authRequired(message: message)
             }
         }
     }

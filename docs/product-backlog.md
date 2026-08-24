@@ -1,12 +1,13 @@
 # Token Monitor Product Backlog
 
-Last reviewed: 2026-05-13
+Last reviewed: 2026-08-24
 
 ## Current Release State
 
-- Current public preview release: `v1.0.27` / build `28`.
-- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.27`.
-- GitHub Pages landing page: `https://mediapublishing.github.io/token-monitor/`.
+- Current public preview release: `v1.0.28` / build `29`.
+- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.28`.
+- Public marketing landing page: `https://token-monitor-landing.pages.dev/`.
+- GitHub Pages release and update host: `https://mediapublishing.github.io/token-monitor/`.
 - Sparkle appcast: `https://mediapublishing.github.io/token-monitor/appcast.xml`.
 - Public builds remain preview builds until Developer ID signing and notarization are resumed.
 
@@ -26,7 +27,7 @@ Last reviewed: 2026-05-13
 | P0 | Parser reliability | Active | Treat Claude and ChatGPT layout changes as hotfix candidates when users report parse failures. |
 | P0 | Install/update trust | Active | Keep Gatekeeper and update behavior clearly documented while builds are unsigned previews. |
 | P1 | Menu bar clarity | Active | Continue refining status bar display only when screenshots show real confusion or space pressure. |
-| P1 | Release operations | Active | Keep release assets, appcast, GitHub Pages, README, and landing page aligned on every preview release. |
+| P1 | Release operations | Active | Keep release assets, appcast, GitHub Pages, Cloudflare Pages, README, and landing page aligned on every preview release. |
 | P2 | Marketing setup | Active | Keep landing page screenshots and install guidance current; avoid App Store or notarization claims until true. |
 | Paused | Apple distribution | Paused | Resume only after explicit approval and required Apple credentials/access exist. |
 

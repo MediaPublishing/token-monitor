@@ -12,6 +12,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     private let statusLabel = NSTextField(wrappingLabelWithString: "")
     private var didNotifyAuthenticated = false
     private var didAutoRetryBlankChatGPTPage = false
+    private var forcesGoogleAccountSelection = false
+    private var didRewriteGoogleAuthorizationRequest = false
     private var blankPageCheckTask: Task<Void, Never>?
     private var openCodeGoReadinessTask: Task<Void, Never>?
 
@@ -98,6 +100,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     ) {
         didNotifyAuthenticated = false
         didAutoRetryBlankChatGPTPage = false
+        forcesGoogleAccountSelection = false
+        didRewriteGoogleAuthorizationRequest = false
         openCodeGoReadinessTask?.cancel()
         onAuthenticated = callback
         onAuthenticationDismissed = onDismissed
@@ -108,6 +112,16 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         openCodeGoReadinessTask?.cancel()
         let request = URLRequest(url: service.usageURL, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 60)
         webView.load(request)
+    }
+
+    func prepareForSessionReset() {
+        blankPageCheckTask?.cancel()
+        openCodeGoReadinessTask?.cancel()
+        didNotifyAuthenticated = false
+        forcesGoogleAccountSelection = true
+        didRewriteGoogleAuthorizationRequest = false
+        webView.stopLoading()
+        webView.loadHTMLString("", baseURL: nil)
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -135,6 +149,12 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void
     ) {
         guard allowsEmbeddedWebNavigation(navigationAction) else {
+            decisionHandler(.cancel)
+            return
+        }
+
+        if let accountSelectionRequest = googleAccountSelectionRequest(from: navigationAction.request) {
+            webView.load(accountSelectionRequest)
             decisionHandler(.cancel)
             return
         }
@@ -171,6 +191,11 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
             return nil
         }
 
+        if let accountSelectionRequest = googleAccountSelectionRequest(from: navigationAction.request) {
+            webView.load(accountSelectionRequest)
+            return nil
+        }
+
         webView.load(URLRequest(url: url))
         return nil
     }
@@ -179,6 +204,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         if isAuthenticatedUsagePageURL(currentURL),
            !didNotifyAuthenticated {
             didNotifyAuthenticated = true
+            forcesGoogleAccountSelection = false
             let callback = onAuthenticated
             onAuthenticated = nil
             onAuthenticationDismissed = nil
@@ -308,6 +334,52 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
             && currentURL.contains(service.usageURL.path)
     }
 
+    private func googleAccountSelectionRequest(from request: URLRequest) -> URLRequest? {
+        guard forcesGoogleAccountSelection,
+              !didRewriteGoogleAuthorizationRequest,
+              let url = request.url,
+              url.host()?.lowercased() == "accounts.google.com",
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+            return nil
+        }
+
+        var queryItems = components.queryItems ?? []
+        let isOAuthAuthorizationRequest = queryItems.contains { $0.name == "client_id" }
+            && queryItems.contains { $0.name == "redirect_uri" }
+        guard isOAuthAuthorizationRequest else {
+            return nil
+        }
+
+        let promptItems = queryItems.filter { $0.name == "prompt" }
+        let promptStrings = promptItems.compactMap { $0.value }
+        let promptValues = promptStrings.flatMap { value in
+            value.split(separator: " ").map { String($0) }
+        }
+        let existingPromptValues = promptValues.filter { value in
+            value != "none" && value != "select_account"
+        }
+
+        queryItems.removeAll { item in
+            ["prompt", "login_hint", "authuser"].contains(item.name)
+        }
+        queryItems.append(
+            URLQueryItem(
+                name: "prompt",
+                value: (existingPromptValues + ["select_account"]).joined(separator: " ")
+            )
+        )
+        components.queryItems = queryItems
+
+        guard let accountSelectionURL = components.url else {
+            return nil
+        }
+
+        didRewriteGoogleAuthorizationRequest = true
+        var accountSelectionRequest = request
+        accountSelectionRequest.url = accountSelectionURL
+        return accountSelectionRequest
+    }
+
     private func configureStatusBanner() {
         statusBanner.translatesAutoresizingMaskIntoConstraints = false
         statusBanner.wantsLayer = true
@@ -380,6 +452,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         blankPageCheckTask?.cancel()
         openCodeGoReadinessTask?.cancel()
+        forcesGoogleAccountSelection = false
         sender.orderOut(nil)
         let dismissCallback = onAuthenticationDismissed
         onAuthenticationDismissed = nil

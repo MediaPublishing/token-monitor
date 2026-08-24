@@ -84,4 +84,26 @@ struct DashboardReducerTests {
         #expect(state.service(.claude).snapshot == snapshot)
         #expect(state.service(.claude).refreshState == .stale(lastSuccess: now, message: "Claude login required"))
     }
+
+    @Test func disconnectRemovesThePreviousAccountSnapshot() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let snapshot = ServiceSnapshot(
+            service: .openCodeGo,
+            capturedAt: now,
+            pageTitle: "OpenCode Go",
+            url: "https://opencode.ai/workspace/previous/go",
+            metrics: []
+        )
+        var state = DashboardState.initial(lastSnapshots: [.openCodeGo: snapshot])
+
+        DashboardReducer.reduce(
+            &state,
+            event: .service(.openCodeGo, .disconnected(message: "Connect account")),
+            now: now
+        )
+
+        #expect(state.service(.openCodeGo).snapshot == nil)
+        #expect(state.service(.openCodeGo).connectionStatus == .authRequired)
+        #expect(state.service(.openCodeGo).refreshState == .authRequired(message: "Connect account"))
+    }
 }

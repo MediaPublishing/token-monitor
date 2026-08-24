@@ -141,13 +141,10 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
 
             ForEach(settingsProviderStatuses, id: \.service) { status in
-                Button {
-                    if status.service == .openCodeGo && !model.openCodeGoEnabled {
-                        model.setOpenCodeGoEnabled(true)
-                    }
-                    model.openLogin(for: status.service)
-                } label: {
-                    HStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    Button {
+                        connectOrReconnect(status)
+                    } label: {
                         Text(status.service.displayName)
                             .font(.subheadline)
                         Spacer(minLength: 0)
@@ -158,8 +155,30 @@ struct SettingsView: View {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
                     }
+                    .buttonStyle(.plain)
+
+                    if providerHasAccountActions(status) {
+                        Menu {
+                            Button("Reconnect") {
+                                model.openLogin(for: status.service)
+                            }
+                            Button("Switch account...") {
+                                model.switchAccount(for: status.service)
+                            }
+                            Divider()
+                            Button("Disconnect", role: .destructive) {
+                                model.disconnect(status.service)
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .menuStyle(.borderlessButton)
+                        .fixedSize()
+                        .help("\(status.service.displayName) account options")
+                    }
                 }
-                .buttonStyle(.plain)
 
                 if status.service != .openCodeGo {
                     Divider()
@@ -202,6 +221,22 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
             }
         }
+    }
+
+    private func connectOrReconnect(_ status: ServiceStatus) {
+        if status.connectionStatus == .authRequired
+            || (status.service == .openCodeGo && !model.openCodeGoEnabled) {
+            model.switchAccount(for: status.service)
+            return
+        }
+        model.openLogin(for: status.service)
+    }
+
+    private func providerHasAccountActions(_ status: ServiceStatus) -> Bool {
+        if status.service == .openCodeGo && !model.openCodeGoEnabled {
+            return false
+        }
+        return status.snapshot != nil || status.connectionStatus != .authRequired
     }
 
     private var usageDetailsSettingsCard: some View {

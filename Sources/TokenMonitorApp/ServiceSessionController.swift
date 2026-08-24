@@ -87,6 +87,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     func showLoginWindow(
+        replacingExistingSession: Bool = false,
         onAuthenticated: @escaping @MainActor () -> Void,
         onDismissed: @escaping @MainActor () -> Void
     ) {
@@ -94,7 +95,37 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             onAuthenticated: onAuthenticated,
             onDismissed: onDismissed
         )
-        browserController.showWindowAndActivate()
+
+        guard replacingExistingSession else {
+            browserController.showWindowAndActivate()
+            return
+        }
+
+        Task { @MainActor in
+            await clearSession()
+            browserController.showWindowAndActivate()
+        }
+    }
+
+    func clearSession() async {
+        cancelRefresh()
+        backgroundWebView.stopLoading()
+        browserController.prepareForSessionReset()
+
+        let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
+        let records = await dataStore.tm_dataRecords(ofTypes: dataTypes)
+        let serviceRecords = records.filter { record in
+            websiteDataBelongsToService(record.displayName, service: service)
+        }
+
+        if !serviceRecords.isEmpty {
+            await dataStore.tm_removeData(ofTypes: dataTypes, for: serviceRecords)
+        }
+
+        let cookies = await dataStore.httpCookieStore.tm_allCookies()
+        for cookie in cookies where websiteDataBelongsToService(cookie.domain, service: service) {
+            await dataStore.httpCookieStore.tm_delete(cookie)
+        }
     }
 
     private func handlePageFinishedLoading() {
@@ -436,6 +467,62 @@ private func allowsEmbeddedWebNavigation(_ url: URL?) -> Bool {
     }
 
     return ["about", "http", "https"].contains(scheme)
+}
+
+private func websiteDataBelongsToService(_ value: String, service: ServiceKind) -> Bool {
+    let normalized = value
+        .lowercased()
+        .trimmingCharacters(in: CharacterSet(charactersIn: "."))
+    return serviceWebsiteHosts(service).contains { host in
+        normalized == host || normalized.hasSuffix(".\(host)")
+    }
+}
+
+private func serviceWebsiteHosts(_ service: ServiceKind) -> [String] {
+    switch service {
+    case .chatGPT:
+        return ["chatgpt.com", "openai.com"]
+    case .claude:
+        return ["claude.ai", "anthropic.com"]
+    case .openCodeGo:
+        return ["opencode.ai"]
+    }
+}
+
+private extension WKWebsiteDataStore {
+    func tm_dataRecords(ofTypes dataTypes: Set<String>) async -> [WKWebsiteDataRecord] {
+        await withCheckedContinuation { continuation in
+            fetchDataRecords(ofTypes: dataTypes) { records in
+                continuation.resume(returning: records)
+            }
+        }
+    }
+
+    func tm_removeData(ofTypes dataTypes: Set<String>, for records: [WKWebsiteDataRecord]) async {
+        await withCheckedContinuation { continuation in
+            removeData(ofTypes: dataTypes, for: records) {
+                continuation.resume()
+            }
+        }
+    }
+}
+
+private extension WKHTTPCookieStore {
+    func tm_allCookies() async -> [HTTPCookie] {
+        await withCheckedContinuation { continuation in
+            getAllCookies { cookies in
+                continuation.resume(returning: cookies)
+            }
+        }
+    }
+
+    func tm_delete(_ cookie: HTTPCookie) async {
+        await withCheckedContinuation { continuation in
+            delete(cookie) {
+                continuation.resume()
+            }
+        }
+    }
 }
 
 @MainActor

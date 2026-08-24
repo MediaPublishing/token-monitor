@@ -25,12 +25,18 @@ final class SessionCoordinator {
 
     func showLoginWindow(
         for service: ServiceKind,
+        replacingExistingSession: Bool = false,
         onAuthenticated: @escaping @MainActor () -> Void,
         onDismissed: @escaping @MainActor () -> Void
     ) {
         controllers[service]?.showLoginWindow(
+            replacingExistingSession: replacingExistingSession,
             onAuthenticated: onAuthenticated,
             onDismissed: onDismissed
         )
+    }
+
+    func clearSession(for service: ServiceKind) async {
+        await controllers[service]?.clearSession()
     }
 }

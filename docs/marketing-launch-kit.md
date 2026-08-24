@@ -1,6 +1,6 @@
 # Token Monitor Marketing Launch Kit
 
-Last reviewed: 2026-05-13
+Last reviewed: 2026-08-24
 
 ## Purpose
 
@@ -118,8 +118,10 @@ https://github.com/MediaPublishing/token-monitor/blob/main/SUPPORT.md
 Marketing URL:
 
 ```text
-https://mediapublishing.github.io/token-monitor/
+https://token-monitor-landing.pages.dev/
 ```
+
+The Cloudflare Pages project `token-monitor-landing` is the public marketing surface. GitHub Pages remains the release/update host at `https://mediapublishing.github.io/token-monitor/` for `appcast.xml` and Sparkle update assets.
 
 Privacy URL:
 
