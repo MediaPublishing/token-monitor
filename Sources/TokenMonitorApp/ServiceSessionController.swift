@@ -427,20 +427,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     private func makeBrowserController() -> ServiceLoginWindowController {
-        let controller = ServiceLoginWindowController(service: service, dataStore: dataStore)
-        controller.onPageFinishedLoading = { [weak self] in
-            guard let self, self.service == .chatGPT else {
-                return
-            }
-            self.handlePageFinishedLoading()
-        }
-        controller.onNavigationFailure = { [weak self] error in
-            guard let self, self.service == .chatGPT else {
-                return
-            }
-            self.handleNavigationFailure(error)
-        }
-        return controller
+        ServiceLoginWindowController(service: service, dataStore: dataStore)
     }
 
     private func makeBackgroundWebView() -> WKWebView {
@@ -670,7 +657,7 @@ private func extractionScript(for service: ServiceKind) -> String {
           const interesting = Array.from(document.querySelectorAll('main, main *, section, article, div, span, p, h1, h2, h3'))
             .map(node => (node.innerText || node.textContent || '').trim())
             .filter(text => text.length > 0 && text.length < 320)
-            .filter(text => /%|rolling\\s+usage|weekly\\s+usage|monthly\\s+usage|resets?\\s+in/i.test(text));
+            .filter(text => /%|(?:rolling|5[- ]hour)\\s+usage|weekly\\s+usage|monthly\\s+usage|resets?\\s+in/i.test(text));
           const links = Array.from(document.querySelectorAll('a[href]'))
             .map(node => {
               try { return new URL(node.getAttribute('href'), location.href).href; } catch (_) { return ''; }

@@ -224,11 +224,6 @@ struct SettingsView: View {
     }
 
     private func connectOrReconnect(_ status: ServiceStatus) {
-        if status.connectionStatus == .authRequired
-            || (status.service == .openCodeGo && !model.openCodeGoEnabled) {
-            model.switchAccount(for: status.service)
-            return
-        }
         model.openLogin(for: status.service)
     }
 

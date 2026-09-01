@@ -257,8 +257,15 @@ public struct OpenCodeGoUsageParser: UsageParsing {
         let specs = [
             OpenCodeGoMetricSpec(
                 key: "rolling-usage",
-                title: "Rolling Usage",
-                labels: ["Rolling Usage", "Fortlaufende Nutzung"]
+                title: "5 hour",
+                labels: [
+                    "5-hour Usage",
+                    "5 hour Usage",
+                    "Rolling Usage",
+                    "5-Stunden-Nutzung",
+                    "5 Stunden Nutzung",
+                    "Fortlaufende Nutzung"
+                ]
             ),
             OpenCodeGoMetricSpec(
                 key: "weekly-usage",
@@ -524,16 +531,14 @@ private func chatGPTCandidateLines(from extract: ServicePageExtract) -> [String]
 }
 
 private func openCodeCandidateLines(from extract: ServicePageExtract, splittingAt labels: [String]) -> [String] {
-    var result: [String] = []
-    var seen: Set<String> = []
-    let sources = extract.segments + [extract.bodyText]
+    var result = normalizedLines(from: extract.bodyText).flatMap { line in
+        splitOpenCodeGoLine(line, labels: labels)
+    }
+    var seen = Set(result)
 
-    for source in sources {
-        for line in normalizedLines(from: source) {
-            for candidate in splitOpenCodeGoLine(line, labels: labels) {
-                guard seen.insert(candidate).inserted else {
-                    continue
-                }
+    for segment in extract.segments {
+        for line in normalizedLines(from: segment) {
+            for candidate in splitOpenCodeGoLine(line, labels: labels) where seen.insert(candidate).inserted {
                 result.append(candidate)
             }
         }

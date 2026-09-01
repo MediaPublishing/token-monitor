@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.28/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.29/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.28`.
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.29`.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -49,7 +49,7 @@ If your work depends on Claude and ChatGPT, the limiting factor is often not the
 - View Claude and ChatGPT/Codex in one compact popover
 - Optionally add OpenCode Go after connecting the account
 - Keep each provider in its own persistent WebKit session
-- Reconnect, switch accounts, or disconnect each provider independently
+- Reconnect without clearing the provider session, or explicitly switch and disconnect accounts
 - Refresh on launch, on demand, and in the background
 - Preserve source-native metrics instead of inventing a combined score
 - Use the menu bar icon as a quick remaining-capacity signal
@@ -74,7 +74,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.28/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.29/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -111,7 +111,7 @@ Token Monitor checks for updates only when you click **Check for Updates...** in
 
 #### Optional OpenCode Go
 
-OpenCode Go monitoring is off by default. In Settings, enable **Monitor OpenCode Go**, click **Connect OpenCode Go**, and sign in on the OpenCode page. Token Monitor follows the authenticated workspace page and reads **Rolling Usage**, **Weekly Usage**, and **Monthly Usage**. The OpenCode Go section and its menu bar indicator appear only after a successful connection and refresh.
+OpenCode Go monitoring is off by default. In Settings, enable **Monitor OpenCode Go**, click **Connect OpenCode Go**, and sign in on the OpenCode page. Token Monitor follows the authenticated workspace page and reads **5-hour Usage**, **Weekly Usage**, and **Monthly Usage**. The OpenCode Go section and its menu bar indicator appear only after a successful connection and refresh.
 
 ### Build From Source
 
@@ -158,7 +158,7 @@ Wenn deine Arbeit von Claude und ChatGPT abhängt, ist oft nicht die Modellquali
 - Claude und ChatGPT/Codex in einem kompakten Popover sehen
 - OpenCode Go bei Bedarf optional hinzufügen
 - Jeden Provider in einer eigenen persistenten WebKit-Session halten
-- Jeden Provider unabhängig neu verbinden, wechseln oder trennen
+- Provider neu verbinden, ohne die Sitzung zu löschen, oder Accounts ausdrücklich wechseln und trennen
 - Beim Start, manuell und im Hintergrund aktualisieren
 - Quellnahe Metriken behalten statt einen künstlichen Gesamtscore zu bauen
 - Das Menüleisten-Icon als schnelles Restkapazitäts-Signal nutzen
@@ -183,7 +183,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.28/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.29/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -220,7 +220,7 @@ Token Monitor sucht nur dann nach Updates, wenn du in den Settings **Check for U
 
 #### Optionales OpenCode Go
 
-Die OpenCode-Go-Überwachung ist standardmäßig deaktiviert. Aktiviere in den Settings **Monitor OpenCode Go**, klicke auf **Connect OpenCode Go** und melde dich auf der OpenCode-Seite an. Token Monitor folgt der authentifizierten Workspace-Seite und liest **Rolling Usage**, **Weekly Usage** und **Monthly Usage**. Der OpenCode-Go-Bereich und sein Menüleisten-Balken erscheinen erst nach erfolgreicher Verbindung und Aktualisierung.
+Die OpenCode-Go-Überwachung ist standardmäßig deaktiviert. Aktiviere in den Settings **Monitor OpenCode Go**, klicke auf **Connect OpenCode Go** und melde dich auf der OpenCode-Seite an. Token Monitor folgt der authentifizierten Workspace-Seite und liest **5-hour Usage**, **Weekly Usage** und **Monthly Usage**. Der OpenCode-Go-Bereich und sein Menüleisten-Balken erscheinen erst nach erfolgreicher Verbindung und Aktualisierung.
 
 ### Aus dem Source Code bauen
 

@@ -19,8 +19,6 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
     var onAuthenticated: (@MainActor () -> Void)?
     var onAuthenticationDismissed: (@MainActor () -> Void)?
-    var onPageFinishedLoading: (@MainActor () -> Void)?
-    var onNavigationFailure: (@MainActor (Error) -> Void)?
 
     init(service: ServiceKind, dataStore: WKWebsiteDataStore, onAuthenticated: (@MainActor () -> Void)? = nil) {
         self.service = service
@@ -126,7 +124,6 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         guard let currentURL = webView.url?.absoluteString else {
-            onPageFinishedLoading?()
             return
         }
 
@@ -211,7 +208,6 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
             callback?()
         }
 
-        onPageFinishedLoading?()
     }
 
     private func scheduleChatGPTBlankPageCheck(currentURL: String) {
@@ -302,7 +298,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
             JSON.stringify({
               url: location.href,
               bodyText: ((document.body && (document.body.innerText || document.body.textContent)) || "").trim(),
-              hasUsageLabels: ["Rolling Usage", "Weekly Usage", "Monthly Usage"].every(label => (document.body?.innerText || "").toLowerCase().includes(label.toLowerCase())),
+              hasUsageLabels: ["Weekly Usage", "Monthly Usage"].every(label => (document.body?.innerText || "").toLowerCase().includes(label.toLowerCase()))
+                && ["Rolling Usage", "5-hour Usage", "5 hour Usage"].some(label => (document.body?.innerText || "").toLowerCase().includes(label.toLowerCase())),
               hasWorkspaceLink: Array.from(document.querySelectorAll('a[href]')).some(node => {
                 try { return new URL(node.getAttribute('href'), location.href).pathname.match(/^\\/workspace\\/[^/]+\\/go\\/?$/) !== null; } catch (_) { return false; }
               })
@@ -417,11 +414,11 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        onNavigationFailure?(error)
+        showStatusBannerIfNeeded("ChatGPT connection page could not be loaded. Try again without clearing your local session.")
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        onNavigationFailure?(error)
+        showStatusBannerIfNeeded("ChatGPT connection page could not be loaded. Try again without clearing your local session.")
     }
 
     func currentPageTitle() -> String {

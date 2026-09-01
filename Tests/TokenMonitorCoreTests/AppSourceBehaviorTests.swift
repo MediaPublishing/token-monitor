@@ -272,5 +272,9 @@ struct AppSourceBehaviorTests {
         #expect(loginController.contains("accounts.google.com"))
         #expect(settingsView.contains("model.disconnect(status.service)"))
         #expect(settingsView.contains("providerHasAccountActions"))
+        #expect(settingsView.contains("model.openLogin(for: status.service)"))
+        #expect(!settingsView.contains("model.switchAccount(for: status.service)\n            return"))
+        #expect(!sessionController.contains("controller.onPageFinishedLoading"))
+        #expect(!sessionController.contains("controller.onNavigationFailure"))
     }
 }

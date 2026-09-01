@@ -142,4 +142,33 @@ struct OpenCodeGoUsageParserTests {
         #expect(snapshot.metric(for: "weekly-usage")?.valueText == "94% remaining")
         #expect(snapshot.metric(for: "monthly-usage")?.valueText == "97% remaining")
     }
+
+    @Test func parsesCurrentFiveHourUsageLayoutWithDecimalPercentages() throws {
+        let extract = ServicePageExtract(
+            service: .openCodeGo,
+            pageTitle: "opencode",
+            url: "https://opencode.ai/workspace/example/go",
+            bodyText: """
+            You are subscribed to OpenCode Go.
+            5-hour Usage
+            0%
+            Resets in 2 hours 41 minutes
+            Weekly Usage
+            0%
+            Resets in 5 days 10 hours
+            Monthly Usage
+            75.3%
+            Resets in 5 days 7 hours
+            """,
+            segments: []
+        )
+
+        let snapshot = try OpenCodeGoUsageParser().parse(extract: extract, now: .now)
+
+        #expect(snapshot.metrics.map(\.key) == ["rolling-usage", "weekly-usage", "monthly-usage"])
+        #expect(snapshot.metric(for: "rolling-usage")?.title == "5 hour")
+        #expect(snapshot.metric(for: "rolling-usage")?.valueText == "100% remaining")
+        #expect(snapshot.metric(for: "monthly-usage")?.valueText == "25% remaining")
+        #expect(snapshot.metric(for: "monthly-usage")?.progress == 0.247)
+    }
 }
