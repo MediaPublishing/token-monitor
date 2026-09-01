@@ -12,6 +12,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     private let statusLabel = NSTextField(wrappingLabelWithString: "")
     private var didNotifyAuthenticated = false
     private var didAutoRetryBlankChatGPTPage = false
+    private var didEnterChatGPTAuthenticationFlow = false
     private var forcesGoogleAccountSelection = false
     private var didRewriteGoogleAuthorizationRequest = false
     private var blankPageCheckTask: Task<Void, Never>?
@@ -84,6 +85,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
     func showWindowAndActivate() {
         didAutoRetryBlankChatGPTPage = false
+        didEnterChatGPTAuthenticationFlow = false
         openCodeGoReadinessTask?.cancel()
         showStatusBannerIfNeeded("Loading ChatGPT connection page...")
         loadUsagePage()
@@ -98,6 +100,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     ) {
         didNotifyAuthenticated = false
         didAutoRetryBlankChatGPTPage = false
+        didEnterChatGPTAuthenticationFlow = false
         forcesGoogleAccountSelection = false
         didRewriteGoogleAuthorizationRequest = false
         openCodeGoReadinessTask?.cancel()
@@ -116,6 +119,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         blankPageCheckTask?.cancel()
         openCodeGoReadinessTask?.cancel()
         didNotifyAuthenticated = false
+        didEnterChatGPTAuthenticationFlow = false
         forcesGoogleAccountSelection = true
         didRewriteGoogleAuthorizationRequest = false
         webView.stopLoading()
@@ -128,7 +132,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         }
 
         if service == .chatGPT {
-            scheduleChatGPTBlankPageCheck(currentURL: currentURL)
+            scheduleChatGPTBlankPageCheck()
             return
         }
 
@@ -145,6 +149,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         decidePolicyFor navigationAction: WKNavigationAction,
         decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void
     ) {
+        noteChatGPTAuthenticationNavigation(navigationAction.request.url)
+
         guard allowsEmbeddedWebNavigation(navigationAction) else {
             decisionHandler(.cancel)
             return
@@ -184,6 +190,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         for navigationAction: WKNavigationAction,
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
+        noteChatGPTAuthenticationNavigation(navigationAction.request.url)
+
         guard allowsEmbeddedWebNavigation(navigationAction), let url = navigationAction.request.url else {
             return nil
         }
@@ -210,7 +218,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
     }
 
-    private func scheduleChatGPTBlankPageCheck(currentURL: String) {
+    private func scheduleChatGPTBlankPageCheck() {
         blankPageCheckTask?.cancel()
         blankPageCheckTask = Task { @MainActor in
             try? await Task.sleep(nanoseconds: 4_000_000_000)
@@ -238,8 +246,43 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
                 hideStatusBannerIfNeeded()
             }
 
-            finishLoadedPage(currentURL: currentURL)
+            if shouldRedirectChatGPTToUsagePage(readiness.url) {
+                didEnterChatGPTAuthenticationFlow = false
+                showStatusBannerIfNeeded("ChatGPT login completed. Loading usage limits...")
+                loadUsagePage()
+                return
+            }
+
+            finishLoadedPage(currentURL: readiness.url)
         }
+    }
+
+    private func noteChatGPTAuthenticationNavigation(_ url: URL?) {
+        guard service == .chatGPT, let url else {
+            return
+        }
+
+        let host = url.host()?.lowercased() ?? ""
+        let path = url.path.lowercased()
+        if host == "auth.openai.com"
+            || host.hasSuffix(".auth.openai.com")
+            || path == "/auth"
+            || path.hasPrefix("/auth/")
+            || path.contains("/log-in") {
+            didEnterChatGPTAuthenticationFlow = true
+        }
+    }
+
+    private func shouldRedirectChatGPTToUsagePage(_ currentURL: String) -> Bool {
+        guard service == .chatGPT,
+              didEnterChatGPTAuthenticationFlow,
+              !isAuthenticatedUsagePageURL(currentURL),
+              let url = URL(string: currentURL),
+              let host = url.host()?.lowercased() else {
+            return false
+        }
+
+        return host == "chatgpt.com" || host.hasSuffix(".chatgpt.com")
     }
 
     private func readChatGPTPageReadiness() async -> ChatGPTPageReadiness? {

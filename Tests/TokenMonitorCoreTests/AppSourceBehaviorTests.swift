@@ -193,6 +193,24 @@ struct AppSourceBehaviorTests {
         #expect(sessionController.contains("Usage page refresh timed out"))
     }
 
+    @Test func chatGPTLoginReturnsToUsagePageBeforeCompletingConnection() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let loginController = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/ServiceLoginWindowController.swift"),
+            encoding: .utf8
+        )
+
+        #expect(loginController.contains("didEnterChatGPTAuthenticationFlow"))
+        #expect(loginController.contains("noteChatGPTAuthenticationNavigation"))
+        #expect(loginController.contains("shouldRedirectChatGPTToUsagePage"))
+        #expect(loginController.contains("loadUsagePage()"))
+        #expect(loginController.contains("finishLoadedPage(currentURL: readiness.url)"))
+    }
+
     @Test func openCodeGoIsOptInAndHiddenUntilItHasASnapshot() throws {
         let rootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
