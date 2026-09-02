@@ -1,11 +1,11 @@
 # Token Monitor Product Backlog
 
-Last reviewed: 2026-09-01
+Last reviewed: 2026-09-02
 
 ## Current Release State
 
-- Current public preview release: `v1.0.30` / build `31`.
-- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.30`.
+- Current public preview release: `v1.0.31` / build `32`.
+- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.31`.
 - Public marketing landing page: `https://token-monitor-landing.pages.dev/`.
 - GitHub Pages release and update host: `https://mediapublishing.github.io/token-monitor/`.
 - Sparkle appcast: `https://mediapublishing.github.io/token-monitor/appcast.xml`.
@@ -19,7 +19,8 @@ Last reviewed: 2026-09-01
 - Manual update checks remain available through Settings.
 - Debug reports must remain opt-in and draft-only. Do not send or post private usage dumps automatically.
 - Public GitHub Issues must not include raw debug dumps, account data, chat titles, cookies, tokens, Apple credentials, or GitHub secrets.
-- ChatGPT connection completes only after an authenticated login window has returned to the usage page; normal reconnects must preserve provider sessions.
+- ChatGPT connection completes only after an authenticated login window has returned to the usage page; its first snapshot must come from that same authenticated window before background refresh resumes.
+- Localized login pages must be classified as authentication failures, not parser failures. A single provider-reported usage limit is valid and must not be duplicated into invented model metrics.
 
 ## Active Priorities
 

@@ -24,7 +24,6 @@ struct AppSourceBehaviorTests {
         #expect(!loginWindowController.contains("orderFrontRegardless"))
         #expect(!loginWindowController.contains("removeData(ofTypes:"))
         #expect(!sessionController.contains("browserController.loadUsagePage()"))
-        #expect(!sessionController.contains("browserController.evaluateJavaScript"))
         #expect(!sessionController.contains("WKWebsiteDataStore(forIdentifier:"))
         #expect(sessionController.contains("WKWebsiteDataStore.default()"))
         #expect(!sessionController.contains("beginBackgroundRefreshPresentationIfNeeded"))
@@ -209,6 +208,24 @@ struct AppSourceBehaviorTests {
         #expect(loginController.contains("shouldRedirectChatGPTToUsagePage"))
         #expect(loginController.contains("loadUsagePage()"))
         #expect(loginController.contains("finishLoadedPage(currentURL: readiness.url)"))
+    }
+
+    @Test func firstChatGPTRefreshAfterLoginUsesTheAuthenticatedLoginPage() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+
+        let sessionController = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/ServiceSessionController.swift"),
+            encoding: .utf8
+        )
+
+        #expect(sessionController.contains("useAuthenticatedLoginPageForNextRefresh"))
+        #expect(sessionController.contains("snapshotFromAuthenticatedLoginPage"))
+        #expect(sessionController.contains("browserController.evaluateJavaScript(extractionScript(for: service))"))
+        #expect(sessionController.contains("useAuthenticatedLoginPageForNextRefresh = true"))
+        #expect(sessionController.contains("useAuthenticatedLoginPageForNextRefresh = false"))
     }
 
     @Test func openCodeGoIsOptInAndHiddenUntilItHasASnapshot() throws {

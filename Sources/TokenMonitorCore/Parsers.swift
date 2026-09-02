@@ -156,8 +156,14 @@ public struct ChatGPTUsageParser: UsageParsing {
     public func parse(extract: ServicePageExtract, now: Date) throws -> ServiceSnapshot {
         if extractLooksLikeLogin(extract, keywords: [
             "log in",
+            "sign in",
             "continue with google",
             "continue with apple",
+            "melde dich an",
+            "anmelden",
+            "mit google fortfahren",
+            "mit apple fortfahren",
+            "kostenlos registrieren",
             "verify you are human",
             "verify you're human"
         ]) {
@@ -179,6 +185,8 @@ public struct ChatGPTUsageParser: UsageParsing {
             }),
             .init(key: "credits-remaining", kind: .stat, match: { line in
                 line.localizedCaseInsensitiveContains("credits remaining")
+                    || line.localizedCaseInsensitiveContains("verbleibendes guthaben")
+                    || line.localizedCaseInsensitiveContains("guthaben verbleibend")
             })
         ]
 
@@ -217,7 +225,7 @@ public struct ChatGPTUsageParser: UsageParsing {
 
         let metrics = specs.compactMap { metricsByKey[$0.key] }
         let progressMetricCount = metrics.filter { $0.style == .progress }.count
-        guard progressMetricCount >= 2 else {
+        guard progressMetricCount >= 1 else {
             throw UsageParseError.unsupportedLayout("ChatGPT usage layout could not be parsed")
         }
 
@@ -408,21 +416,27 @@ private enum ChatGPTDuration {
 }
 
 private func isUsageLimitTitle(_ line: String, duration: ChatGPTDuration, requiresModelName: Bool) -> Bool {
+    guard line.count <= 180 else {
+        return false
+    }
+
     let normalized = line
         .lowercased()
         .replacingOccurrences(of: "-", with: " ")
         .replacingOccurrences(of: "  ", with: " ")
 
-    guard normalized.contains("usage limit") else {
+    guard normalized.contains("limit") else {
         return false
     }
 
     let hasDuration: Bool
     switch duration {
     case .fiveHour:
-        hasDuration = normalized.contains("5 hour")
+        hasDuration = normalized.contains("5 hour") || normalized.contains("5 stunden")
     case .weekly:
         hasDuration = normalized.contains("weekly")
+            || normalized.contains("wöchentlich")
+            || normalized.contains("woechentlich")
     }
 
     guard hasDuration else {
@@ -481,7 +495,7 @@ private func extractChatGPTSubtitle(after index: Int, lines: [String], valueText
 
         switch kind {
         case .progress:
-            if candidate.localizedCaseInsensitiveContains("Resets") {
+            if isResetLine(candidate) {
                 return candidate
             }
             if candidate.localizedCaseInsensitiveContains("reset"), candidateIndex < upperBound {
@@ -731,8 +745,8 @@ private func normalizedProgressValue(_ text: String) -> String? {
         .trimmingCharacters(in: .whitespacesAndNewlines)
 
     let patterns = [
-        #"(\d+(?:[.,]\d+)?)\s*%\s*(remaining|used)"#,
-        #"(\d+(?:[.,]\d+)?)\s*(remaining|used)"#
+        #"(\d+(?:[.,]\d+)?)\s*%\s*(remaining|used|verbleibend|übrig|genutzt|verwendet|verbraucht)"#,
+        #"(\d+(?:[.,]\d+)?)\s*(remaining|used|verbleibend|übrig|genutzt|verwendet|verbraucht)"#
     ]
 
     for pattern in patterns {
@@ -748,7 +762,8 @@ private func normalizedProgressValue(_ text: String) -> String? {
 
         let value = normalized[valueRange]
         let status = normalized[statusRange].lowercased()
-        return "\(value)% \(status)"
+        let remainingStatuses = ["remaining", "verbleibend", "übrig"]
+        return "\(value)% \(remainingStatuses.contains(status) ? "remaining" : "used")"
     }
 
     return nil

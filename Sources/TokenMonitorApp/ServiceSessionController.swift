@@ -38,6 +38,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private var pendingContinuation: CheckedContinuation<ServiceSnapshot, Error>?
     private var currentLoadToken = UUID()
     private var extractionScheduled = false
+    private var useAuthenticatedLoginPageForNextRefresh = false
     private var refreshTimeoutTask: Task<Void, Never>?
 
     init(service: ServiceKind, diagnosticsStore: DiagnosticsStore) {
@@ -58,6 +59,12 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     func refresh() async throws -> ServiceSnapshot {
         guard pendingContinuation == nil else {
             throw SessionControllerError.refreshAlreadyInProgress
+        }
+
+        if service == .chatGPT, useAuthenticatedLoginPageForNextRefresh {
+            let snapshot = try await snapshotFromAuthenticatedLoginPage()
+            useAuthenticatedLoginPageForNextRefresh = false
+            return snapshot
         }
 
         currentLoadToken = UUID()
@@ -91,8 +98,14 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         onAuthenticated: @escaping @MainActor () -> Void,
         onDismissed: @escaping @MainActor () -> Void
     ) {
+        useAuthenticatedLoginPageForNextRefresh = false
         browserController.prepareForAuthentication(
-            onAuthenticated: onAuthenticated,
+            onAuthenticated: { [weak self] in
+                if self?.service == .chatGPT {
+                    self?.useAuthenticatedLoginPageForNextRefresh = true
+                }
+                onAuthenticated()
+            },
             onDismissed: onDismissed
         )
 
@@ -108,6 +121,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     func clearSession() async {
+        useAuthenticatedLoginPageForNextRefresh = false
         cancelRefresh()
         backgroundWebView.stopLoading()
         browserController.prepareForSessionReset()
@@ -325,6 +339,59 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private func evaluateCurrentPage() async throws -> ServicePageExtract {
         let payload = try await backgroundWebView.tm_evaluateJavaScript(extractionScript(for: service))
 
+        return try decodePageExtract(payload)
+    }
+
+    private func snapshotFromAuthenticatedLoginPage() async throws -> ServiceSnapshot {
+        let delays: [UInt64] = [0, 500_000_000, 1_500_000_000, 3_000_000_000]
+        var latestExtract: ServicePageExtract?
+        var latestError: Error = SessionControllerError.emptyUsagePage
+
+        for delay in delays {
+            if delay > 0 {
+                try await Task.sleep(nanoseconds: delay)
+            }
+            try Task.checkCancellation()
+
+            do {
+                let payload = try await browserController.evaluateJavaScript(extractionScript(for: service))
+                let extract = try decodePageExtract(payload)
+                latestExtract = extract
+
+                guard !extract.isEmptyUsagePayload else {
+                    latestError = SessionControllerError.emptyUsagePage
+                    continue
+                }
+
+                let snapshot = try parser.parse(extract: extract, now: Date())
+                writeDebugRecord(from: extract, outcome: .success, message: nil)
+                return snapshot
+            } catch let parseError as UsageParseError {
+                latestError = parseError
+            } catch {
+                latestError = error
+            }
+        }
+
+        if let latestExtract {
+            let outcome: RefreshDebugRecord.Outcome
+            if let parseError = latestError as? UsageParseError {
+                switch parseError {
+                case .authRequired:
+                    outcome = .authRequired
+                case .unsupportedLayout:
+                    outcome = .parseFailure
+                }
+            } else {
+                outcome = .transportFailure
+            }
+            writeDebugRecord(from: latestExtract, outcome: outcome, message: latestError.localizedDescription)
+        }
+
+        throw latestError
+    }
+
+    private func decodePageExtract(_ payload: String) throws -> ServicePageExtract {
         guard let data = payload.data(using: .utf8) else {
             throw SessionControllerError.invalidPayload
         }
@@ -624,12 +691,12 @@ private func extractionScript(for service: ServiceKind) -> String {
           const bodyText = readableText(document.body);
           const cardTexts = Array.from(document.querySelectorAll('main section, main article, main div'))
             .map(node => (node.innerText || node.textContent || '').trim())
-            .filter(text => /usage limit|credits remaining|remaining|resets/i.test(text))
+            .filter(text => /usage limit|nutzungslimit|credits remaining|guthaben|remaining|verbleibend|resets|zurücksetz/i.test(text))
             .filter(text => text.length > 0 && text.length < 800);
           const interesting = Array.from(document.querySelectorAll('main, main *, section, article, div, span, button, h1, h2, h3'))
             .map(node => (node.innerText || node.textContent || '').trim())
             .filter(text => text.length > 0 && text.length < 320)
-            .filter(text => /% remaining|% used|usage limit|credits remaining|codex|gpt-|weekly|5-hour|5 hour|resets/i.test(text));
+            .filter(text => /% remaining|% used|% verbleibend|% genutzt|usage limit|nutzungslimit|credits remaining|guthaben|codex|gpt-|weekly|wöchentlich|5-hour|5 hour|5-stunden|resets|zurücksetz/i.test(text));
           return JSON.stringify({
             service: "\(service.rawValue)",
             pageTitle: document.title || "",
