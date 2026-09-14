@@ -238,7 +238,8 @@ public struct ChatGPTUsageParser: UsageParsing {
             capturedAt: now,
             pageTitle: extract.pageTitle,
             url: extract.url,
-            metrics: metrics
+            metrics: metrics,
+            bankedResets: BankedResetParser.parse(extract, now: now)
         )
     }
 }

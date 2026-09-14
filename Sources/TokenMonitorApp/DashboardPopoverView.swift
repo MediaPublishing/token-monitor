@@ -21,7 +21,7 @@ struct DashboardPopoverView: View {
 
 }
 
-private struct ServiceSectionView: View {
+struct ServiceSectionView: View {
     @EnvironmentObject private var model: AppModel
 
     let status: ServiceStatus
@@ -67,6 +67,11 @@ private struct ServiceSectionView: View {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
                     ForEach(visibleMetrics(from: snapshot)) { metric in
                         MetricCardView(metric: metric)
+                    }
+                }
+                if status.service == .chatGPT {
+                    BankedResetsView(inventory: snapshot.bankedResets, snapshotDate: snapshot.capturedAt) {
+                        model.openLogin(for: .chatGPT)
                     }
                 }
             } else {

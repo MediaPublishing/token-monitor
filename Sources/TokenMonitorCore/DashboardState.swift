@@ -63,7 +63,11 @@ public enum DashboardReducer {
                 state.services[index].refreshState = .refreshing(trigger: trigger)
 
             case let .refreshSucceeded(snapshot):
-                state.services[index].snapshot = snapshot
+                var updated = snapshot
+                if snapshot.service == .chatGPT, updated.bankedResets == nil {
+                    updated.bankedResets = state.services[index].snapshot?.bankedResets
+                }
+                state.services[index].snapshot = updated
                 state.services[index].refreshState = .success(lastSuccess: snapshot.capturedAt)
 
             case let .refreshFailed(message):

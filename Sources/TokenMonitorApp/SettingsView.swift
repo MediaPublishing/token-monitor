@@ -245,6 +245,8 @@ struct SettingsView: View {
             Text("Turn this off to keep the dashboard focused on remaining capacity and reset times.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            Divider()
+            ResetReminderSettingsView(reminders: model.resetReminders)
         }
     }
 

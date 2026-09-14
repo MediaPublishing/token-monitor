@@ -294,6 +294,10 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                     continue
                 }
                 let snapshot = try parser.parse(extract: extract, now: Date())
+                if service == .chatGPT, snapshot.bankedResets == nil,
+                   BankedResetParser.isLoading(extract), index < delays.count - 1 {
+                    continue
+                }
                 writeDebugRecord(from: extract, outcome: .success, message: nil)
                 finishRefresh(with: .success(snapshot))
                 return
@@ -347,7 +351,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         var latestExtract: ServicePageExtract?
         var latestError: Error = SessionControllerError.emptyUsagePage
 
-        for delay in delays {
+        for (index, delay) in delays.enumerated() {
             if delay > 0 {
                 try await Task.sleep(nanoseconds: delay)
             }
@@ -364,6 +368,10 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                 }
 
                 let snapshot = try parser.parse(extract: extract, now: Date())
+                if service == .chatGPT, snapshot.bankedResets == nil,
+                   BankedResetParser.isLoading(extract), index < delays.count - 1 {
+                    continue
+                }
                 writeDebugRecord(from: extract, outcome: .success, message: nil)
                 return snapshot
             } catch let parseError as UsageParseError {
@@ -682,6 +690,12 @@ private func extractionScript(for service: ServiceKind) -> String {
     case .chatGPT:
         return """
         (() => {
+          const visibleBody = document.body?.innerText || '';
+          const resetHeading = /Usage limit resets|Banked resets|Gespeicherte Resets|Nutzungslimit-Zurücksetzungen/i.exec(visibleBody);
+          const bankedResetText = resetHeading
+            ? visibleBody.slice(resetHeading.index + resetHeading[0].length)
+                .split(/\\n(?:Auto reload|Auto-reload credits|Usage breakdown|Credits usage history|Automatisches Aufladen)\\b/i)[0].trim()
+            : null;
           const readableText = (root) => {
             if (!root) return "";
             const clone = root.cloneNode(true);
@@ -703,7 +717,9 @@ private func extractionScript(for service: ServiceKind) -> String {
             url: location.href,
             bodyText: [bodyText].concat(cardTexts).join("\\n"),
             segments: Array.from(new Set(interesting.concat(cardTexts))).slice(0, 240),
-            links: []
+            links: [],
+            bankedResetText,
+            pageTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
           });
         })();
         """

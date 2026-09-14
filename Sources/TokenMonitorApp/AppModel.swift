@@ -55,6 +55,7 @@ final class AppModel: ObservableObject {
 
     let snapshotDirectoryURL: URL
     let diagnosticsDirectoryURL: URL
+    let resetReminders = ResetReminderController()
 
     private let snapshotStore: SnapshotPersisting
     private let diagnosticsStore: DiagnosticsStore
@@ -64,7 +65,7 @@ final class AppModel: ObservableObject {
     private var pendingForcedRefreshes: [ServiceKind: RefreshTrigger] = [:]
     private var backgroundRefreshTimer: Timer?
 
-    private init(
+    init(
         snapshotStore: SnapshotPersisting = FileSnapshotStore(),
         updateController: AppUpdateController = .shared
     ) {
@@ -110,6 +111,7 @@ final class AppModel: ObservableObject {
         }
 
         syncLaunchAtLoginRegistration()
+        resetReminders.start()
 
         backgroundRefreshTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -208,12 +210,16 @@ final class AppModel: ObservableObject {
 
             do {
                 let snapshot = try await sessionCoordinator.refresh(service: service)
+                try Task.checkCancellation()
                 await MainActor.run {
                     DashboardReducer.reduce(
                         &self.dashboardState,
                         event: .service(service, .refreshSucceeded(snapshot))
                     )
                     self.persistSnapshots()
+                    if service == .chatGPT {
+                        self.resetReminders.update(snapshot.bankedResets)
+                    }
                 }
             } catch let parseError as UsageParseError {
                 await MainActor.run {
@@ -242,6 +248,8 @@ final class AppModel: ObservableObject {
         sessionCoordinator.cancelRefresh(service: service)
 
         if replacingExistingSession {
+            refreshTasks[service]?.cancel()
+            if service == .chatGPT { resetReminders.disconnect() }
             DashboardReducer.reduce(
                 &dashboardState,
                 event: .service(service, .disconnected(message: "Connect account"))
@@ -275,6 +283,7 @@ final class AppModel: ObservableObject {
     }
 
     func disconnect(_ service: ServiceKind) {
+        if service == .chatGPT { resetReminders.disconnect() }
         pendingForcedRefreshes[service] = nil
         refreshTasks[service]?.cancel()
         sessionCoordinator.cancelRefresh(service: service)
@@ -303,7 +312,7 @@ final class AppModel: ObservableObject {
     func desiredPopoverHeight() -> CGFloat {
         switch popoverScreen {
         case .dashboard:
-            return showUsageDetails ? 650 : 540
+            return (showUsageDetails ? 650 : 540) + 32
         case .settings:
             return 700
         }

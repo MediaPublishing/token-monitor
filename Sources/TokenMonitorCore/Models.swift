@@ -68,6 +68,8 @@ public struct ServicePageExtract: Codable, Equatable, Sendable {
     public let bodyText: String
     public let segments: [String]
     public let links: [String]
+    public let bankedResetText: String?
+    public let pageTimeZone: String?
 
     public init(
         service: ServiceKind,
@@ -75,7 +77,9 @@ public struct ServicePageExtract: Codable, Equatable, Sendable {
         url: String,
         bodyText: String,
         segments: [String],
-        links: [String] = []
+        links: [String] = [],
+        bankedResetText: String? = nil,
+        pageTimeZone: String? = nil
     ) {
         self.service = service
         self.pageTitle = pageTitle
@@ -83,6 +87,8 @@ public struct ServicePageExtract: Codable, Equatable, Sendable {
         self.bodyText = bodyText
         self.segments = segments
         self.links = links
+        self.bankedResetText = bankedResetText
+        self.pageTimeZone = pageTimeZone
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -92,6 +98,8 @@ public struct ServicePageExtract: Codable, Equatable, Sendable {
         case bodyText
         case segments
         case links
+        case bankedResetText
+        case pageTimeZone
     }
 
     public init(from decoder: Decoder) throws {
@@ -102,6 +110,8 @@ public struct ServicePageExtract: Codable, Equatable, Sendable {
         bodyText = try container.decode(String.self, forKey: .bodyText)
         segments = try container.decode([String].self, forKey: .segments)
         links = try container.decodeIfPresent([String].self, forKey: .links) ?? []
+        bankedResetText = try container.decodeIfPresent(String.self, forKey: .bankedResetText)
+        pageTimeZone = try container.decodeIfPresent(String.self, forKey: .pageTimeZone)
     }
 }
 
@@ -194,13 +204,15 @@ public struct ServiceSnapshot: Codable, Equatable, Sendable {
     public let pageTitle: String
     public let url: String
     public let metrics: [UsageMetric]
+    public var bankedResets: BankedResetInventory?
 
-    public init(service: ServiceKind, capturedAt: Date, pageTitle: String, url: String, metrics: [UsageMetric]) {
+    public init(service: ServiceKind, capturedAt: Date, pageTitle: String, url: String, metrics: [UsageMetric], bankedResets: BankedResetInventory? = nil) {
         self.service = service
         self.capturedAt = capturedAt
         self.pageTitle = pageTitle
         self.url = url
         self.metrics = metrics
+        self.bankedResets = bankedResets
     }
 
     public func metric(for key: String) -> UsageMetric? {
