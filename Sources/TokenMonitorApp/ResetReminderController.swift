@@ -63,7 +63,7 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
                 let status = await authorizationStatus()
                 let allowed: Bool
                 if status == .notDetermined {
-                    allowed = try await center.requestAuthorization(options: [.alert, .sound])
+                    allowed = try await requestAuthorization()
                 } else {
                     allowed = status == .authorized || status == .provisional
                 }
@@ -156,7 +156,7 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
             components.timeZone = calendar.timeZone
             let request = UNNotificationRequest(identifier: reminder.identifier, content: content, trigger: UNCalendarNotificationTrigger(dateMatching: components, repeats: false))
             do {
-                try await center.add(request)
+                try await addNotification(request)
                 guard change == revision, enabled else {
                     center.removePendingNotificationRequests(withIdentifiers: [reminder.identifier])
                     return
@@ -196,6 +196,30 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
         await withCheckedContinuation { continuation in
             center.getDeliveredNotifications { notifications in
                 continuation.resume(returning: notifications.map { $0.request.identifier })
+            }
+        }
+    }
+
+    private func requestAuthorization() async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
+            center.requestAuthorization(options: [.alert, .sound]) { allowed, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: allowed)
+                }
+            }
+        }
+    }
+
+    private func addNotification(_ request: UNNotificationRequest) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+            center.add(request) { error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume()
+                }
             }
         }
     }
