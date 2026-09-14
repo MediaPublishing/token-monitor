@@ -180,6 +180,9 @@ jobs:
 
           ./scripts/package-release.sh "${package_args[@]}"
 
+      - name: Smoke test packaged app
+        run: ./scripts/smoke-test-app.sh
+
       - name: Upload release archive
         env:
           GH_TOKEN: ${{ github.token }}

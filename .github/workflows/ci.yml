@@ -64,6 +64,19 @@ jobs:
       - name: Build direct DMG app candidate
         run: ./scripts/build-app.sh
 
+      - name: Smoke test app startup
+        run: ./scripts/smoke-test-app.sh
+
+      - name: Archive tested app candidate
+        run: ditto -c -k --sequesterRsrc --keepParent dist/TokenMonitor.app dist/TokenMonitor-ci-macOS.zip
+
+      - name: Upload app for pre-release verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: TokenMonitor-ci-macOS
+          path: dist/TokenMonitor-ci-macOS.zip
+          retention-days: 3
+
       - name: Build MAS app candidate
         run: ./scripts/build-mas-app.sh
 

@@ -175,10 +175,11 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
     }
 
     // Older SDKs do not mark notification objects Sendable. Extract immutable
-    // values in the completion handler before resuming on the main actor.
+    // values before resuming on the main actor. Explicit Sendable callbacks also
+    // prevent legacy signatures from inferring main-actor execution off-thread.
     private func authorizationStatus() async -> UNAuthorizationStatus {
         await withCheckedContinuation { continuation in
-            center.getNotificationSettings { settings in
+            center.getNotificationSettings { @Sendable settings in
                 continuation.resume(returning: settings.authorizationStatus)
             }
         }
@@ -186,7 +187,7 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
 
     private func pendingIdentifiers() async -> [String] {
         await withCheckedContinuation { continuation in
-            center.getPendingNotificationRequests { requests in
+            center.getPendingNotificationRequests { @Sendable requests in
                 continuation.resume(returning: requests.map(\.identifier))
             }
         }
@@ -194,7 +195,7 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
 
     private func deliveredIdentifiers() async -> [String] {
         await withCheckedContinuation { continuation in
-            center.getDeliveredNotifications { notifications in
+            center.getDeliveredNotifications { @Sendable notifications in
                 continuation.resume(returning: notifications.map { $0.request.identifier })
             }
         }
@@ -202,7 +203,7 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
 
     private func requestAuthorization() async throws -> Bool {
         try await withCheckedThrowingContinuation { continuation in
-            center.requestAuthorization(options: [.alert, .sound]) { allowed, error in
+            center.requestAuthorization(options: [.alert, .sound]) { @Sendable allowed, error in
                 if let error {
                     continuation.resume(throwing: error)
                 } else {
@@ -214,7 +215,7 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
 
     private func addNotification(_ request: UNNotificationRequest) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            center.add(request) { error in
+            center.add(request) { @Sendable error in
                 if let error {
                     continuation.resume(throwing: error)
                 } else {
