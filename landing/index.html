@@ -182,7 +182,7 @@
     .footer-grid { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
     .footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
     .footer-links a:hover { color: #fff; }
-    [data-lang] { display: none; }
+    [data-lang]:not(.active) { display: none; }
     [data-lang].active { display: block; }
     span[data-lang].active { display: inline; }
 
