@@ -34,7 +34,7 @@ struct AppSourceBehaviorTests {
         #expect(sessionController.contains("recordBlockedNavigation"))
         #expect(sessionController.contains("allowsEmbeddedWebNavigation"))
         #expect(appModel.contains("shouldSkipAutomaticRefresh"))
-        #expect(appModel.contains("case .launch, .background"))
+        #expect(appModel.contains("dashboardState.service(service).shouldSkipAutomaticRefresh(trigger: trigger)"))
     }
 
     @Test func remainingProgressBarsUseThresholdColors() throws {
@@ -135,7 +135,7 @@ struct AppSourceBehaviorTests {
         #expect(settingsView.contains("Enable debug mode"))
         #expect(settingsView.contains("Status menu"))
         #expect(settingsView.contains("Use colored status bars"))
-        #expect(settingsView.contains("Show percentages in menu bar"))
+        #expect(settingsView.contains("Menu bar percentages"))
         #expect(settingsView.contains("Limit display"))
         #expect(settingsView.contains("pickerStyle(.segmented)"))
         #expect(settingsView.contains("Show usage details"))

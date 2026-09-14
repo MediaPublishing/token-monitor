@@ -3,6 +3,41 @@ import Testing
 @testable import TokenMonitorCore
 
 struct OpenCodeGoUsageParserTests {
+    @Test func acceptsSingleVisibleLimitWhenDetailsAreCollapsed() throws {
+        let extract = ServicePageExtract(
+            service: .openCodeGo,
+            pageTitle: "opencode",
+            url: "https://opencode.ai/workspace/example/go",
+            bodyText: """
+            You are subscribed to OpenCode Go.
+            5-hour Usage
+            0%
+            Resets in 4 hours 54 minutes
+            Show details
+            Use your available balance after reaching the usage limits
+            """,
+            segments: []
+        )
+        let snapshot = try OpenCodeGoUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metrics.count == 1)
+        #expect(snapshot.metric(for: "rolling-usage")?.valueText == "100% remaining")
+        #expect(snapshot.metric(for: "rolling-usage")?.progress == 1)
+        #expect(snapshot.metric(for: "weekly-usage") == nil)
+        #expect(snapshot.metric(for: "monthly-usage") == nil)
+    }
+
+    @Test func subscriptionMessageWithoutReadableLimitsIsNotASuccessfulSnapshot() {
+        let extract = ServicePageExtract(
+            service: .openCodeGo, pageTitle: "opencode",
+            url: "https://opencode.ai/workspace/example/go",
+            bodyText: "You are subscribed to OpenCode Go.\n5-hour Usage\nShow details",
+            segments: []
+        )
+        #expect(throws: UsageParseError.unsupportedLayout("OpenCode Go usage layout could not be parsed")) {
+            try OpenCodeGoUsageParser().parse(extract: extract, now: .now)
+        }
+    }
+
     @Test func parsesOpenCodeGoUsageDashboard() throws {
         let extract = ServicePageExtract(
             service: .openCodeGo,

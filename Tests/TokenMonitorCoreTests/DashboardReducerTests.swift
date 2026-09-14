@@ -3,6 +3,23 @@ import Testing
 @testable import TokenMonitorCore
 
 struct DashboardReducerTests {
+    @Test func enabledOpenCodeTriesExistingSessionOnceOnLaunchWithoutASnapshot() {
+        let status = DashboardState.initial(lastSnapshots: [:]).service(.openCodeGo)
+        #expect(!status.shouldSkipAutomaticRefresh(trigger: .launch))
+        #expect(status.shouldSkipAutomaticRefresh(trigger: .background))
+        #expect(!status.shouldSkipAutomaticRefresh(trigger: .manual))
+        #expect(!status.shouldSkipAutomaticRefresh(trigger: .login))
+    }
+
+    @Test func missingChatGPTAndClaudeAccountsDoNotRefreshUntilConnected() {
+        let state = DashboardState.initial(lastSnapshots: [:])
+        for service in [ServiceKind.chatGPT, .claude] {
+            #expect(state.service(service).shouldSkipAutomaticRefresh(trigger: .launch))
+            #expect(state.service(service).shouldSkipAutomaticRefresh(trigger: .background))
+            #expect(!state.service(service).shouldSkipAutomaticRefresh(trigger: .login))
+        }
+    }
+
     @Test func firstLaunchRequiresConnectionForBothServices() {
         let state = DashboardState.initial(lastSnapshots: [:])
 

@@ -290,7 +290,7 @@ public struct OpenCodeGoUsageParser: UsageParsing {
         let lines = openCodeCandidateLines(from: extract, splittingAt: labels)
         let metrics = specs.compactMap { parseOpenCodeGoMetric($0, from: lines, stoppingAt: labels) }
 
-        guard metrics.count >= 2 else {
+        guard !metrics.isEmpty else {
             throw UsageParseError.unsupportedLayout("OpenCode Go usage layout could not be parsed")
         }
 
@@ -580,28 +580,15 @@ private func splitOpenCodeGoLine(_ line: String, labels: [String]) -> [String] {
 private func claudeCandidateLines(from extract: ServicePageExtract) -> [String] {
     let bodyLines = normalizedLines(from: extract.bodyText)
     var result: [String] = []
-    var seen: Set<String> = []
-
-    func appendLine(_ line: String, preservingDuplicates: Bool = false) {
-        if preservingDuplicates {
-            result.append(line)
-            return
-        }
-
-        guard seen.insert(line).inserted else {
-            return
-        }
-        result.append(line)
-    }
 
     for segment in extract.segments {
-        for line in normalizedLines(from: segment) {
-            appendLine(line, preservingDuplicates: true)
-        }
+        result.append(contentsOf: normalizedLines(from: segment))
     }
 
+    // Separate limits can have identical percentages or reset times.
+    // Deduplicating individual lines removes values from later sections.
     for line in bodyLines where !looksLikeCollapsedClaudeBodyLine(line) {
-        appendLine(line)
+        result.append(line)
     }
 
     return result.isEmpty ? bodyLines : result

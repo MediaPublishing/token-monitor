@@ -18,7 +18,7 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(compact ? "Settings" : "Token Monitor Settings")
                             .font(compact ? .headline.weight(.semibold) : .title3.weight(.semibold))
-                        Text("Provider sessions stay signed in across app updates.")
+                        Text("Updates preserve your sign-in. Providers may still require reauthentication.")
                             .font(compact ? .caption : .subheadline)
                             .foregroundStyle(.secondary)
                             .lineLimit(compact ? 2 : nil)
@@ -196,7 +196,7 @@ struct SettingsView: View {
             )
 
             settingsToggle(
-                "Show percentages in menu bar",
+                "Menu bar percentages",
                 description: "Show the selected limit next to every status bar.",
                 isOn: statusMenuPercentagesBinding
             )
@@ -205,7 +205,7 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Limit display")
                         .font(.subheadline.weight(.semibold))
-                    Text("Use Session, Total, or both for every provider.")
+                    Text("Session, total, or both.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -255,6 +255,7 @@ struct SettingsView: View {
             Text("Updates are delivered by the Mac App Store.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            versionLabel
         }
         #else
         settingsCard("Updates") {
@@ -269,8 +270,18 @@ struct SettingsView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(compact ? .mini : .small)
+            versionLabel
         }
         #endif
+    }
+
+    private var versionLabel: some View {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Development"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
+        return Text(build.map { "Version \(version) (\($0))" } ?? "Version \(version)")
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            .textSelection(.enabled)
     }
 
     private var debuggingSettingsCard: some View {

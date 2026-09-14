@@ -296,6 +296,46 @@ struct ClaudeUsageParserTests {
         #expect(snapshot.metric(for: "current-balance")?.valueText == "$10.01")
     }
 
+    @Test func parsesIssue3ProUsageCreditsWithEuroBalance() throws {
+        let extract = ServicePageExtract(
+            service: .claude, pageTitle: "Claude",
+            url: "https://claude.ai/settings/usage",
+            bodyText: """
+            Plan usage limits
+            Pro
+            Current session
+            Resets in 1 hr 12 min
+            100% used
+
+            Weekly limits
+            All models
+            Resets Wed 3:59 AM
+            11% used
+            Claude Design
+            You haven't used Claude Design yet
+            0% used
+
+            Usage credits
+            Turn on usage credits to keep using Claude if you hit a limit.
+            €0.00 spent
+            Resets Jun 1
+            0% used
+            €45
+            Monthly spend limit
+            Adjust limit
+            €0.02
+            Current balance·Auto-reload
+            Off
+            """, segments: []
+        )
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metric(for: "current-session")?.valueText == "0% remaining")
+        #expect(snapshot.metric(for: "weekly-all-models")?.valueText == "89% remaining")
+        #expect(snapshot.metric(for: "extra-usage-spend")?.valueText == "€0.00 spent")
+        #expect(snapshot.metric(for: "monthly-spend-limit")?.valueText == "€45")
+        #expect(snapshot.metric(for: "current-balance")?.valueText == "€0.02")
+    }
+
     @Test func parsesGermanClaudeFableLayout() throws {
         let extract = ServicePageExtract(
             service: .claude,

@@ -189,6 +189,7 @@ jobs:
         run: |
           mkdir -p public/updates
           sed 's#../assets/#assets/#g' landing/index.html > public/index.html
+          cp landing/app.js public/app.js
           cp -R assets public/assets
           cp dist/appcast.xml public/appcast.xml
           cp dist/updates/*.zip public/updates/

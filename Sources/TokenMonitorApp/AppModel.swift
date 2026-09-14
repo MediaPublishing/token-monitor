@@ -235,6 +235,10 @@ final class AppModel: ObservableObject {
     }
 
     func openLogin(for service: ServiceKind, replacingExistingSession: Bool = false) {
+        // Connecting an optional provider also opts it into refreshes and the menu.
+        if service == .openCodeGo && !openCodeGoEnabled {
+            setOpenCodeGoEnabledWithoutRefreshing(true)
+        }
         sessionCoordinator.cancelRefresh(service: service)
 
         if replacingExistingSession {
@@ -267,9 +271,6 @@ final class AppModel: ObservableObject {
     }
 
     func switchAccount(for service: ServiceKind) {
-        if service == .openCodeGo && !openCodeGoEnabled {
-            setOpenCodeGoEnabledWithoutRefreshing(true)
-        }
         openLogin(for: service, replacingExistingSession: true)
     }
 
@@ -548,20 +549,7 @@ final class AppModel: ObservableObject {
     }
 
     private func shouldSkipAutomaticRefresh(for service: ServiceKind, trigger: RefreshTrigger) -> Bool {
-        switch trigger {
-        case .launch, .background:
-            let status = dashboardState.service(service)
-            if case .authRequired = status.refreshState, status.snapshot == nil {
-                return true
-            }
-            if case let .stale(_, message) = status.refreshState,
-               message.localizedCaseInsensitiveContains("login required") {
-                return true
-            }
-            return false
-        case .manual, .popover, .login:
-            return false
-        }
+        dashboardState.service(service).shouldSkipAutomaticRefresh(trigger: trigger)
     }
 
     private var enabledServices: [ServiceKind] {

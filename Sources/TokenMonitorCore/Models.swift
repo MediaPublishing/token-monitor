@@ -344,4 +344,25 @@ public struct ServiceStatus: Equatable, Sendable {
             return snapshot?.capturedAt
         }
     }
+
+    // Call only for enabled providers. A missing snapshot does not imply that
+    // an opted-in OpenCode provider has lost its persistent browser session.
+    public func shouldSkipAutomaticRefresh(trigger: RefreshTrigger) -> Bool {
+        switch trigger {
+        case .launch, .background:
+            if trigger == .launch && service == .openCodeGo {
+                return false
+            }
+            if case .authRequired = refreshState, snapshot == nil {
+                return true
+            }
+            if case let .stale(_, message) = refreshState,
+               message.localizedCaseInsensitiveContains("login required") {
+                return true
+            }
+            return false
+        case .manual, .popover, .login:
+            return false
+        }
+    }
 }
