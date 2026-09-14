@@ -28,9 +28,9 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
             setEnabled(true)
         } else {
             Task {
-                let settings = await center.notificationSettings()
+                let status = await authorizationStatus()
                 guard !enabled else { return }
-                if settings.authorizationStatus == .denied {
+                if status == .denied {
                     statusText = "Allow notifications in System Settings."
                 }
             }
@@ -60,12 +60,12 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
         }
         Task {
             do {
-                let settings = await center.notificationSettings()
+                let status = await authorizationStatus()
                 let allowed: Bool
-                if settings.authorizationStatus == .notDetermined {
+                if status == .notDetermined {
                     allowed = try await center.requestAuthorization(options: [.alert, .sound])
                 } else {
-                    allowed = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
+                    allowed = status == .authorized || status == .provisional
                 }
                 guard change == authorizationGeneration, enabled else { return }
                 if !allowed {
@@ -119,25 +119,25 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
     private func reconcile() async {
         guard Bundle.main.bundleIdentifier != nil, enabled, let inventory else { return }
         let change = revision
-        let settings = await center.notificationSettings()
+        let status = await authorizationStatus()
         guard change == revision, enabled else { return }
-        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+        guard status == .authorized || status == .provisional else {
             statusText = "Allow notifications in System Settings."
             return
         }
         let now = Date()
         let reminders = Array(ResetReminderPlanner.reminders(for: inventory, now: now).prefix(32))
         let activeIDs = Set(reminders.map(\.identifier))
-        let pending = await center.pendingNotificationRequests()
-        let delivered = await center.deliveredNotifications()
+        let pending = await pendingIdentifiers()
+        let delivered = await deliveredIdentifiers()
         guard change == revision, enabled else { return }
-        let ownedIDs = Set(pending.map(\.identifier) + delivered.map { $0.request.identifier })
+        let ownedIDs = Set(pending + delivered)
             .filter { $0.hasPrefix(ResetReminderPlanner.identifierPrefix) }
         let removed = Array(ownedIDs.subtracting(activeIDs))
         center.removePendingNotificationRequests(withIdentifiers: removed)
         center.removeDeliveredNotifications(withIdentifiers: removed)
         scheduledDates = scheduledDates.filter { activeIDs.contains($0.key) }
-        let deliveredIDs = Set(delivered.map { $0.request.identifier })
+        let deliveredIDs = Set(delivered)
 
         for reminder in reminders {
             guard change == revision, enabled else { return }
@@ -174,11 +174,37 @@ final class ResetReminderController: NSObject, ObservableObject, UNUserNotificat
         UserDefaults.standard.set(scheduledDates, forKey: Self.scheduledKey)
     }
 
+    // Older SDKs do not mark notification objects Sendable. Extract immutable
+    // values in the completion handler before resuming on the main actor.
+    private func authorizationStatus() async -> UNAuthorizationStatus {
+        await withCheckedContinuation { continuation in
+            center.getNotificationSettings { settings in
+                continuation.resume(returning: settings.authorizationStatus)
+            }
+        }
+    }
+
+    private func pendingIdentifiers() async -> [String] {
+        await withCheckedContinuation { continuation in
+            center.getPendingNotificationRequests { requests in
+                continuation.resume(returning: requests.map(\.identifier))
+            }
+        }
+    }
+
+    private func deliveredIdentifiers() async -> [String] {
+        await withCheckedContinuation { continuation in
+            center.getDeliveredNotifications { notifications in
+                continuation.resume(returning: notifications.map { $0.request.identifier })
+            }
+        }
+    }
+
     private func removeOwnedNotifications() async {
         guard Bundle.main.bundleIdentifier != nil else { return }
-        let pending = await center.pendingNotificationRequests()
-        let delivered = await center.deliveredNotifications()
-        let identifiers = (pending.map(\.identifier) + delivered.map { $0.request.identifier })
+        let pending = await pendingIdentifiers()
+        let delivered = await deliveredIdentifiers()
+        let identifiers = (pending + delivered)
             .filter { $0.hasPrefix(ResetReminderPlanner.identifierPrefix) }
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
         center.removeDeliveredNotifications(withIdentifiers: identifiers)

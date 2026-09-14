@@ -31,7 +31,7 @@ Turn the existing technical preview page into a focused product landing page for
 - The first viewport says who the app is for, what it does, and what to do next.
 - The dashboard is legible and visually dominant on desktop and mobile.
 - Every public claim is supported by the repository documentation.
-- The current `v1.0.33` DMG and release links resolve.
+- The current `v1.0.34` DMG and release links resolve.
 - Layout works at 1440 px desktop and 390 px mobile without overflow.
 - Keyboard focus, reduced motion, semantic headings, alt text, and language switching work.
 
