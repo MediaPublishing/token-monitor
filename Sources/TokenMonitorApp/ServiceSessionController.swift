@@ -40,8 +40,15 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private var extractionScheduled = false
     private var useAuthenticatedLoginPageForNextRefresh = false
     private var refreshTimeoutTask: Task<Void, Never>?
+    private var openCodeGoWorkspaceURL: URL?
+    private var didTryOpenCodeConsole = false
 
-    init(service: ServiceKind, diagnosticsStore: DiagnosticsStore) {
+    private var refreshURL: URL {
+        service == .openCodeGo
+            ? OpenCodeGoNavigation.refreshURL(lastKnownURL: openCodeGoWorkspaceURL?.absoluteString) : service.usageURL
+    }
+
+    init(service: ServiceKind, diagnosticsStore: DiagnosticsStore, lastSnapshot: ServiceSnapshot? = nil) {
         self.service = service
         self.diagnosticsStore = diagnosticsStore
         switch service {
@@ -53,6 +60,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             parser = OpenCodeGoUsageParser()
         }
         dataStore = WKWebsiteDataStore.default()
+        openCodeGoWorkspaceURL = service == .openCodeGo
+            ? OpenCodeGoNavigation.workspaceURL(from: lastSnapshot?.url) : nil
         super.init()
     }
 
@@ -61,20 +70,22 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             throw SessionControllerError.refreshAlreadyInProgress
         }
 
-        if service == .chatGPT, useAuthenticatedLoginPageForNextRefresh {
+        if useAuthenticatedLoginPageForNextRefresh {
             let snapshot = try await snapshotFromAuthenticatedLoginPage()
             useAuthenticatedLoginPageForNextRefresh = false
+            rememberWorkspace(from: snapshot)
             return snapshot
         }
 
         currentLoadToken = UUID()
         extractionScheduled = false
+        didTryOpenCodeConsole = false
 
         return try await withCheckedThrowingContinuation { continuation in
             pendingContinuation = continuation
             scheduleRefreshTimeout(loadToken: currentLoadToken)
             let request = URLRequest(
-                url: service.usageURL,
+                url: refreshURL,
                 cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
                 timeoutInterval: 60
             )
@@ -101,7 +112,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         useAuthenticatedLoginPageForNextRefresh = false
         browserController.prepareForAuthentication(
             onAuthenticated: { [weak self] in
-                if self?.service == .chatGPT {
+                if self?.service == .chatGPT || self?.service == .openCodeGo {
                     self?.useAuthenticatedLoginPageForNextRefresh = true
                 }
                 onAuthenticated()
@@ -110,18 +121,19 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         )
 
         guard replacingExistingSession else {
-            browserController.showWindowAndActivate()
+            browserController.showWindowAndActivate(usageURL: refreshURL)
             return
         }
 
         Task { @MainActor in
             await clearSession()
-            browserController.showWindowAndActivate()
+            browserController.showWindowAndActivate(usageURL: refreshURL)
         }
     }
 
     func clearSession() async {
         useAuthenticatedLoginPageForNextRefresh = false
+        openCodeGoWorkspaceURL = nil
         cancelRefresh()
         backgroundWebView.stopLoading()
         browserController.prepareForSessionReset()
@@ -267,9 +279,21 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             do {
                 let extract = try await evaluateCurrentPage()
 
+                // Migrated workspaces redirect to Console login even when a
+                // Console session exists. Let its Go entry resolve that session.
+                if service == .openCodeGo, !didTryOpenCodeConsole,
+                   OpenCodeGoNavigation.isConsoleURL(extract.url),
+                   extract.openCodeGoWorkspaceURL == nil {
+                    didTryOpenCodeConsole = true
+                    extractionScheduled = false
+                    backgroundWebView.load(URLRequest(url: OpenCodeGoNavigation.consoleUsageURL,
+                        cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 60))
+                    return
+                }
+
                 if service == .openCodeGo,
                    let workspaceURL = extract.openCodeGoWorkspaceURL,
-                   !isOpenCodeGoWorkspaceURL(URL(string: extract.url)) {
+                   OpenCodeGoNavigation.workspaceURL(from: extract.url) == nil {
                     extractionScheduled = false
                     backgroundWebView.load(
                         URLRequest(
@@ -304,6 +328,9 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             } catch let parseError as UsageParseError {
                 switch parseError {
                 case .authRequired:
+                    // Account redirects and client-side hydration can briefly
+                    // show login text before the existing session is resolved.
+                    if service == .openCodeGo, index < delays.count - 1 { continue }
                     if let latestExtract {
                         writeDebugRecord(from: latestExtract, outcome: .authRequired, message: String(describing: parseError))
                     }
@@ -433,9 +460,16 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
 
         switch result {
         case let .success(snapshot):
+            rememberWorkspace(from: snapshot)
             continuation.resume(returning: snapshot)
         case let .failure(error):
             continuation.resume(throwing: error)
+        }
+    }
+
+    private func rememberWorkspace(from snapshot: ServiceSnapshot) {
+        if service == .openCodeGo, let url = OpenCodeGoNavigation.workspaceURL(from: snapshot.url) {
+            openCodeGoWorkspaceURL = url
         }
     }
 
@@ -613,26 +647,6 @@ private extension ServicePageExtract {
             && bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && segments.allSatisfy { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
-
-    var openCodeGoWorkspaceURL: URL? {
-        guard service == .openCodeGo else {
-            return nil
-        }
-
-        return links.compactMap(URL.init(string:)).first(where: isOpenCodeGoWorkspaceURL)
-    }
-}
-
-private func isOpenCodeGoWorkspaceURL(_ url: URL?) -> Bool {
-    guard let url,
-          url.host == ServiceKind.openCodeGo.usageURL.host(),
-          url.pathComponents.count >= 4,
-          url.pathComponents[1] == "workspace",
-          url.pathComponents.last == "go" else {
-        return false
-    }
-
-    return true
 }
 
 private func extractionScript(for service: ServiceKind) -> String {
@@ -733,8 +747,9 @@ private func extractionScript(for service: ServiceKind) -> String {
             clone.querySelectorAll('script, style, noscript, template').forEach(node => node.remove());
             return clone.innerText || clone.textContent || "";
           };
-          const bodyText = readableText(document.body);
-          const usageItems = Array.from(document.querySelectorAll('[data-slot="usage-item"]'))
+          const consoleLimits = document.querySelector('section[aria-label="Go usage limits"]');
+          const bodyText = readableText(consoleLimits || document.body);
+          const usageItems = Array.from(consoleLimits ? consoleLimits.children : document.querySelectorAll('[data-slot="usage-item"]'))
             .map(node => (node.innerText || node.textContent || '').trim())
             .filter(text => text.length > 0 && text.length < 800);
           const interesting = Array.from(document.querySelectorAll('main, main *, section, article, div, span, p, h1, h2, h3'))
@@ -745,7 +760,7 @@ private func extractionScript(for service: ServiceKind) -> String {
             .map(node => {
               try { return new URL(node.getAttribute('href'), location.href).href; } catch (_) { return ''; }
             })
-            .filter(url => /https:\\/\\/opencode\\.ai\\/workspace\\/[^/]+\\/go(?:[/?#]|$)/i.test(url));
+            .filter(url => /https:\\/\\/opencode\\.ai\\/(?:(?:[a-z]{2}(?:-[a-z]{2,4})?\\/)?workspace\\/[^/]+|console\\/(?:org_|wrk_)[^/]+)\\/go(?:[/?#]|$)/i.test(url));
           return JSON.stringify({
             service: "\(service.rawValue)",
             pageTitle: document.title || "",

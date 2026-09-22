@@ -34,7 +34,7 @@ public enum ServiceKind: String, CaseIterable, Codable, Sendable {
         case .chatGPT:
             return URL(string: "https://chatgpt.com/codex/cloud/settings/usage")!
         case .openCodeGo:
-            return URL(string: "https://opencode.ai/go")!
+            return OpenCodeGoNavigation.accountURL
         }
     }
 

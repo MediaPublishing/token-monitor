@@ -226,6 +226,10 @@ struct AppSourceBehaviorTests {
         #expect(sessionController.contains("browserController.evaluateJavaScript(extractionScript(for: service))"))
         #expect(sessionController.contains("useAuthenticatedLoginPageForNextRefresh = true"))
         #expect(sessionController.contains("useAuthenticatedLoginPageForNextRefresh = false"))
+        #expect(sessionController.contains("self?.service == .chatGPT || self?.service == .openCodeGo"))
+        #expect(sessionController.contains("lastSnapshot?.url"))
+        #expect(sessionController.contains("openCodeGoWorkspaceURL = nil"))
+        #expect(sessionController.contains("showWindowAndActivate(usageURL: refreshURL)"))
     }
 
     @Test func openCodeGoIsOptInAndHiddenUntilItHasASnapshot() throws {
@@ -260,6 +264,11 @@ struct AppSourceBehaviorTests {
         #expect(sessionController.contains("OpenCodeGoUsageParser()"))
         #expect(loginController.contains("isOpenCodeGoWorkspaceURL(currentURL)"))
         #expect(loginController.contains("hasSubscriptionMessage"))
+        #expect(loginController.contains("while !Task.isCancelled"))
+        #expect(loginController.contains("window?.isVisible == true"))
+        #expect(loginController.contains("OpenCodeGoNavigation.consoleUsageURL"))
+        #expect(sessionController.contains("OpenCodeGoNavigation.consoleUsageURL"))
+        #expect(sessionController.contains("section[aria-label=\"Go usage limits\"]"))
     }
 
     @Test func providersCanDisconnectOrSwitchAccountsWithoutClearingOtherProviders() throws {

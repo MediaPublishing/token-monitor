@@ -37,6 +37,38 @@ struct BankedResetTests {
         #expect(result.groups.isEmpty)
     }
 
+    @Test func availableZeroClearsConsumedInventoryDespiteHistory() throws {
+        let page = extract("""
+        Use a reset to restore your 5-hour limit, weekly limit, or both.
+        Available
+        0
+        History
+        Past 30 days
+        Reset used
+        Sep 15
+        Full reset
+        Expires Oct 5 at 12:18 AM
+        """)
+        let inventory = try #require(BankedResetParser.parse(page, now: now))
+        #expect(inventory.groups.isEmpty)
+        #expect(ResetReminderPlanner.reminders(for: inventory, now: now).isEmpty)
+        let old = ServiceSnapshot(service: .chatGPT, capturedAt: now, pageTitle: "", url: "", metrics: [],
+            bankedResets: .init(capturedAt: now, groups: [.init(title: "Full reset", expiresAt: now.addingTimeInterval(86400), expiryText: "")]))
+        var state = DashboardState.initial(lastSnapshots: [.chatGPT: old])
+        let fresh = ServiceSnapshot(service: .chatGPT, capturedAt: now, pageTitle: "", url: "", metrics: [], bankedResets: inventory)
+        DashboardReducer.reduce(&state, event: .service(.chatGPT, .refreshSucceeded(fresh)))
+        #expect(state.service(.chatGPT).snapshot?.bankedResets?.availableCount(at: now) == 0)
+    }
+
+    @Test func availableCounterMustAgreeWithCompleteCards() throws {
+        #expect(try #require(BankedResetParser.parse(extract("Verfügbar\n0\nVerlauf\nReset verwendet"), now: now)).groups.isEmpty)
+        #expect(BankedResetParser.parse(extract("Available\n1\nHistory\nReset used"), now: now) == nil)
+        #expect(BankedResetParser.parse(extract("Available\n0\nLoading usage limit resets…"), now: now) == nil)
+        #expect(BankedResetParser.parse(extract("Available\n0\nFull reset\nExpires Oct 5 at 12:18 AM"), now: now) == nil)
+        #expect(BankedResetParser.parse(extract("Available\n2\nFull reset\nExpires Oct 5 at 12:18 AM"), now: now) == nil)
+        #expect(try #require(BankedResetParser.parse(extract("Available\n1\nFull reset\nExpires Oct 5 at 12:18 AM\nHistory\nFull reset\nExpires Oct 6 at 12:18 AM"), now: now)).availableCount(at: now) == 1)
+    }
+
     @Test func unreadableExpiryIsNotInventedOrScheduled() throws {
         let result = try #require(BankedResetParser.parse(extract("Full reset\nExpires someday\nUse reset"), now: now))
         #expect(result.availableCount(at: now) == 1)

@@ -3,6 +3,23 @@ import Testing
 @testable import TokenMonitorCore
 
 struct OpenCodeGoUsageParserTests {
+    @Test func parsesMigratedConsoleUsageMeters() throws {
+        let page = ServicePageExtract(service: .openCodeGo, pageTitle: "OpenCode Console",
+            url: "https://opencode.ai/console/wrk_example/go", bodyText: """
+            Rolling usage
+            20%
+            Resets in 4h 32m
+            Weekly usage
+            43%
+            Resets in 6d 2h
+            Monthly usage
+            71%
+            Resets in 23d 19h
+            """, segments: [])
+        let result = try OpenCodeGoUsageParser().parse(extract: page, now: .now)
+        #expect(result.metrics.map(\.valueText) == ["80% remaining", "57% remaining", "29% remaining"])
+        #expect(result.metrics.map(\.subtitle) == ["Resets in 4h 32m", "Resets in 6d 2h", "Resets in 23d 19h"])
+    }
     @Test func acceptsSingleVisibleLimitWhenDetailsAreCollapsed() throws {
         let extract = ServicePageExtract(
             service: .openCodeGo,

@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.35/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.36/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.35`.
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.36`.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -76,7 +76,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.35/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.36/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -115,9 +115,13 @@ Token Monitor checks for updates only when you click **Check for Updates...** in
 
 OpenCode Go monitoring is off by default. In Settings, enable **Monitor OpenCode Go**, click **Connect OpenCode Go**, and sign in on the OpenCode page. Token Monitor follows the authenticated workspace page and reads **5-hour Usage**, **Weekly Usage**, and **Monthly Usage**. The OpenCode Go section and its menu bar indicator appear only after a successful connection and refresh.
 
+Version 1.0.36 reuses the connected workspace instead of checking the public Go marketing page. Both the original workspace and the new OpenCode Console are supported. Accounts migrated by OpenCode may need one sign-in to the new Console; app updates do not clear provider sessions.
+
 #### Banked resets
 
 The ChatGPT section includes a compact reset count and the next expiry in local 24-hour time. Click it for individual reset types and dates. These saved resets are separate from remaining capacity; Token Monitor never redeems them. Missing or loading data is not treated as zero, and older reset data is marked **Last seen** until confirmed by a fresh reading.
+
+An explicit **Available 0** clears consumed resets and their pending expiry reminders. Reset history is excluded from the available count.
 
 Enable **Settings > Usage details > Reset reminders** and allow macOS notifications. Reminders are scheduled locally for 72 hours before each known expiry, or immediately when first detected later. Consumed resets and disconnected accounts have their reminders removed after a successful refresh or disconnect. A scheduled reminder can appear even when Token Monitor is closed. If macOS denies permission, enable Token Monitor in **System Settings > Notifications**, then turn on **Reset reminders** again. Unknown expiry dates cannot trigger a reliable reminder.
 
@@ -193,7 +197,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.35/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.36/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -232,9 +236,13 @@ Token Monitor sucht nur dann nach Updates, wenn du in den Settings **Check for U
 
 Die OpenCode-Go-Überwachung ist standardmäßig deaktiviert. Aktiviere in den Settings **Monitor OpenCode Go**, klicke auf **Connect OpenCode Go** und melde dich auf der OpenCode-Seite an. Token Monitor folgt der authentifizierten Workspace-Seite und liest **5-hour Usage**, **Weekly Usage** und **Monthly Usage**. Der OpenCode-Go-Bereich und sein Menüleisten-Balken erscheinen erst nach erfolgreicher Verbindung und Aktualisierung.
 
+Version 1.0.36 verwendet den verbundenen Workspace statt der öffentlichen Go-Werbeseite. Sowohl die bisherigen Workspaces als auch die neue OpenCode Console werden unterstützt. Von OpenCode umgezogene Accounts können eine einmalige Anmeldung in der neuen Console benötigen; App-Updates löschen keine Provider-Sitzungen.
+
 #### Banked Resets
 
 Unter ChatGPT stehen die Anzahl gespeicherter Resets und der nächste Ablauf in lokaler 24-Stunden-Zeit. Ein Klick öffnet die einzelnen Reset-Typen und Termine. Diese Resets bleiben von der Restkapazität getrennt und werden niemals automatisch eingelöst. Fehlende oder noch ladende Daten gelten nicht als null. Ältere Werte sind bis zur erneuten Bestätigung als **Last seen** gekennzeichnet.
+
+Ein bestätigtes **Available 0** entfernt verbrauchte Resets und ihre geplanten Ablauf-Erinnerungen. Die Reset-Historie zählt nicht zum verfügbaren Bestand.
 
 Aktiviere **Settings > Usage details > Reset reminders** und erlaube Mitteilungen in macOS. Die Erinnerung wird lokal für 72 Stunden vor dem bekannten Ablauf vorgemerkt; bei späterer Erkennung sofort. Nach erfolgreicher Aktualisierung werden Erinnerungen für verbrauchte Resets entfernt, beim Trennen des Accounts ebenfalls. Bereits geplante Mitteilungen können auch bei geschlossener App erscheinen. Bei verweigerter Freigabe: Token Monitor unter **Systemeinstellungen > Mitteilungen** erlauben und **Reset reminders** erneut aktivieren. Ohne lesbares Ablaufdatum ist keine verlässliche Erinnerung möglich.
 

@@ -5,9 +5,10 @@ import TokenMonitorCore
 final class SessionCoordinator {
     private let controllers: [ServiceKind: ServiceSessionController]
 
-    init(diagnosticsStore: DiagnosticsStore) {
+    init(diagnosticsStore: DiagnosticsStore, snapshots: [ServiceKind: ServiceSnapshot] = [:]) {
         controllers = Dictionary(uniqueKeysWithValues: ServiceKind.allCases.map { service in
-            (service, ServiceSessionController(service: service, diagnosticsStore: diagnosticsStore))
+            (service, ServiceSessionController(service: service, diagnosticsStore: diagnosticsStore,
+                                              lastSnapshot: snapshots[service]))
         })
     }
 

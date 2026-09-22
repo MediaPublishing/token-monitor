@@ -44,6 +44,14 @@ public enum BankedResetParser {
         guard extract.service == .chatGPT, let text = section(from: extract), !isLoading(extract) else { return nil }
         let lines = text.components(separatedBy: .newlines)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
+            .prefix { !["history", "verlauf", "historie"].contains($0.lowercased()) }
+        // The current page reports an explicit Available counter, including zero.
+        // Historical grants/uses below it are not part of the available inventory.
+        let availableCount: Int? = lines.indices.first(where: {
+            ["available", "available resets", "verfügbar", "verfügbare resets"].contains(lines[$0].lowercased())
+        }).flatMap { index in
+            lines.index(after: index) < lines.endIndex ? Int(lines[lines.index(after: index)]) : nil
+        }
         var groups: [BankedResetGroup] = []
         let timeZone = extract.pageTimeZone.flatMap(TimeZone.init(identifier:)) ?? .current
         for (index, line) in lines.enumerated() {
@@ -60,9 +68,11 @@ public enum BankedResetParser {
                 groups.append(group)
             }
         }
-        if groups.isEmpty {
+        if let availableCount {
+            guard availableCount == groups.reduce(0, { $0 + $1.count }) else { return nil }
+        } else if groups.isEmpty {
             let emptyPattern = #"\bno (?:banked |usage limit )?resets(?: available)?\b|\b0 (?:banked |usage limit )?resets\b|keine .*resets|keine .*zurücksetzungen"#
-            guard text.range(of: emptyPattern, options: [.regularExpression, .caseInsensitive]) != nil else { return nil }
+            guard lines.joined(separator: "\n").range(of: emptyPattern, options: [.regularExpression, .caseInsensitive]) != nil else { return nil }
         }
         return BankedResetInventory(capturedAt: now, groups: groups)
     }

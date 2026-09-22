@@ -102,7 +102,7 @@ final class AppModel: ObservableObject {
         }
         diagnosticsStore = DiagnosticsStore(baseDirectory: snapshotDirectoryURL, isEnabled: initialDebugModeEnabled)
         diagnosticsDirectoryURL = snapshotDirectoryURL.appendingPathComponent("Debug", isDirectory: true)
-        sessionCoordinator = SessionCoordinator(diagnosticsStore: diagnosticsStore)
+        sessionCoordinator = SessionCoordinator(diagnosticsStore: diagnosticsStore, snapshots: snapshots)
     }
 
     func start() {
