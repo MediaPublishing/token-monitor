@@ -42,15 +42,33 @@ public enum BankedResetParser {
 
     public static func parse(_ extract: ServicePageExtract, now: Date) -> BankedResetInventory? {
         guard extract.service == .chatGPT, let text = section(from: extract), !isLoading(extract) else { return nil }
-        let lines = text.components(separatedBy: .newlines)
+        let pageLines = text.components(separatedBy: .newlines)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
-            .prefix { !["history", "verlauf", "historie"].contains($0.lowercased()) }
+        var lines: [String] = []
+        var hasAvailableCard = false
+        for line in pageLines {
+            let lower = line.lowercased()
+            if ["history", "verlauf", "historie"].contains(lower) {
+                // The History tab precedes available cards; a second occurrence
+                // after a card starts the history panel.
+                if hasAvailableCard { break }
+                continue
+            }
+            if lower.range(of: #"^(?:past \d+ days|letzte \d+ tage|reset (?:used|received|expired)|zurücksetzung (?:verwendet|erhalten|abgelaufen))\b"#, options: .regularExpression) != nil {
+                break
+            }
+            lines.append(line)
+            if resetTitle(line) != nil { hasAvailableCard = true }
+        }
         // The current page reports an explicit Available counter, including zero.
         // Historical grants/uses below it are not part of the available inventory.
-        let availableCount: Int? = lines.indices.first(where: {
-            ["available", "available resets", "verfügbar", "verfügbare resets"].contains(lines[$0].lowercased())
+        let availableCount: Int? = lines.indices.first(where: { index in
+            let lower = lines[index].lowercased()
+            return ["available", "available resets", "verfügbar", "verfügbare resets"].contains(lower)
+                || lower.range(of: #"^(?:available(?: resets)?|verfügbar(?:e resets)?)\s+\d+$"#, options: .regularExpression) != nil
         }).flatMap { index in
-            lines.index(after: index) < lines.endIndex ? Int(lines[lines.index(after: index)]) : nil
+            if let inlineCount = Int(lines[index].split(separator: " ").last ?? "") { return inlineCount }
+            return lines.index(after: index) < lines.endIndex ? Int(lines[lines.index(after: index)]) : nil
         }
         var groups: [BankedResetGroup] = []
         let timeZone = extract.pageTimeZone.flatMap(TimeZone.init(identifier:)) ?? .current

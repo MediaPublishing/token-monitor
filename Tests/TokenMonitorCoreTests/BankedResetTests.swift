@@ -69,6 +69,21 @@ struct BankedResetTests {
         #expect(try #require(BankedResetParser.parse(extract("Available\n1\nFull reset\nExpires Oct 5 at 12:18 AM\nHistory\nFull reset\nExpires Oct 6 at 12:18 AM"), now: now)).availableCount(at: now) == 1)
     }
 
+    @Test func parsesAvailableCountOnSameLineAsCurrentTabLabel() throws {
+        let page = extract("""
+        Use a reset to restore your 5-hour limit, weekly limit, or both.
+        Available 1
+        History
+        Full reset
+        Expires Oct 22 at 4:28 PM
+        """)
+        let inventory = try #require(BankedResetParser.parse(page, now: now))
+        #expect(inventory.availableCount(at: now) == 1)
+        #expect(inventory.groups.first?.title == "Full reset")
+        #expect(inventory.groups.first?.expiresAt == ISO8601DateFormatter().date(from: "2026-10-22T20:28:00Z"))
+        #expect(BankedResetParser.parse(extract("Available 1\nHistory\nPast 30 days\nReset used\nFull reset\nExpires Oct 22 at 4:28 PM"), now: now) == nil)
+    }
+
     @Test func unreadableExpiryIsNotInventedOrScheduled() throws {
         let result = try #require(BankedResetParser.parse(extract("Full reset\nExpires someday\nUse reset"), now: now))
         #expect(result.availableCount(at: now) == 1)
