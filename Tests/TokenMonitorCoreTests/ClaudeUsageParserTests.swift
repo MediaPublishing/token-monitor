@@ -30,6 +30,56 @@ struct ClaudeUsageParserTests {
         #expect(snapshot.metric(for: "current-balance")?.valueText == "$41.94")
     }
 
+    @Test func parsesNewClaudeWeeklyAndFableLabelsWithoutCrossingUsageCards() throws {
+        let extract = ServicePageExtract(
+            service: .claude,
+            pageTitle: "New chat - Claude",
+            url: "https://claude.ai/new#settings/usage",
+            bodyText: "Your usageMax (5x)Current sessionResets at 2:10 PM2% usedThis weekResets at 12:00 PM23% usedFable this weekSeparate weekly limit for Fable · Resets at 12:00 PM4% usedUsage creditsAvailable for any task. Promotional credits are used before purchased credits.$0Turn on usage credits to keep using Claude if you hit a plan limit.Monthly spend limit$0.00 of $200 this monthCredits are spent automatically past your plan limits.This week’s usage by productClaude Code100%Chats0%",
+            segments: [
+                "Current session\nResets at 2:10 PM\n2% used\nThis week\nResets at 12:00 PM\n23% used\nFable this week\nSeparate weekly limit for Fable · Resets at 12:00 PM\n4% used",
+                "Current session\nResets at 2:10 PM\n2% used",
+                "Current session",
+                "2% used",
+                "This week\nResets at 12:00 PM\n23% used",
+                "This week",
+                "23% used",
+                "Fable this week\nSeparate weekly limit for Fable · Resets at 12:00 PM\n4% used",
+                "Fable this week",
+                "4% used",
+                "Usage credits\nAvailable for any task.\n$0\nTurn on usage credits to keep using Claude if you hit a plan limit.",
+                "Monthly spend limit\n$0.00 of $200 this month",
+                "This week’s usage by product\nClaude Code\n100%\nChats\n0%"
+            ]
+        )
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metric(for: "current-session")?.valueText == "98% remaining")
+        #expect(snapshot.metric(for: "current-session")?.subtitle == "Resets at 2:10 PM")
+        #expect(snapshot.metric(for: "weekly-all-models")?.valueText == "77% remaining")
+        #expect(snapshot.metric(for: "weekly-all-models")?.subtitle == "Resets at 12:00 PM")
+        #expect(snapshot.metric(for: "weekly-fable")?.valueText == "96% remaining")
+        #expect(snapshot.metric(for: "weekly-fable")?.subtitle == "Separate weekly limit for Fable · Resets at 12:00 PM")
+        #expect(snapshot.metric(for: "weekly-fable")?.displaySubtitle == "Separate Fable limit")
+        #expect(snapshot.metric(for: "extra-usage-spend") == nil)
+    }
+
+    @Test func missingClaudeWeeklyPercentageDoesNotBorrowFablePercentage() {
+        let extract = ServicePageExtract(
+            service: .claude,
+            pageTitle: "Claude",
+            url: "https://claude.ai/new#settings/usage",
+            bodyText: "",
+            segments: [
+                "Current session\nResets at 2:10 PM\n2% used",
+                "This week\nResets at 12:00 PM",
+                "Fable this week\nResets at 12:00 PM\n4% used"
+            ]
+        )
+        #expect(throws: UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")) {
+            try ClaudeUsageParser().parse(extract: extract, now: .now)
+        }
+    }
+
     @Test func parsesClaudeExtractWhenBodyTextIsCollapsedButSegmentsAreStructured() throws {
         let extract = ServicePageExtract(
             service: .claude,

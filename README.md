@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.37/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.38/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.37`.
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.38`.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -76,7 +76,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.37/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.38/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -116,6 +116,8 @@ Token Monitor checks for updates only when you click **Check for Updates...** in
 OpenCode Go monitoring is off by default. In Settings, enable **Monitor OpenCode Go**, click **Connect OpenCode Go**, and sign in on the OpenCode page. Token Monitor follows the authenticated workspace page and reads **5-hour Usage**, **Weekly Usage**, and **Monthly Usage**. The OpenCode Go section and its menu bar indicator appear only after a successful connection and refresh.
 
 Version 1.0.36 reuses the connected workspace instead of checking the public Go marketing page. Both the original workspace and the new OpenCode Console are supported. Accounts migrated by OpenCode may need one sign-in to the new Console; app updates do not clear provider sessions.
+
+Version 1.0.38 reads Claude's updated **This week** and **Fable this week** usage labels while keeping their percentages and reset times associated with the correct limit.
 
 #### Banked resets
 
@@ -198,7 +200,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.37/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.38/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -238,6 +240,8 @@ Token Monitor sucht nur dann nach Updates, wenn du in den Settings **Check for U
 Die OpenCode-Go-Überwachung ist standardmäßig deaktiviert. Aktiviere in den Settings **Monitor OpenCode Go**, klicke auf **Connect OpenCode Go** und melde dich auf der OpenCode-Seite an. Token Monitor folgt der authentifizierten Workspace-Seite und liest **5-hour Usage**, **Weekly Usage** und **Monthly Usage**. Der OpenCode-Go-Bereich und sein Menüleisten-Balken erscheinen erst nach erfolgreicher Verbindung und Aktualisierung.
 
 Version 1.0.36 verwendet den verbundenen Workspace statt der öffentlichen Go-Werbeseite. Sowohl die bisherigen Workspaces als auch die neue OpenCode Console werden unterstützt. Von OpenCode umgezogene Accounts können eine einmalige Anmeldung in der neuen Console benötigen; App-Updates löschen keine Provider-Sitzungen.
+
+Version 1.0.38 liest Claudes neue Nutzungslabels **This week** und **Fable this week** und ordnet Prozentwerte und Reset-Zeiten wieder dem richtigen Limit zu.
 
 #### Banked Resets
 

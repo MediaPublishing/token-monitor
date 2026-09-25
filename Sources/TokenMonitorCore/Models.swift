@@ -143,6 +143,9 @@ public struct UsageMetric: Codable, Equatable, Identifiable, Sendable {
         guard let subtitle else {
             return nil
         }
+        if key == "weekly-fable", subtitle.localizedCaseInsensitiveContains("Separate weekly limit for Fable") {
+            return "Separate Fable limit"
+        }
         return compactResetText(subtitle)
     }
 

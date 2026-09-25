@@ -22,11 +22,11 @@ public struct ClaudeUsageParser: UsageParsing {
         let monthlyLimitLabels = ["Monthly spend limit", "Monthly limit", "Monatliches Ausgabenlimit", "Monatliches Limit"]
         let balanceLabels = ["Current balance", "Balance", "Aktueller Kontostand", "Aktuelles Guthaben"]
         guard
-            let currentSessionIndex = firstIndex(in: lines, containingAny: ["Current session", "Aktuelle Sitzung", "Sitzung"]),
-            let allModelsIndex = firstIndex(in: lines, containingAny: ["All models", "Alle Modelle"]),
-            let currentSessionValue = firstLine(after: currentSessionIndex, in: lines, matching: isUsageUsedValue),
-            let allModelsValue = firstLine(after: allModelsIndex, in: lines, matching: isUsageUsedValue),
-            let allModelsReset = firstLine(after: allModelsIndex, in: lines, matching: isResetLine)
+            let currentSessionIndex = claudeLimitIndex(in: lines, labels: ["Current session", "Aktuelle Sitzung", "Sitzung"]),
+            let allModelsIndex = claudeLimitIndex(in: lines, labels: ["All models", "Alle Modelle", "This week", "Diese Woche"]),
+            let currentSessionValue = firstClaudeLimitLine(after: currentSessionIndex, in: lines, matching: isUsageUsedValue),
+            let allModelsValue = firstClaudeLimitLine(after: allModelsIndex, in: lines, matching: isUsageUsedValue),
+            let allModelsReset = firstClaudeLimitLine(after: allModelsIndex, in: lines, matching: isResetLine)
         else {
             throw UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")
         }
@@ -36,7 +36,7 @@ public struct ClaudeUsageParser: UsageParsing {
                 key: "current-session",
                 title: "Current session",
                 valueText: remainingProgressText(fromUsedText: currentSessionValue),
-                subtitle: firstLine(after: currentSessionIndex, in: lines, matching: { $0 != currentSessionValue }),
+                subtitle: firstClaudeLimitLine(after: currentSessionIndex, in: lines, matching: { $0 != currentSessionValue }),
                 progress: remainingProgress(fromUsedText: currentSessionValue),
                 style: .progress
             ),
@@ -73,7 +73,7 @@ public struct ClaudeUsageParser: UsageParsing {
             key: "weekly-fable",
             title: "Fable",
             lines: lines,
-            labels: ["Fable"],
+            labels: ["Fable", "Fable this week", "Fable diese Woche"],
             requiresExactLabel: true
         ) {
             metrics.append(fableMetric)
@@ -598,9 +598,12 @@ private func claudeCandidateLines(from extract: ServicePageExtract) -> [String] 
 private func looksLikeCollapsedClaudeBodyLine(_ line: String) -> Bool {
     let markers = [
         "Current session",
+        "This week",
+        "Fable this week",
         "All models",
         "Sonnet only",
         "Extra usage",
+        "Usage credits",
         "Monthly spend limit",
         "Current balance",
         "Aktuelle Sitzung",
@@ -693,11 +696,9 @@ private func isResetLine(_ text: String) -> Bool {
 
 private func isSpentLine(_ text: String) -> Bool {
     let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
-    let containsSpentLabel = normalized.localizedCaseInsensitiveContains("spent")
-        || normalized.localizedCaseInsensitiveContains("ausgegeben")
-        || normalized.localizedCaseInsensitiveContains("verbraucht")
-        || normalized.localizedCaseInsensitiveContains("verwendet")
-    return containsSpentLabel && !claudeMoneyValues(in: normalized).isEmpty
+    let money = #"(?:[$€]\s?\d+(?:[.,]\d+)?|\d+(?:[.,]\d+)?\s?€)"#
+    let spent = #"(?:spent|ausgegeben|verbraucht|verwendet)"#
+    return normalized.range(of: "^\(money)\\s+\(spent)$", options: [.regularExpression, .caseInsensitive]) != nil
 }
 
 private func optionalClaudeUsageMetric(
@@ -712,7 +713,7 @@ private func optionalClaudeUsageMetric(
         : firstIndex(in: lines, containingAny: labels)
 
     guard let titleIndex,
-          let value = firstLine(after: titleIndex, in: lines, matching: isUsageUsedValue) else {
+          let value = firstClaudeLimitLine(after: titleIndex, in: lines, matching: isUsageUsedValue) else {
         return nil
     }
 
@@ -720,10 +721,32 @@ private func optionalClaudeUsageMetric(
         key: key,
         title: title,
         valueText: remainingProgressText(fromUsedText: value),
-        subtitle: firstLine(after: titleIndex, in: lines, matching: isResetLine),
+        subtitle: firstClaudeLimitLine(after: titleIndex, in: lines, matching: isResetLine),
         progress: remainingProgress(fromUsedText: value),
         style: .progress
     )
+}
+
+private func claudeLimitIndex(in lines: [String], labels: [String]) -> Int? {
+    firstIndex(in: lines, exactlyMatchingAny: labels)
+        ?? firstIndex(in: lines, containingAny: labels)
+}
+
+private func firstClaudeLimitLine(after index: Int, in lines: [String], matching predicate: (String) -> Bool) -> String? {
+    let headings = [
+        "Current session", "Aktuelle Sitzung", "Sitzung",
+        "All models", "Alle Modelle", "This week", "Diese Woche",
+        "Sonnet only", "Nur Sonnet", "Fable", "Fable this week", "Fable diese Woche",
+        "Claude Design", "Extra usage", "Usage credits", "Zusätzliche Nutzung"
+    ]
+    guard index + 1 < lines.endIndex else { return nil }
+    for line in lines[(index + 1)...] {
+        if headings.contains(where: { line.compare($0, options: [.caseInsensitive, .diacriticInsensitive]) == .orderedSame }) {
+            return nil
+        }
+        if predicate(line) { return line }
+    }
+    return nil
 }
 
 private func normalizedProgressValue(_ text: String) -> String? {
