@@ -286,4 +286,60 @@ struct ChatGPTUsageParserTests {
             try ChatGPTUsageParser().parse(extract: extract, now: .now)
         }
     }
+    @Test func parsesUnifiedPlanLimitsAndInlineCredits() throws {
+        let extract = ServicePageExtract(service: .chatGPT, pageTitle: "ChatGPT", url: "https://chatgpt.com/#settings/Usage", bodyText: "", segments: [
+            "Weekly limit\nResets in 5d 23h\n85% left",
+            "62,500 credits remaining\nCurrent balance\nAdd more"
+        ])
+        let snapshot = try ChatGPTUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metrics.map(\.key) == ["weekly-limit", "credits-remaining"])
+        #expect(snapshot.metric(for: "weekly-limit")?.valueText == "85% remaining")
+        #expect(snapshot.metric(for: "weekly-limit")?.progress == 0.85)
+        #expect(snapshot.metric(for: "weekly-limit")?.subtitle == "Resets in 5d 23h")
+        #expect(snapshot.metric(for: "credits-remaining")?.valueText == "62,500")
+        #expect(snapshot.metric(for: "credits-remaining")?.title == "Credits remaining")
+    }
+
+    @Test(arguments: ["Weekly limit", "5-hour limit", "GPT-6.1-Sol weekly limit", "GPT-5.3-Codex-Spark 5-hour limit"])
+    func parsesLeftAtBudgetBoundaries(title: String) throws {
+        for value in [0, 100] {
+            let extract = ServicePageExtract(service: .chatGPT, pageTitle: "Usage", url: "https://chatgpt.com/", bodyText: "\(title)\nResets in 0h 1m\n\(value)% left", segments: [])
+            let snapshot = try ChatGPTUsageParser().parse(extract: extract, now: .now)
+            #expect(snapshot.metrics.count == 1)
+            #expect(snapshot.metrics[0].progress == Double(value) / 100)
+            #expect(snapshot.metrics[0].subtitle == "Resets in 0h 1m")
+        }
+    }
+
+    @Test func doesNotBorrowValueOrResetFromNextLimit() throws {
+        let extract = ServicePageExtract(service: .chatGPT, pageTitle: "Usage", url: "https://chatgpt.com/", bodyText: "5-hour limit\nLoading\nWeekly limit\n80% remaining\nResets tomorrow\nCredits remaining\n0", segments: [])
+        let snapshot = try ChatGPTUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metric(for: "five-hour-limit") == nil)
+        let noReset = ServicePageExtract(service: .chatGPT, pageTitle: "Usage", url: "https://chatgpt.com/", bodyText: "5-hour limit\n20% remaining\nWeekly limit\n80% remaining\nResets tomorrow", segments: [])
+        #expect(try ChatGPTUsageParser().parse(extract: noReset, now: .now).metric(for: "five-hour-limit")?.subtitle == nil)
+    }
+
+    @Test(arguments: ["Weekly limit\nLoading\n62,500 credits remaining", "Weekly limit\nLoading\nDaily usage\n0% left", "Weekly limit\nFailed to load usage", "Buy credits to extend usage\n62,500 credits remaining"])
+    func rejectsMissingPlanBudget(body: String) throws {
+        let extract = ServicePageExtract(service: .chatGPT, pageTitle: "Usage", url: "https://chatgpt.com/", bodyText: body, segments: [])
+        #expect(throws: UsageParseError.unsupportedLayout("ChatGPT usage layout could not be parsed")) {
+            try ChatGPTUsageParser().parse(extract: extract, now: .now)
+        }
+    }
+
+    @Test(arguments: ["Verbleibendes Guthaben", "Guthaben verbleibend"])
+    func respectsGermanCreditCardBoundary(title: String) throws {
+        let extract = ServicePageExtract(service: .chatGPT, pageTitle: "Usage", url: "https://chatgpt.com/", bodyText: "Weekly limit\n85% left\n\(title)\n12,50\nResets tomorrow", segments: [])
+        let snapshot = try ChatGPTUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metric(for: "weekly-limit")?.subtitle == nil)
+        #expect(snapshot.metric(for: "credits-remaining")?.valueText == "12,50")
+        #expect(snapshot.metric(for: "credits-remaining")?.title == title)
+    }
+
+    @Test func doesNotBorrowCreditBalanceAcrossLocalizedCards() throws {
+        let extract = ServicePageExtract(service: .chatGPT, pageTitle: "Usage", url: "https://chatgpt.com/", bodyText: "Weekly limit\n85% left\nCredits remaining\nLoading\nGuthaben verbleibend\n12,50", segments: [])
+        let snapshot = try ChatGPTUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metric(for: "credits-remaining") == nil)
+    }
+
 }

@@ -184,9 +184,7 @@ public struct ChatGPTUsageParser: UsageParsing {
                 isUsageLimitTitle(line, duration: .weekly, requiresModelName: true)
             }),
             .init(key: "credits-remaining", kind: .stat, match: { line in
-                line.localizedCaseInsensitiveContains("credits remaining")
-                    || line.localizedCaseInsensitiveContains("verbleibendes guthaben")
-                    || line.localizedCaseInsensitiveContains("guthaben verbleibend")
+                isChatGPTCreditTitle(line)
             })
         ]
 
@@ -215,7 +213,7 @@ public struct ChatGPTUsageParser: UsageParsing {
 
             metricsByKey[spec.key] = UsageMetric(
                 key: spec.key,
-                title: title,
+                title: spec.kind == .stat && title.first?.isNumber == true ? "Credits remaining" : title,
                 valueText: valueText,
                 subtitle: subtitle,
                 progress: spec.kind == .progress ? percentage(from: valueText) : nil,
@@ -391,7 +389,7 @@ private func parseChatGPTMetricCard(from lines: [String], specs: [ChatGPTMetricS
 
     return UsageMetric(
         key: spec.key,
-        title: title,
+        title: spec.kind == .stat && title.first?.isNumber == true ? "Credits remaining" : title,
         valueText: valueText,
         subtitle: extractChatGPTSubtitle(after: titleIndex, lines: lines, valueText: valueText, kind: spec.kind),
         progress: spec.kind == .progress ? percentage(from: valueText) : nil,
@@ -449,8 +447,35 @@ private func isUsageLimitTitle(_ line: String, duration: ChatGPTDuration, requir
     return requiresModelName ? hasModelName : !hasModelName
 }
 
+private func isChatGPTCreditTitle(_ line: String) -> Bool {
+    line.range(of: #"^(?:[0-9][0-9.,]*\s+)?credits remaining$"#, options: [.regularExpression, .caseInsensitive]) != nil
+        || line.localizedCaseInsensitiveContains("verbleibendes guthaben")
+        || line.localizedCaseInsensitiveContains("guthaben verbleibend")
+}
+
+private func chatGPTCardEnd(after index: Int, lines: [String]) -> Int {
+    let end = min(lines.count - 1, index + 8)
+    guard index < end else { return end }
+    for next in (index + 1)...end {
+        let line = lines[next]
+        if isUsageLimitTitle(line, duration: .fiveHour, requiresModelName: false)
+            || isUsageLimitTitle(line, duration: .weekly, requiresModelName: false)
+            || isUsageLimitTitle(line, duration: .fiveHour, requiresModelName: true)
+            || isUsageLimitTitle(line, duration: .weekly, requiresModelName: true)
+            || isChatGPTCreditTitle(line)
+            || ["Credits", "Daily usage", "Plan limits", "Usage limit resets", "Verbleibendes Guthaben"].contains(where: { line.localizedCaseInsensitiveCompare($0) == .orderedSame }) {
+            return next - 1
+        }
+    }
+    return end
+}
+
 private func extractChatGPTValue(after index: Int, lines: [String], kind: UsageMetricStyle) throws -> String {
-    let upperBound = min(lines.count - 1, index + 8)
+    if kind == .stat, isChatGPTCreditTitle(lines[index]),
+       let range = lines[index].range(of: #"^[0-9][0-9.,]*(?=\s+credits remaining$)"#, options: [.regularExpression, .caseInsensitive]) {
+        return String(lines[index][range])
+    }
+    let upperBound = chatGPTCardEnd(after: index, lines: lines)
     guard index + 1 <= upperBound else {
         throw UsageParseError.unsupportedLayout("ChatGPT usage layout could not be parsed")
     }
@@ -482,7 +507,7 @@ private func extractChatGPTValue(after index: Int, lines: [String], kind: UsageM
 }
 
 private func extractChatGPTSubtitle(after index: Int, lines: [String], valueText: String, kind: UsageMetricStyle) -> String? {
-    let upperBound = min(lines.count - 1, index + 8)
+    let upperBound = chatGPTCardEnd(after: index, lines: lines)
     guard index + 1 <= upperBound else {
         return nil
     }
@@ -756,8 +781,8 @@ private func normalizedProgressValue(_ text: String) -> String? {
         .trimmingCharacters(in: .whitespacesAndNewlines)
 
     let patterns = [
-        #"(\d+(?:[.,]\d+)?)\s*%\s*(remaining|used|verbleibend|übrig|genutzt|verwendet|verbraucht)"#,
-        #"(\d+(?:[.,]\d+)?)\s*(remaining|used|verbleibend|übrig|genutzt|verwendet|verbraucht)"#
+        #"(\d+(?:[.,]\d+)?)\s*%\s*(remaining|left|used|verbleibend|übrig|genutzt|verwendet|verbraucht)"#,
+        #"(\d+(?:[.,]\d+)?)\s*(remaining|left|used|verbleibend|übrig|genutzt|verwendet|verbraucht)"#
     ]
 
     for pattern in patterns {
@@ -773,7 +798,7 @@ private func normalizedProgressValue(_ text: String) -> String? {
 
         let value = normalized[valueRange]
         let status = normalized[statusRange].lowercased()
-        let remainingStatuses = ["remaining", "verbleibend", "übrig"]
+        let remainingStatuses = ["remaining", "left", "verbleibend", "übrig"]
         return "\(value)% \(remainingStatuses.contains(status) ? "remaining" : "used")"
     }
 
