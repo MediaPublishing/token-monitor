@@ -17,8 +17,10 @@ Official source checked: https://help.openai.com/en/articles/11369540-using-code
 - Final 1.0.39 build 40 ran alone with the existing WebKit session. Debug result at 2026-10-04T05:38:21Z was `success`; fresh snapshot contains weekly limit and credits. No secrets, cookies or auth state were copied.
 - Non-sensitive test/build logs: `dist/pre-release-validation/1.0.39/qa/` (ignored local output).
 
-## Remaining release gate
+## Release gate at the initial repair closeout
 
 Version 1.0.39 build 40 is prepared locally. No new release/tag or public assets have been published. Visually checking the final app is blocked: root computer-use transport is closed; an independent app selection timed out. A later UI launch also started the installed old app in parallel; both diagnostic instances were stopped and the final live test above ran with only the new build. The original installed app remains unchanged, temporary debug mode is restored to false and the installed app is restarted on closeout.
 
-Next: restore native UI access, visually check Token Monitor with the final build, push the verified main commit, confirm CI including isolated startup smoke test, create the explicitly authorized v1.0.39 GitHub prerelease through the existing Release workflow, deploy the existing Cloudflare Pages project, run `scripts/verify-public-release.sh v1.0.39 1.0.39 40`, verify downloaded app version/signature and the Sparkle update ZIP, and only then report successful publication. Do not modify or close Reto's Comet/LinkedIn or OpenAI submission/help tabs.
+Next at that closeout: restore native UI access, visually check Token Monitor with the final build, push the verified main commit, confirm CI including isolated startup smoke test, create the explicitly authorized v1.0.39 GitHub prerelease through the existing Release workflow, deploy the existing Cloudflare Pages project, run `scripts/verify-public-release.sh v1.0.39 1.0.39 40`, verify downloaded app version/signature and the Sparkle update ZIP, and only then report successful publication. Do not modify or close Reto's Comet/LinkedIn or OpenAI submission/help tabs.
+
+Publication was resumed later on 2026-10-04. The completed release, local installation, public-package verification and remaining native screenshot limitation are recorded in [the publication receipt](2026-10-04-release-1.0.39-receipt.md).

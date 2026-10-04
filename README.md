@@ -117,7 +117,7 @@ OpenCode Go monitoring is off by default. In Settings, enable **Monitor OpenCode
 
 Version 1.0.36 reuses the connected workspace instead of checking the public Go marketing page. Both the original workspace and the new OpenCode Console are supported. Accounts migrated by OpenCode may need one sign-in to the new Console; app updates do not clear provider sessions.
 
-Version 1.0.39 reads Claude's updated **This week** and **Fable this week** usage labels while keeping their percentages and reset times associated with the correct limit.
+Version 1.0.38 reads Claude's updated **This week** and **Fable this week** usage labels while keeping their percentages and reset times associated with the correct limit. Version 1.0.39 also supports ChatGPT's unified Usage dashboard, including **% left**, relative reset times, and an inline credit balance.
 
 #### Banked resets
 
@@ -241,7 +241,7 @@ Die OpenCode-Go-Überwachung ist standardmäßig deaktiviert. Aktiviere in den S
 
 Version 1.0.36 verwendet den verbundenen Workspace statt der öffentlichen Go-Werbeseite. Sowohl die bisherigen Workspaces als auch die neue OpenCode Console werden unterstützt. Von OpenCode umgezogene Accounts können eine einmalige Anmeldung in der neuen Console benötigen; App-Updates löschen keine Provider-Sitzungen.
 
-Version 1.0.39 liest Claudes neue Nutzungslabels **This week** und **Fable this week** und ordnet Prozentwerte und Reset-Zeiten wieder dem richtigen Limit zu.
+Version 1.0.38 liest Claudes neue Nutzungslabels **This week** und **Fable this week** und ordnet Prozentwerte und Reset-Zeiten wieder dem richtigen Limit zu. Version 1.0.39 unterstützt zusätzlich ChatGPTs vereinheitlichtes Usage-Dashboard mit **% left**, relativen Reset-Zeiten und dem Guthaben direkt in der Überschrift.
 
 #### Banked Resets
 
