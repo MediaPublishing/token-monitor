@@ -1,11 +1,11 @@
 # Token Monitor Product Backlog
 
-Last reviewed: 2026-09-02
+Last reviewed: 2026-10-07
 
 ## Current Release State
 
-- Current public preview release: `v1.0.31` / build `32`.
-- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.31`.
+- Current public preview release: `v1.0.40` / build `41`.
+- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.40`.
 - Public marketing landing page: `https://token-monitor-landing.pages.dev/`.
 - GitHub Pages release and update host: `https://mediapublishing.github.io/token-monitor/`.
 - Sparkle appcast: `https://mediapublishing.github.io/token-monitor/appcast.xml`.
@@ -64,3 +64,27 @@ Last reviewed: 2026-09-02
 - Whether to pursue the Mac App Store track separately.
 - Whether to add a formal public license or keep the public repository source-visible without a license.
 - Whether to promote beyond the current preview audience.
+
+## Deferred Idea: Optional Session Overview
+
+**Status: documented and deferred by the product owner on 2026-10-07. No implementation, scanner, hook, or integration is enabled. Resume only after an explicit implementation request.**
+
+Reference: [AI-Agent-Session-Dashboard](https://github.com/ralfw-vibe-coding/AI-Agent-Session-Dashboard), reviewed at commit `2636a3cff70599c682a65a25876c04becffc9e3b`.
+
+### Proposed Experience
+
+- An opt-in **Show sessions** checkbox in Settings, off by default.
+- A collapsible section below the capacity overview, with at most five rows showing app icon, session title, last activity, and an action to open the session. Additional rows belong in a separate overview.
+- Label the section **Recently active sessions** when only timestamps are available. Show running, waiting, or completed only when supported by an authoritative signal.
+- Group sessions by their source app. Do not infer which monitored budget account owns a session without a reliable account identifier.
+- Keep the first scope to discovery and navigation. Manual session entry, archive management, and agent control are outside the proposed scope.
+
+### Questions To Resolve Before Implementation
+
+- Verify discovery and direct opening for Codex and Claude first. Codex has documented thread deep links; Claude Code, native Desktop sessions, and Cowork need distinct opening paths. Resuming a CLI session is not the same as focusing its current terminal window.
+- The reference project uses recency as an activity heuristic. Cowork cloud metadata may reveal only the first appearance of a session. Its scanner does not support OpenCode.
+- Prefer supported local metadata/status interfaces. If undocumented file formats are necessary, isolate each source and report an unavailable source without affecting capacity refreshes.
+- Read only necessary local metadata. Do not include conversation contents, session titles, or working paths in public debug reports.
+- The reviewed reference repository has no license file. Adapt the concept; do not copy its source into the public app without license clarification.
+
+The interface is a contained addition; reliable cross-app status and navigation need a separate feasibility check. No feasibility work is scheduled while this idea is deferred.
