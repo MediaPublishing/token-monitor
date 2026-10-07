@@ -39,9 +39,12 @@ final class AppModel: ObservableObject {
         static let statusMenuLimitDisplay = "statusMenuLimitDisplay"
         static let showUsageDetails = "showUsageDetails"
         static let openCodeGoEnabled = "openCodeGoEnabled"
+        static let menuBarAccountIDs = "menuBarAccountIDs"
     }
 
     @Published private(set) var dashboardState: DashboardState
+    @Published private(set) var accounts: [MonitoredAccount]
+    @Published private(set) var menuBarAccountIDs: [String: String]
     @Published private(set) var popoverScreen: PopoverScreen = .dashboard
     @Published private(set) var isPopoverVisible = false
     @Published private(set) var launchAtLoginEnabled: Bool
@@ -58,18 +61,22 @@ final class AppModel: ObservableObject {
     let resetReminders = ResetReminderController()
 
     private let snapshotStore: SnapshotPersisting
+    private let accountStore: AccountPersisting
+    private let canPersistAccounts: Bool
     private let diagnosticsStore: DiagnosticsStore
     private let sessionCoordinator: SessionCoordinator
     private let updateController: AppUpdateController
-    private var refreshTasks: [ServiceKind: Task<Void, Never>] = [:]
-    private var pendingForcedRefreshes: [ServiceKind: RefreshTrigger] = [:]
+    private var refreshTasks: [UUID: Task<Void, Never>] = [:]
+    private var pendingForcedRefreshes: [UUID: RefreshTrigger] = [:]
     private var backgroundRefreshTimer: Timer?
 
     init(
         snapshotStore: SnapshotPersisting = FileSnapshotStore(),
+        accountStore: AccountPersisting = FileAccountStore(),
         updateController: AppUpdateController = .shared
     ) {
         self.snapshotStore = snapshotStore
+        self.accountStore = accountStore
         self.updateController = updateController
         UserDefaults.standard.register(defaults: [
             Keys.launchAtLoginEnabled: true,
@@ -90,9 +97,14 @@ final class AppModel: ObservableObject {
         ) ?? .total
         showUsageDetails = UserDefaults.standard.bool(forKey: Keys.showUsageDetails)
         openCodeGoEnabled = UserDefaults.standard.bool(forKey: Keys.openCodeGoEnabled)
+        menuBarAccountIDs = UserDefaults.standard.dictionary(forKey: Keys.menuBarAccountIDs) as? [String: String] ?? [:]
         automaticallyChecksForUpdates = updateController.automaticallyChecksForUpdates
         let snapshots = (try? snapshotStore.loadSnapshots()) ?? [:]
-        dashboardState = DashboardState.initial(lastSnapshots: snapshots)
+        let savedAccounts = try? accountStore.loadAccounts()
+        canPersistAccounts = savedAccounts != nil
+        let restoredAccounts = AccountMigration.restoring(savedAccounts ?? [], legacySnapshots: snapshots)
+        accounts = restoredAccounts
+        dashboardState = DashboardState.initial(accounts: restoredAccounts)
 
         if let fileStore = snapshotStore as? FileSnapshotStore {
             snapshotDirectoryURL = fileStore.directoryURL
@@ -102,7 +114,16 @@ final class AppModel: ObservableObject {
         }
         diagnosticsStore = DiagnosticsStore(baseDirectory: snapshotDirectoryURL, isEnabled: initialDebugModeEnabled)
         diagnosticsDirectoryURL = snapshotDirectoryURL.appendingPathComponent("Debug", isDirectory: true)
-        sessionCoordinator = SessionCoordinator(diagnosticsStore: diagnosticsStore, snapshots: snapshots)
+        sessionCoordinator = SessionCoordinator(diagnosticsStore: diagnosticsStore, accounts: restoredAccounts)
+        if canPersistAccounts {
+            do {
+                try accountStore.saveAccounts(restoredAccounts)
+            } catch {
+                NSLog("Failed to initialize account registry: \(error.localizedDescription)")
+            }
+        } else {
+            NSLog("Account registry could not be loaded; leaving its existing file untouched")
+        }
     }
 
     func start() {
@@ -144,24 +165,23 @@ final class AppModel: ObservableObject {
     }
 
     func refreshAll(trigger: RefreshTrigger) {
-        for service in enabledServices {
-            refresh(service, trigger: trigger, force: trigger == .manual)
+        for account in enabledAccounts {
+            refresh(account.id, trigger: trigger, force: trigger == .manual)
         }
     }
 
     var dashboardServices: [ServiceStatus] {
         let order: [ServiceKind] = [.chatGPT, .claude, .openCodeGo]
-        return order.compactMap { service in
-            let status = dashboardState.service(service)
-            if service == .openCodeGo && (!openCodeGoEnabled || status.snapshot == nil) {
-                return nil
+        return order.flatMap { service in
+            dashboardState.services.filter { status in
+                status.service == service &&
+                (service != .openCodeGo || (openCodeGoEnabled && (status.snapshot != nil || !status.isPrimary)))
             }
-            return status
         }
     }
 
-    var providerSettingsServices: [ServiceStatus] {
-        [.chatGPT, .claude].map { dashboardState.service($0) }
+    func providerSettingsServices(for service: ServiceKind) -> [ServiceStatus] {
+        dashboardState.services.filter { $0.service == service }
     }
 
     var statusMenuServices: [ServiceKind] {
@@ -177,22 +197,28 @@ final class AppModel: ObservableObject {
     }
 
     func refresh(_ service: ServiceKind, trigger: RefreshTrigger, force: Bool = false) {
+        refresh(service.dataStoreIdentifier, trigger: trigger, force: force)
+    }
+
+    func refresh(_ accountID: UUID, trigger: RefreshTrigger, force: Bool = false) {
+        guard let status = dashboardState.account(accountID) else { return }
+        let service = status.service
         guard service != .openCodeGo || openCodeGoEnabled else {
             return
         }
 
-        if refreshTasks[service] != nil {
+        if refreshTasks[accountID] != nil {
             if force {
-                pendingForcedRefreshes[service] = trigger
+                pendingForcedRefreshes[accountID] = trigger
             }
             return
         }
 
-        if shouldSkipAutomaticRefresh(for: service, trigger: trigger) {
+        if shouldSkipAutomaticRefresh(for: accountID, trigger: trigger) {
             return
         }
 
-        DashboardReducer.reduce(&dashboardState, event: .service(service, .refreshStarted(trigger: trigger)))
+        DashboardReducer.reduce(&dashboardState, event: .account(accountID, .refreshStarted(trigger: trigger)))
 
         let task = Task { [weak self] in
             guard let self else {
@@ -201,29 +227,29 @@ final class AppModel: ObservableObject {
 
             defer {
                 Task { @MainActor in
-                    self.refreshTasks[service] = nil
-                    if let pendingTrigger = self.pendingForcedRefreshes.removeValue(forKey: service) {
-                        self.refresh(service, trigger: pendingTrigger)
+                    self.refreshTasks[accountID] = nil
+                    if let pendingTrigger = self.pendingForcedRefreshes.removeValue(forKey: accountID) {
+                        self.refresh(accountID, trigger: pendingTrigger)
                     }
                 }
             }
 
             do {
-                let snapshot = try await sessionCoordinator.refresh(service: service)
+                let snapshot = try await sessionCoordinator.refresh(accountID: accountID)
                 try Task.checkCancellation()
                 await MainActor.run {
                     DashboardReducer.reduce(
                         &self.dashboardState,
-                        event: .service(service, .refreshSucceeded(snapshot))
+                        event: .account(accountID, .refreshSucceeded(snapshot))
                     )
                     self.persistSnapshots()
-                    if service == .chatGPT {
+                    if service == .chatGPT && accountID == ServiceKind.chatGPT.dataStoreIdentifier {
                         self.resetReminders.update(snapshot.bankedResets)
                     }
                 }
             } catch let parseError as UsageParseError {
                 await MainActor.run {
-                    self.applyParseError(parseError, for: service)
+                    self.applyParseError(parseError, for: accountID)
                 }
             } catch is CancellationError {
                 return
@@ -231,47 +257,53 @@ final class AppModel: ObservableObject {
                 await MainActor.run {
                     DashboardReducer.reduce(
                         &self.dashboardState,
-                        event: .service(service, .refreshFailed(message: self.userVisibleMessage(for: error)))
+                        event: .account(accountID, .refreshFailed(message: self.userVisibleMessage(for: error)))
                     )
                 }
             }
         }
 
-        refreshTasks[service] = task
+        refreshTasks[accountID] = task
     }
 
     func openLogin(for service: ServiceKind, replacingExistingSession: Bool = false) {
+        openLogin(accountID: service.dataStoreIdentifier, replacingExistingSession: replacingExistingSession)
+    }
+
+    func openLogin(accountID: UUID, replacingExistingSession: Bool = false) {
+        guard let account = accounts.first(where: { $0.id == accountID }) else { return }
+        let service = account.service
         // Connecting an optional provider also opts it into refreshes and the menu.
         if service == .openCodeGo && !openCodeGoEnabled {
             setOpenCodeGoEnabledWithoutRefreshing(true)
         }
-        sessionCoordinator.cancelRefresh(service: service)
+        sessionCoordinator.cancelRefresh(accountID: accountID)
 
         if replacingExistingSession {
-            refreshTasks[service]?.cancel()
-            if service == .chatGPT { resetReminders.disconnect() }
+            refreshTasks[accountID]?.cancel()
+            if service == .chatGPT && accountID == ServiceKind.chatGPT.dataStoreIdentifier { resetReminders.disconnect() }
             DashboardReducer.reduce(
                 &dashboardState,
-                event: .service(service, .disconnected(message: "Connect account"))
+                event: .account(accountID, .disconnected(message: "Connect account"))
             )
             persistSnapshots()
         }
 
-        DashboardReducer.reduce(&dashboardState, event: .service(service, .refreshStarted(trigger: .login)))
+        DashboardReducer.reduce(&dashboardState, event: .account(accountID, .refreshStarted(trigger: .login)))
         sessionCoordinator.showLoginWindow(
-            for: service,
+            for: accountID,
             replacingExistingSession: replacingExistingSession,
             onAuthenticated: { [weak self] in
-                self?.refresh(service, trigger: .login, force: true)
+                self?.refresh(accountID, trigger: .login, force: true)
             },
             onDismissed: { [weak self] in
                 guard let self else {
                     return
                 }
-                if case .refreshing(trigger: .login) = self.dashboardState.service(service).refreshState {
+                if case .refreshing(trigger: .login) = self.dashboardState.account(accountID)?.refreshState {
                     DashboardReducer.reduce(
                         &self.dashboardState,
-                        event: .service(service, .refreshFailed(message: "Reconnect window closed before a successful refresh"))
+                        event: .account(accountID, .refreshFailed(message: "Reconnect window closed before a successful refresh"))
                     )
                 }
             }
@@ -283,26 +315,95 @@ final class AppModel: ObservableObject {
     }
 
     func disconnect(_ service: ServiceKind) {
-        if service == .chatGPT { resetReminders.disconnect() }
-        pendingForcedRefreshes[service] = nil
-        refreshTasks[service]?.cancel()
-        sessionCoordinator.cancelRefresh(service: service)
+        disconnect(accountID: service.dataStoreIdentifier)
+    }
+
+    func disconnect(accountID: UUID) {
+        guard let account = accounts.first(where: { $0.id == accountID }) else { return }
+        let service = account.service
+        if service == .chatGPT && accountID == ServiceKind.chatGPT.dataStoreIdentifier { resetReminders.disconnect() }
+        pendingForcedRefreshes[accountID] = nil
+        refreshTasks[accountID]?.cancel()
+        sessionCoordinator.cancelRefresh(accountID: accountID)
 
         Task { @MainActor [weak self] in
             guard let self else {
                 return
             }
 
-            await self.sessionCoordinator.clearSession(for: service)
-            if service == .openCodeGo {
+            await self.sessionCoordinator.clearSession(for: accountID)
+            if service == .openCodeGo && self.accounts.filter({ $0.service == .openCodeGo }).count == 1 {
                 self.setOpenCodeGoEnabledWithoutRefreshing(false)
             }
             DashboardReducer.reduce(
                 &self.dashboardState,
-                event: .service(service, .disconnected(message: "Connect account"))
+                event: .account(accountID, .disconnected(message: "Connect account"))
             )
             self.persistSnapshots()
         }
+    }
+
+    func addAccount(for service: ServiceKind) {
+        guard canPersistAccounts else { return }
+        let count = accounts.filter { $0.service == service }.count
+        let account = MonitoredAccount(id: UUID(), service: service,
+                                       name: "\(service.displayName) \(count + 1)", isPrimary: false)
+        accounts.append(account)
+        dashboardState = DashboardState(services: dashboardState.services + [
+            ServiceStatus(service: service, snapshot: nil,
+                          refreshState: .authRequired(message: "Connect account"),
+                          accountID: account.id, accountName: account.name, isPrimary: false)
+        ])
+        sessionCoordinator.add(account, diagnosticsStore: diagnosticsStore)
+        if service == .openCodeGo { setOpenCodeGoEnabledWithoutRefreshing(true) }
+        persistSnapshots()
+        openLogin(accountID: account.id)
+    }
+
+    func renameAccount(_ accountID: UUID, to name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed.count <= 40,
+              let index = accounts.firstIndex(where: { $0.id == accountID }) else { return }
+        accounts[index].name = trimmed
+        if let statusIndex = dashboardState.services.firstIndex(where: { $0.accountID == accountID }) {
+            dashboardState.services[statusIndex].accountName = trimmed
+        }
+        persistSnapshots()
+    }
+
+    func removeAccount(_ accountID: UUID) {
+        guard let account = accounts.first(where: { $0.id == accountID }), !account.isPrimary else { return }
+        pendingForcedRefreshes[accountID] = nil
+        refreshTasks[accountID]?.cancel()
+        sessionCoordinator.cancelRefresh(accountID: accountID)
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.sessionCoordinator.remove(accountID)
+            self.accounts.removeAll { $0.id == accountID }
+            self.dashboardState.services.removeAll { $0.accountID == accountID }
+            if self.menuBarAccountIDs[account.service.rawValue] == accountID.uuidString {
+                self.setMenuBarAccount(account.service.dataStoreIdentifier, for: account.service)
+            }
+            if account.service == .openCodeGo && self.accounts.filter({ $0.service == .openCodeGo }).count == 1,
+               self.dashboardState.service(.openCodeGo).snapshot == nil {
+                self.setOpenCodeGoEnabledWithoutRefreshing(false)
+            }
+            self.persistSnapshots()
+        }
+    }
+
+    func menuBarAccountID(for service: ServiceKind) -> UUID {
+        guard let raw = menuBarAccountIDs[service.rawValue], let id = UUID(uuidString: raw),
+              accounts.contains(where: { $0.id == id && $0.service == service }) else {
+            return service.dataStoreIdentifier
+        }
+        return id
+    }
+
+    func setMenuBarAccount(_ accountID: UUID, for service: ServiceKind) {
+        guard accounts.contains(where: { $0.id == accountID && $0.service == service }) else { return }
+        menuBarAccountIDs[service.rawValue] = accountID.uuidString
+        UserDefaults.standard.set(menuBarAccountIDs, forKey: Keys.menuBarAccountIDs)
     }
 
     func openUsagePageInDefaultBrowser(for service: ServiceKind) {
@@ -312,7 +413,8 @@ final class AppModel: ObservableObject {
     func desiredPopoverHeight() -> CGFloat {
         switch popoverScreen {
         case .dashboard:
-            return (showUsageDetails ? 650 : 540) + 32
+            let visible = dashboardServices.count
+            return min(760, (showUsageDetails ? 650 : 540) + 32 + CGFloat(max(0, visible - 3)) * 150)
         case .settings:
             return 700
         }
@@ -396,10 +498,14 @@ final class AppModel: ObservableObject {
         UserDefaults.standard.set(enabled, forKey: Keys.openCodeGoEnabled)
 
         if enabled {
-            refresh(.openCodeGo, trigger: .manual, force: true)
+            for account in accounts where account.service == .openCodeGo {
+                refresh(account.id, trigger: .manual, force: true)
+            }
         } else {
-            pendingForcedRefreshes[.openCodeGo] = nil
-            sessionCoordinator.cancelRefresh(service: .openCodeGo)
+            for account in accounts where account.service == .openCodeGo {
+                pendingForcedRefreshes[account.id] = nil
+                sessionCoordinator.cancelRefresh(accountID: account.id)
+            }
         }
     }
 
@@ -484,8 +590,8 @@ final class AppModel: ObservableObject {
     }
 
     var lastRefreshText: String {
-        let lastRefresh = enabledServices
-            .compactMap { dashboardState.service($0).lastSuccessfulRefresh }
+        let lastRefresh = enabledAccounts
+            .compactMap { dashboardState.account($0.id)?.lastSuccessfulRefresh }
             .max()
 
         guard let lastRefresh else {
@@ -504,7 +610,7 @@ final class AppModel: ObservableObject {
     }
 
     var overallConnectionStatus: ServiceConnectionStatus {
-        let states = enabledServices.map { dashboardState.service($0).connectionStatus }
+        let states = enabledAccounts.compactMap { dashboardState.account($0.id)?.connectionStatus }
         if states.contains(.error) {
             return .error
         }
@@ -521,15 +627,19 @@ final class AppModel: ObservableObject {
     }
 
     func statusMenuScores(for service: ServiceKind) -> (session: Double?, total: Double?) {
-        guard let snapshot = dashboardState.service(service).snapshot else {
+        guard let snapshot = statusMenuStatus(for: service)?.snapshot else {
             return (nil, nil)
         }
         return (snapshot.statusMenuSessionScore, snapshot.statusMenuTotalScore)
     }
 
+    func statusMenuStatus(for service: ServiceKind) -> ServiceStatus? {
+        dashboardState.account(menuBarAccountID(for: service))
+    }
+
     private func persistSnapshots() {
         let snapshots = Dictionary(
-            uniqueKeysWithValues: dashboardState.services.compactMap { status in
+            uniqueKeysWithValues: dashboardState.services.filter(\.isPrimary).compactMap { status in
                 status.snapshot.map { (status.service, $0) }
             }
         )
@@ -537,33 +647,44 @@ final class AppModel: ObservableObject {
         do {
             try snapshotStore.saveSnapshots(snapshots)
         } catch {
-            NSLog("Failed to persist snapshots: \(error.localizedDescription)")
+            NSLog("Failed to persist legacy snapshots: \(error.localizedDescription)")
+        }
+        guard canPersistAccounts else { return }
+        let updatedAccounts = accounts.map { account -> MonitoredAccount in
+            var updated = account
+            updated.snapshot = dashboardState.account(account.id)?.snapshot
+            return updated
+        }
+        do {
+            try accountStore.saveAccounts(updatedAccounts)
+        } catch {
+            NSLog("Failed to persist account snapshots: \(error.localizedDescription)")
         }
     }
 
-    private func applyParseError(_ error: UsageParseError, for service: ServiceKind) {
+    private func applyParseError(_ error: UsageParseError, for accountID: UUID) {
         switch error {
         case let .authRequired(message):
             DashboardReducer.reduce(
                 &dashboardState,
-                event: .service(service, .authRequired(message: message))
+                event: .account(accountID, .authRequired(message: message))
             )
 
         case let .unsupportedLayout(message):
             DashboardReducer.reduce(
                 &dashboardState,
-                event: .service(service, .refreshFailed(message: message))
+                event: .account(accountID, .refreshFailed(message: message))
             )
         }
     }
 
-    private func shouldSkipAutomaticRefresh(for service: ServiceKind, trigger: RefreshTrigger) -> Bool {
-        dashboardState.service(service).shouldSkipAutomaticRefresh(trigger: trigger)
+    private func shouldSkipAutomaticRefresh(for accountID: UUID, trigger: RefreshTrigger) -> Bool {
+        dashboardState.account(accountID)?.shouldSkipAutomaticRefresh(trigger: trigger) ?? true
     }
 
-    private var enabledServices: [ServiceKind] {
-        ServiceKind.allCases.filter { service in
-            service != .openCodeGo || openCodeGoEnabled
+    private var enabledAccounts: [MonitoredAccount] {
+        accounts.filter { account in
+            account.service != .openCodeGo || openCodeGoEnabled
         }
     }
 
@@ -591,9 +712,9 @@ final class AppModel: ObservableObject {
             "## Current status"
         ]
 
-        for service in enabledServices {
-            let status = dashboardState.service(service)
-            lines.append("- \(status.service.displayName): \(status.connectionStatus.rawValue) - \(stateDescription(for: status))")
+        for account in enabledAccounts {
+            guard let status = dashboardState.account(account.id) else { continue }
+            lines.append("- \(status.accountName): \(status.connectionStatus.rawValue) - \(stateDescription(for: status))")
         }
 
         lines.append("")

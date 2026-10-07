@@ -3,6 +3,8 @@ import TokenMonitorCore
 
 struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var renamingAccountID: UUID?
+    @State private var draftAccountName = ""
     let compact: Bool
 
     init(compact: Bool = false) {
@@ -36,18 +38,16 @@ struct SettingsView: View {
                 }
 
                 VStack(spacing: 10) {
-                    settingsRow(height: 152) {
-                        appSettingsCard
-                        providerSettingsCard
-                    }
+                    providerSettingsCard
                     settingsRow(height: 205) {
+                        appSettingsCard
                         statusMenuSettingsCard
-                        usageDetailsSettingsCard
                     }
                     settingsRow(height: 174) {
+                        usageDetailsSettingsCard
                         updatesSettingsCard
-                        debuggingSettingsCard
                     }
+                    debuggingSettingsCard
                 }
 
                 Spacer(minLength: 0)
@@ -57,6 +57,19 @@ struct SettingsView: View {
         }
         .frame(width: compact ? AppDelegate.popoverWidth : 560, height: 700, alignment: .topLeading)
         .background(Color(nsColor: .windowBackgroundColor))
+        .alert("Rename account", isPresented: Binding(
+            get: { renamingAccountID != nil },
+            set: { if !$0 { renamingAccountID = nil } }
+        )) {
+            TextField("Account name", text: $draftAccountName)
+            Button("Save") {
+                if let id = renamingAccountID { model.renameAccount(id, to: draftAccountName) }
+                renamingAccountID = nil
+            }
+            Button("Cancel", role: .cancel) { renamingAccountID = nil }
+        } message: {
+            Text("Use a short name to distinguish this account in the dashboard.")
+        }
     }
 
     private func settingsCard<Content: View>(
@@ -136,51 +149,70 @@ struct SettingsView: View {
 
     private var providerSettingsCard: some View {
         settingsCard("Providers") {
-            Text("Manage your connected providers")
+            Text("Add accounts without replacing existing sign-ins. Choose one account per provider for the menu bar.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-
-            ForEach(settingsProviderStatuses, id: \.service) { status in
-                HStack(spacing: 6) {
+            ForEach([ServiceKind.chatGPT, .claude, .openCodeGo], id: \.self) { service in
+                HStack {
+                    Text(service.displayName).font(.subheadline.weight(.semibold))
+                    Spacer()
                     Button {
-                        connectOrReconnect(status)
+                        model.addAccount(for: service)
                     } label: {
-                        Text(status.service.displayName)
-                            .font(.subheadline)
-                        Spacer(minLength: 0)
+                        Label("Add \(service.displayName) account", systemImage: "plus")
+                            .labelStyle(.iconOnly)
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Add \(service.displayName) account")
+                }
+                ForEach(model.providerSettingsServices(for: service), id: \.accountID) { status in
+                    HStack(spacing: 8) {
+                        Button {
+                            model.openLogin(accountID: status.accountID)
+                        } label: {
+                            Text(status.accountName)
+                                .lineLimit(1)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(.plain)
                         Text(providerStatusLabel(for: status))
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(providerStatusColor(for: status))
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-
-                    if providerHasAccountActions(status) {
+                        if model.menuBarAccountID(for: service) == status.accountID {
+                            Image(systemName: "menubar.rectangle")
+                                .foregroundStyle(.secondary)
+                                .help("Shown in menu bar")
+                        }
                         Menu {
-                            Button("Reconnect") {
-                                model.openLogin(for: status.service)
+                            Button("Connect / Reconnect") { model.openLogin(accountID: status.accountID) }
+                            Button("Rename...") {
+                                draftAccountName = status.accountName
+                                renamingAccountID = status.accountID
                             }
-                            Button("Switch account...") {
-                                model.switchAccount(for: status.service)
+                            if model.menuBarAccountID(for: service) != status.accountID {
+                                Button("Show in menu bar") { model.setMenuBarAccount(status.accountID, for: service) }
                             }
                             Divider()
+                            Button("Switch account...") {
+                                model.openLogin(accountID: status.accountID, replacingExistingSession: true)
+                            }
                             Button("Disconnect", role: .destructive) {
-                                model.disconnect(status.service)
+                                model.disconnect(accountID: status.accountID)
+                            }
+                            if !status.isPrimary {
+                                Button("Remove account", role: .destructive) {
+                                    model.removeAccount(status.accountID)
+                                }
                             }
                         } label: {
                             Image(systemName: "ellipsis.circle")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
                         }
                         .menuStyle(.borderlessButton)
                         .fixedSize()
-                        .help("\(status.service.displayName) account options")
                     }
+                    .padding(.leading, 10)
                 }
-
-                if status.service != .openCodeGo {
+                if service != .openCodeGo {
                     Divider()
                 }
             }
@@ -221,17 +253,6 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
             }
         }
-    }
-
-    private func connectOrReconnect(_ status: ServiceStatus) {
-        model.openLogin(for: status.service)
-    }
-
-    private func providerHasAccountActions(_ status: ServiceStatus) -> Bool {
-        if status.service == .openCodeGo && !model.openCodeGoEnabled {
-            return false
-        }
-        return status.snapshot != nil || status.connectionStatus != .authRequired
     }
 
     private var usageDetailsSettingsCard: some View {
@@ -367,10 +388,6 @@ struct SettingsView: View {
             get: { model.showUsageDetails },
             set: { model.setShowUsageDetails($0) }
         )
-    }
-
-    private var settingsProviderStatuses: [ServiceStatus] {
-        model.providerSettingsServices + [model.dashboardState.service(.openCodeGo)]
     }
 
     private func providerStatusLabel(for status: ServiceStatus) -> String {

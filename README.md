@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.39/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.40/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.39`.
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.40`.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -48,6 +48,7 @@ If your work depends on Claude and ChatGPT, the limiting factor is often not the
 
 - View Claude and ChatGPT/Codex in one compact popover
 - Optionally add OpenCode Go after connecting the account
+- Add and name multiple accounts per provider without replacing existing sign-ins; choose which one appears in the menu bar
 - Keep each provider in its own persistent WebKit session
 - Reconnect without clearing the provider session, or explicitly switch and disconnect accounts
 - Refresh on launch, on demand, and in the background
@@ -76,7 +77,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.39/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.40/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -118,6 +119,10 @@ OpenCode Go monitoring is off by default. In Settings, enable **Monitor OpenCode
 Version 1.0.36 reuses the connected workspace instead of checking the public Go marketing page. Both the original workspace and the new OpenCode Console are supported. Accounts migrated by OpenCode may need one sign-in to the new Console; app updates do not clear provider sessions.
 
 Version 1.0.38 reads Claude's updated **This week** and **Fable this week** usage labels while keeping their percentages and reset times associated with the correct limit. Version 1.0.39 also supports ChatGPT's unified Usage dashboard, including **% left**, relative reset times, and an inline credit balance.
+
+#### Multiple accounts
+
+In **Settings > Providers**, click **+** next to Claude, ChatGPT, or OpenCode Go to add another account. Give it a name with **More > Rename**. Each additional account keeps its own persistent sign-in and appears separately in the dashboard. The original account and its existing sign-in stay in place. Choose **Show in menu bar** on the account whose capacity the provider's menu-bar indicator should show. Disconnecting or removing an additional account clears only that account's login data. The original provider accounts remain available for compatibility with previous versions.
 
 #### Banked resets
 
@@ -200,7 +205,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.39/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.40/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -242,6 +247,10 @@ Die OpenCode-Go-Überwachung ist standardmäßig deaktiviert. Aktiviere in den S
 Version 1.0.36 verwendet den verbundenen Workspace statt der öffentlichen Go-Werbeseite. Sowohl die bisherigen Workspaces als auch die neue OpenCode Console werden unterstützt. Von OpenCode umgezogene Accounts können eine einmalige Anmeldung in der neuen Console benötigen; App-Updates löschen keine Provider-Sitzungen.
 
 Version 1.0.38 liest Claudes neue Nutzungslabels **This week** und **Fable this week** und ordnet Prozentwerte und Reset-Zeiten wieder dem richtigen Limit zu. Version 1.0.39 unterstützt zusätzlich ChatGPTs vereinheitlichtes Usage-Dashboard mit **% left**, relativen Reset-Zeiten und dem Guthaben direkt in der Überschrift.
+
+#### Mehrere Accounts
+
+Unter **Settings > Providers** kannst du mit **+** für Claude, ChatGPT oder OpenCode Go weitere Accounts hinzufügen und über **More > Rename** benennen. Jeder zusätzliche Account bekommt eine eigene dauerhafte Anmeldung und erscheint separat im Dashboard. Der bisherige Account samt Login bleibt bestehen. Mit **Show in menu bar** bestimmst du, welcher Account eines Providers die Balken in der Menüleiste liefert. Das Trennen oder Entfernen eines zusätzlichen Accounts löscht nur dessen Login-Daten.
 
 #### Banked Resets
 

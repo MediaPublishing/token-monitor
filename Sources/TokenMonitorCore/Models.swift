@@ -326,11 +326,18 @@ public enum ServiceConnectionStatus: String, Equatable, Sendable {
 }
 
 public struct ServiceStatus: Equatable, Sendable {
+    public let accountID: UUID
+    public var accountName: String
+    public let isPrimary: Bool
     public let service: ServiceKind
     public var snapshot: ServiceSnapshot?
     public var refreshState: RefreshState
 
-    public init(service: ServiceKind, snapshot: ServiceSnapshot?, refreshState: RefreshState) {
+    public init(service: ServiceKind, snapshot: ServiceSnapshot?, refreshState: RefreshState,
+                accountID: UUID? = nil, accountName: String? = nil, isPrimary: Bool = true) {
+        self.accountID = accountID ?? service.dataStoreIdentifier
+        self.accountName = accountName ?? service.displayName
+        self.isPrimary = isPrimary
         self.service = service
         self.snapshot = snapshot
         self.refreshState = refreshState

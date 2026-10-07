@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var dashboardSubscription: AnyCancellable?
     private var popoverScreenSubscription: AnyCancellable?
     private var statusMenuSettingsSubscription: AnyCancellable?
+    private var menuBarAccountSubscription: AnyCancellable?
     private var dashboardHostingController: NSHostingController<AnyView>?
     private var outsideClickMonitor: Any?
 
@@ -106,7 +107,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         dashboardSubscription = model.$dashboardState
             .sink { [weak self] _ in
                 self?.updateStatusItem()
+                self?.updatePopoverSize()
             }
+
+        menuBarAccountSubscription = model.$menuBarAccountIDs.sink { [weak self] _ in
+            self?.updateStatusItem()
+        }
 
         popoverScreenSubscription = Publishers.CombineLatest(
             model.$popoverScreen,
@@ -162,7 +168,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         for (index, service) in services.enumerated() {
             let rowY = CGFloat(services.count - index - 1) * rowHeight
             let barY = rowY + (rowHeight - barHeight) / 2
-            let status = model.dashboardState.service(service).connectionStatus
+            let status = model.statusMenuStatus(for: service)?.connectionStatus ?? .authRequired
             let scores = model.statusMenuScores(for: service)
             let selectedScore = model.statusMenuLimitDisplay == .session
                 ? scores.session
@@ -396,9 +402,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func tooltipText() -> String {
-        let statuses = model.statusMenuServices.map { service in
-            let status = model.dashboardState.service(service)
-            return "\(service.displayName): \(model.stateDescription(for: status))"
+        let statuses = model.statusMenuServices.compactMap { service -> String? in
+            guard let status = model.statusMenuStatus(for: service) else { return nil }
+            return "\(status.accountName): \(model.stateDescription(for: status))"
         }
         let limitDescription = model.statusMenuLimitDisplay == .both
             ? "Menu bar: Session / Total"

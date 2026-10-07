@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIGURATION="${1:-release}"
-BUILD_DIR="$ROOT_DIR/.build/arm64-apple-macosx/$CONFIGURATION"
+BUILD_DIR="$(cd "$ROOT_DIR" && swift build --show-bin-path -c "$CONFIGURATION")"
 APP_DIR="$ROOT_DIR/dist/TokenMonitor.app"
 MACOS_DIR="$APP_DIR/Contents/MacOS"
 RESOURCES_DIR="$APP_DIR/Contents/Resources"

@@ -1,12 +1,14 @@
-import SwiftUI
+import AppKit
 
 @main
-struct TokenMonitorApplication: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+@MainActor
+struct TokenMonitorApplication {
+    private static let delegate = AppDelegate()
 
-    var body: some Scene {
-        Settings {
-            EmptyView()
-        }
+    static func main() {
+        let application = NSApplication.shared
+        application.delegate = delegate
+        application.finishLaunching()
+        application.run()
     }
 }

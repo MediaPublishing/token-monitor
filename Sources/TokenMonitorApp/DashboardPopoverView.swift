@@ -8,8 +8,12 @@ struct DashboardPopoverView: View {
         VStack(alignment: .leading, spacing: 10) {
             PopoverHeaderView()
 
-            ForEach(model.dashboardServices, id: \.service) { status in
-                ServiceSectionView(status: status)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(model.dashboardServices, id: \.accountID) { status in
+                        ServiceSectionView(status: status)
+                    }
+                }
             }
 
             Spacer(minLength: 0)
@@ -34,7 +38,7 @@ struct ServiceSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .center, spacing: 8) {
-                Text(status.service.displayName)
+                Text(status.accountName)
                     .font(.headline)
 
                 StateBadgeView(status: status.connectionStatus)
@@ -71,7 +75,7 @@ struct ServiceSectionView: View {
                 }
                 if status.service == .chatGPT {
                     BankedResetsView(inventory: snapshot.bankedResets, snapshotDate: snapshot.capturedAt) {
-                        model.openLogin(for: .chatGPT)
+                        model.openLogin(accountID: status.accountID)
                     }
                 }
             } else {
@@ -98,9 +102,9 @@ struct ServiceSectionView: View {
 
     private func refreshOrConnect() {
         if status.connectionStatus == .authRequired {
-            model.openLogin(for: status.service)
+            model.openLogin(accountID: status.accountID)
         } else {
-            model.refresh(status.service, trigger: .manual, force: true)
+            model.refresh(status.accountID, trigger: .manual, force: true)
         }
     }
 

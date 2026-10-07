@@ -1,36 +1,56 @@
 import Foundation
 import TokenMonitorCore
+import WebKit
 
 @MainActor
 final class SessionCoordinator {
-    private let controllers: [ServiceKind: ServiceSessionController]
+    private var controllers: [UUID: ServiceSessionController]
 
-    init(diagnosticsStore: DiagnosticsStore, snapshots: [ServiceKind: ServiceSnapshot] = [:]) {
-        controllers = Dictionary(uniqueKeysWithValues: ServiceKind.allCases.map { service in
-            (service, ServiceSessionController(service: service, diagnosticsStore: diagnosticsStore,
-                                              lastSnapshot: snapshots[service]))
+    init(diagnosticsStore: DiagnosticsStore, accounts: [MonitoredAccount]) {
+        controllers = Dictionary(uniqueKeysWithValues: accounts.map { account in
+            (account.id, Self.makeController(for: account, diagnosticsStore: diagnosticsStore))
         })
     }
 
-    func refresh(service: ServiceKind) async throws -> ServiceSnapshot {
-        guard let controller = controllers[service] else {
-            throw SessionControllerError.controllerMissing(service.displayName)
+    private static func makeController(for account: MonitoredAccount, diagnosticsStore: DiagnosticsStore) -> ServiceSessionController {
+        let dataStore = account.isPrimary ? WKWebsiteDataStore.default() : WKWebsiteDataStore(forIdentifier: account.id)
+        return ServiceSessionController(service: account.service, diagnosticsStore: diagnosticsStore,
+                                        lastSnapshot: account.snapshot, dataStore: dataStore,
+                                        isolatedAccount: !account.isPrimary)
+    }
+
+    func add(_ account: MonitoredAccount, diagnosticsStore: DiagnosticsStore) {
+        controllers[account.id] = Self.makeController(for: account, diagnosticsStore: diagnosticsStore)
+    }
+
+    func remove(_ accountID: UUID) async {
+        await controllers[accountID]?.clearSession()
+        controllers[accountID] = nil
+    }
+
+    func refresh(accountID: UUID) async throws -> ServiceSnapshot {
+        guard let controller = controllers[accountID] else {
+            throw SessionControllerError.controllerMissing(accountID.uuidString)
         }
 
         return try await controller.refresh()
     }
 
     func cancelRefresh(service: ServiceKind) {
-        controllers[service]?.cancelRefresh()
+        cancelRefresh(accountID: service.dataStoreIdentifier)
+    }
+
+    func cancelRefresh(accountID: UUID) {
+        controllers[accountID]?.cancelRefresh()
     }
 
     func showLoginWindow(
-        for service: ServiceKind,
+        for accountID: UUID,
         replacingExistingSession: Bool = false,
         onAuthenticated: @escaping @MainActor () -> Void,
         onDismissed: @escaping @MainActor () -> Void
     ) {
-        controllers[service]?.showLoginWindow(
+        controllers[accountID]?.showLoginWindow(
             replacingExistingSession: replacingExistingSession,
             onAuthenticated: onAuthenticated,
             onDismissed: onDismissed
@@ -38,6 +58,10 @@ final class SessionCoordinator {
     }
 
     func clearSession(for service: ServiceKind) async {
-        await controllers[service]?.clearSession()
+        await controllers[service.dataStoreIdentifier]?.clearSession()
+    }
+
+    func clearSession(for accountID: UUID) async {
+        await controllers[accountID]?.clearSession()
     }
 }

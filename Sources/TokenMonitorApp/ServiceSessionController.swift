@@ -31,6 +31,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private let service: ServiceKind
     private let parser: any UsageParsing
     private let dataStore: WKWebsiteDataStore
+    private let isolatedAccount: Bool
     private let diagnosticsStore: DiagnosticsStore
     private lazy var browserController: ServiceLoginWindowController = makeBrowserController()
     private lazy var backgroundWebView: WKWebView = makeBackgroundWebView()
@@ -48,9 +49,11 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             ? OpenCodeGoNavigation.refreshURL(lastKnownURL: openCodeGoWorkspaceURL?.absoluteString) : service.usageURL
     }
 
-    init(service: ServiceKind, diagnosticsStore: DiagnosticsStore, lastSnapshot: ServiceSnapshot? = nil) {
+    init(service: ServiceKind, diagnosticsStore: DiagnosticsStore, lastSnapshot: ServiceSnapshot? = nil,
+         dataStore: WKWebsiteDataStore = .default(), isolatedAccount: Bool = false) {
         self.service = service
         self.diagnosticsStore = diagnosticsStore
+        self.isolatedAccount = isolatedAccount
         switch service {
         case .claude:
             parser = ClaudeUsageParser()
@@ -59,7 +62,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         case .openCodeGo:
             parser = OpenCodeGoUsageParser()
         }
-        dataStore = WKWebsiteDataStore.default()
+        self.dataStore = dataStore
         openCodeGoWorkspaceURL = service == .openCodeGo
             ? OpenCodeGoNavigation.workspaceURL(from: lastSnapshot?.url) : nil
         super.init()
@@ -141,7 +144,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
         let records = await dataStore.tm_dataRecords(ofTypes: dataTypes)
         let serviceRecords = records.filter { record in
-            websiteDataBelongsToService(record.displayName, service: service)
+            isolatedAccount || websiteDataBelongsToService(record.displayName, service: service)
         }
 
         if !serviceRecords.isEmpty {
@@ -149,7 +152,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         }
 
         let cookies = await dataStore.httpCookieStore.tm_allCookies()
-        for cookie in cookies where websiteDataBelongsToService(cookie.domain, service: service) {
+        for cookie in cookies where isolatedAccount || websiteDataBelongsToService(cookie.domain, service: service) {
             await dataStore.httpCookieStore.tm_delete(cookie)
         }
     }

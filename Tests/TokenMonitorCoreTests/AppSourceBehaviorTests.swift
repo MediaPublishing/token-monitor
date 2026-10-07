@@ -25,7 +25,7 @@ struct AppSourceBehaviorTests {
         #expect(!loginWindowController.contains("removeData(ofTypes:"))
         #expect(!sessionController.contains("browserController.loadUsagePage()"))
         #expect(!sessionController.contains("WKWebsiteDataStore(forIdentifier:"))
-        #expect(sessionController.contains("WKWebsiteDataStore.default()"))
+        #expect(sessionController.contains("dataStore: WKWebsiteDataStore = .default()"))
         #expect(!sessionController.contains("beginBackgroundRefreshPresentationIfNeeded"))
         #expect(!sessionController.contains("endBackgroundPresentationIfNeeded"))
         #expect(sessionController.contains("decidePolicyFor navigationAction"))
@@ -34,7 +34,7 @@ struct AppSourceBehaviorTests {
         #expect(sessionController.contains("recordBlockedNavigation"))
         #expect(sessionController.contains("allowsEmbeddedWebNavigation"))
         #expect(appModel.contains("shouldSkipAutomaticRefresh"))
-        #expect(appModel.contains("dashboardState.service(service).shouldSkipAutomaticRefresh(trigger: trigger)"))
+        #expect(appModel.contains("dashboardState.account(accountID)?.shouldSkipAutomaticRefresh(trigger: trigger)"))
     }
 
     @Test func remainingProgressBarsUseThresholdColors() throws {
@@ -62,7 +62,7 @@ struct AppSourceBehaviorTests {
         #expect(dashboardView.contains("isUsedPercentageMetric"))
         #expect(dashboardView.contains("% remaining"))
         #expect(!dashboardView.contains("showsProgressPercentage"))
-        #expect(!dashboardView.contains("ScrollView"))
+        #expect(dashboardView.contains("ScrollView"))
         #expect(dashboardView.contains("ServiceSectionView(status: status)"))
         #expect(dashboardView.contains("count: 3"))
         #expect(dashboardView.contains("Image(systemName: \"arrow.clockwise\")"))
@@ -184,7 +184,7 @@ struct AppSourceBehaviorTests {
         )
 
         #expect(appModel.contains("pendingForcedRefreshes"))
-        #expect(appModel.contains("sessionCoordinator.cancelRefresh(service: service)"))
+        #expect(appModel.contains("sessionCoordinator.cancelRefresh(accountID: accountID)"))
         #expect(appModel.contains("catch is CancellationError"))
         #expect(sessionCoordinator.contains("func cancelRefresh(service: ServiceKind)"))
         #expect(sessionController.contains("func cancelRefresh()"))
@@ -256,10 +256,10 @@ struct AppSourceBehaviorTests {
         )
 
         #expect(appModel.contains("Keys.openCodeGoEnabled: false"))
-        #expect(appModel.contains("!openCodeGoEnabled || status.snapshot == nil"))
+        #expect(appModel.contains("openCodeGoEnabled && (status.snapshot != nil || !status.isPrimary)"))
         #expect(appModel.contains("service != .openCodeGo || openCodeGoEnabled"))
-        #expect(settingsView.contains("status.service.displayName"))
-        #expect(settingsView.contains("settingsProviderStatuses"))
+        #expect(settingsView.contains("service.displayName"))
+        #expect(settingsView.contains("model.providerSettingsServices(for: service)"))
         #expect(sessionController.contains("extract.openCodeGoWorkspaceURL"))
         #expect(sessionController.contains("OpenCodeGoUsageParser()"))
         #expect(loginController.contains("isOpenCodeGoWorkspaceURL(currentURL)"))
@@ -296,7 +296,7 @@ struct AppSourceBehaviorTests {
 
         #expect(settingsView.contains("Switch account..."))
         #expect(settingsView.contains("Disconnect"))
-        #expect(settingsView.contains("model.switchAccount(for: status.service)"))
+        #expect(settingsView.contains("model.openLogin(accountID: status.accountID, replacingExistingSession: true)"))
         #expect(appModel.contains("func disconnect(_ service: ServiceKind)"))
         #expect(appModel.contains("replacingExistingSession: true"))
         #expect(sessionController.contains("websiteDataBelongsToService"))
@@ -314,10 +314,10 @@ struct AppSourceBehaviorTests {
         #expect(loginController.contains("login_hint"))
         #expect(loginController.contains("authuser"))
         #expect(loginController.contains("accounts.google.com"))
-        #expect(settingsView.contains("model.disconnect(status.service)"))
-        #expect(settingsView.contains("providerHasAccountActions"))
-        #expect(settingsView.contains("model.openLogin(for: status.service)"))
-        #expect(!settingsView.contains("model.switchAccount(for: status.service)\n            return"))
+        #expect(settingsView.contains("model.disconnect(accountID: status.accountID)"))
+        #expect(settingsView.contains("model.addAccount(for: service)"))
+        #expect(settingsView.contains("model.openLogin(accountID: status.accountID)"))
+        #expect(settingsView.contains("model.renameAccount(id, to: draftAccountName)"))
         #expect(!sessionController.contains("controller.onPageFinishedLoading"))
         #expect(!sessionController.contains("controller.onNavigationFailure"))
     }
