@@ -3,6 +3,7 @@ import TokenMonitorCore
 
 struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
+    @ObservedObject private var updates = AppUpdateController.shared
     @State private var renamingAccountID: UUID?
     @State private var draftAccountName = ""
     let compact: Bool
@@ -43,7 +44,7 @@ struct SettingsView: View {
                         appSettingsCard
                         statusMenuSettingsCard
                     }
-                    settingsRow(height: 174) {
+                    settingsRow(height: 205) {
                         usageDetailsSettingsCard
                         updatesSettingsCard
                     }
@@ -284,7 +285,7 @@ struct SettingsView: View {
         settingsCard("Updates") {
             settingsToggle(
                 "Automatically check for updates",
-                description: "Show update prompts automatically.",
+                description: "Check hourly. Review and install available updates.",
                 isOn: automaticUpdateChecksBinding
             )
 
@@ -293,6 +294,15 @@ struct SettingsView: View {
             }
             .buttonStyle(.bordered)
             .controlSize(compact ? .mini : .small)
+            Text(updates.statusText)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            if let nextCheck = updates.nextCheckDate {
+                Text("Next check: \(nextCheck, style: .time)")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
             versionLabel
         }
         #endif

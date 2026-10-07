@@ -89,7 +89,7 @@ struct AppSourceBehaviorTests {
         #expect(appDelegate.contains("drawStatusValue"))
         #expect(appDelegate.contains("button.effectiveAppearance"))
         #expect(appDelegate.contains("statusBarForegroundColor"))
-        #expect(appDelegate.contains("button.attributedTitle = NSAttributedString(string: \"\")"))
+        #expect(appDelegate.contains("availableUpdate == nil ? \"\" : \" Update\""))
         #expect(appDelegate.contains("if score >= 0.75 { return .systemGreen }"))
         #expect(appDelegate.contains("if score >= 0.5 { return .systemMint }"))
         #expect(appDelegate.contains("if score >= 0.25 { return .systemOrange }"))

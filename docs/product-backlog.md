@@ -4,8 +4,8 @@ Last reviewed: 2026-10-07
 
 ## Current Release State
 
-- Current public preview release: `v1.0.40` / build `41`.
-- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.40`.
+- Current public preview release: `v1.0.41` / build `42`.
+- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.41`.
 - Public marketing landing page: `https://token-monitor-landing.pages.dev/`.
 - GitHub Pages release and update host: `https://mediapublishing.github.io/token-monitor/`.
 - Sparkle appcast: `https://mediapublishing.github.io/token-monitor/appcast.xml`.
@@ -17,6 +17,7 @@ Last reviewed: 2026-10-07
 - Apple Developer ID signing, notarization, and Mac App Store work are paused until explicitly resumed.
 - Automatic update checks are off by default from `v1.0.22`.
 - Manual update checks remain available through Settings.
+- From `v1.0.41`, enabled checks run hourly and show available updates in the menu bar and dashboard. Debug reports include updater status; checking is not silent installation.
 - Debug reports must remain opt-in and draft-only. Do not send or post private usage dumps automatically.
 - Public GitHub Issues must not include raw debug dumps, account data, chat titles, cookies, tokens, Apple credentials, or GitHub secrets.
 - ChatGPT connection completes only after an authenticated login window has returned to the usage page; its first snapshot must come from that same authenticated window before background refresh resumes.

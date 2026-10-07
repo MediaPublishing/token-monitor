@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var popoverScreenSubscription: AnyCancellable?
     private var statusMenuSettingsSubscription: AnyCancellable?
     private var menuBarAccountSubscription: AnyCancellable?
+    private var updateSubscription: AnyCancellable?
     private var dashboardHostingController: NSHostingController<AnyView>?
     private var outsideClickMonitor: Any?
 
@@ -104,6 +105,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func observeDashboardState() {
+        updateSubscription = AppUpdateController.shared.$availableVersion.sink { [weak self] version in
+            self?.updateStatusItem(availableUpdate: version)
+        }
         dashboardSubscription = model.$dashboardState
             .sink { [weak self] _ in
                 self?.updateStatusItem()
@@ -133,14 +137,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         }
     }
 
-    private func updateStatusItem() {
+    private func updateStatusItem(availableUpdate: String? = AppUpdateController.shared.availableVersion) {
         guard let button = statusItem?.button else {
             return
         }
 
         button.image = makeCapacityStatusImage(for: button.effectiveAppearance)
-        button.attributedTitle = NSAttributedString(string: "")
-        button.toolTip = tooltipText()
+        button.attributedTitle = NSAttributedString(
+            string: availableUpdate == nil ? "" : " Update",
+            attributes: [.font: NSFont.systemFont(ofSize: 10, weight: .semibold),
+                         .foregroundColor: statusBarForegroundColor(for: button.effectiveAppearance)]
+        )
+        button.toolTip = tooltipText() + (availableUpdate.map { "\nUpdate \($0) available. Open Token Monitor to review." } ?? "")
     }
 
     private func makeCapacityStatusImage(for appearance: NSAppearance?) -> NSImage? {

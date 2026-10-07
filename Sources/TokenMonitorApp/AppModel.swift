@@ -133,6 +133,7 @@ final class AppModel: ObservableObject {
 
         syncLaunchAtLoginRegistration()
         resetReminders.start()
+        updateController.start()
 
         backgroundRefreshTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             Task { @MainActor in
@@ -345,9 +346,8 @@ final class AppModel: ObservableObject {
 
     func addAccount(for service: ServiceKind) {
         guard canPersistAccounts else { return }
-        let count = accounts.filter { $0.service == service }.count
         let account = MonitoredAccount(id: UUID(), service: service,
-                                       name: "\(service.displayName) \(count + 1)", isPrimary: false)
+                                       name: MonitoredAccount.nextName(for: service, in: accounts), isPrimary: false)
         accounts.append(account)
         dashboardState = DashboardState(services: dashboardState.services + [
             ServiceStatus(service: service, snapshot: nil,
@@ -717,6 +717,9 @@ final class AppModel: ObservableObject {
             lines.append("- \(status.accountName): \(status.connectionStatus.rawValue) - \(stateDescription(for: status))")
         }
 
+        lines.append("")
+        lines.append("## App updates")
+        lines.append(updateController.diagnosticsText)
         lines.append("")
         lines.append("## Latest redacted debug records")
 

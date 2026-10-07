@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.40/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.41/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.40`.
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.41`.
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -77,7 +77,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.40/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.41/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -110,7 +110,7 @@ Token Monitor tries to register itself as a login item when **Launch at login** 
 
 #### Updates
 
-Token Monitor checks for updates only when you click **Check for Updates...** in Settings. Automatic update checks are off by default from version `1.0.22`. If you enable **Automatically check for updates**, macOS may show an update prompt later without you clicking the manual update button.
+Automatic update checks are off by default from version `1.0.22`. From version `1.0.41`, enabling **Automatically check for updates** checks immediately, then hourly while the app is running. An **Update** indicator in the menu bar and a **Review Update** button in the dashboard make available updates visible without hidden background windows. Review and confirm installation in Sparkle; enabling checks does not enable silent installation. **Check for Updates...** remains available in Settings. The debug report now includes update timing, preferences, results, and error codes. Existing sign-ins are preserved.
 
 #### Optional OpenCode Go
 
@@ -205,7 +205,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.40/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.41/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -238,7 +238,7 @@ Token Monitor versucht, sich als Login Item zu registrieren, wenn **Launch at lo
 
 #### Updates
 
-Token Monitor sucht nur dann nach Updates, wenn du in den Settings **Check for Updates...** klickst. Automatische Update-Prüfungen sind ab Version `1.0.22` standardmäßig aus. Wenn du **Automatically check for updates** aktivierst, kann macOS später ein Update-Fenster anzeigen, ohne dass du den manuellen Update-Button geklickt hast.
+Automatische Update-Prüfungen sind ab Version `1.0.22` standardmäßig aus. Ab Version `1.0.41` prüft **Automatically check for updates** beim Einschalten sofort und danach stündlich, solange die App läuft. Ein **Update**-Hinweis in der Menüleiste und **Review Update** im Dashboard machen verfügbare Updates sichtbar, statt ein Fenster im Hintergrund zu verstecken. Die Installation wird in Sparkle bestätigt; der Schalter aktiviert keine stille Installation. **Check for Updates...** bleibt in den Settings verfügbar. Der Debug-Bericht enthält jetzt Prüfzeiten, Update-Einstellungen, Ergebnisse und Fehlercodes. Bestehende Anmeldungen bleiben erhalten.
 
 #### Optionales OpenCode Go
 

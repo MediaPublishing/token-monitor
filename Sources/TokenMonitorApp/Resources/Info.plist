@@ -17,9 +17,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-    <string>1.0.40</string>
+    <string>1.0.41</string>
 	<key>CFBundleVersion</key>
-    <string>41</string>
+    <string>42</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
 	<key>LSMinimumSystemVersion</key>
@@ -36,6 +36,8 @@
 	<false/>
 	<key>SUAllowsAutomaticUpdates</key>
 	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>3600</integer>
 	<key>SUShowReleaseNotes</key>
 	<true/>
 </dict>

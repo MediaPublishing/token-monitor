@@ -13,16 +13,20 @@ struct UpdateConfigurationTests {
         #expect(plist["SUPublicEDKey"] as? String == "MaN6KO95WRBx46C9MgCneLyaladlp5XPxnIt+p/R860=")
         #expect(plist["SUEnableAutomaticChecks"] as? Bool == false)
         #expect(plist["SUAllowsAutomaticUpdates"] as? Bool == true)
+        #expect(plist["SUScheduledCheckInterval"] as? Int == 3600)
     }
 
-    @Test func automaticUpdateChecksRequireExplicitUserConfiguration() throws {
+    @Test func automaticChecksPreservePreferencesAndSupportVisibleBackgroundReminders() throws {
         let controllerURL = repositoryRootURL()
             .appendingPathComponent("Sources/TokenMonitorApp/AppUpdateController.swift")
         let controller = try String(contentsOf: controllerURL, encoding: .utf8)
 
-        #expect(controller.contains("automaticUpdateChecksConfigured"))
-        #expect(controller.contains("updaterController.updater.automaticallyChecksForUpdates = false"))
-        #expect(controller.contains("UserDefaults.standard.set(true, forKey: Self.automaticUpdateChecksConfiguredKey)"))
+        #expect(!controller.contains("automaticallyChecksForUpdates = false"))
+        #expect(controller.contains("updaterDelegate: self"))
+        #expect(controller.contains("userDriverDelegate: self"))
+        #expect(controller.contains("supportsGentleScheduledUpdateReminders"))
+        #expect(controller.contains("checkForUpdatesInBackground()"))
+        #expect(controller.contains("diagnosticsText"))
     }
 
     private func repositoryRootURL() -> URL {

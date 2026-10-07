@@ -2,8 +2,26 @@ import SwiftUI
 
 struct PopoverHeaderView: View {
     @EnvironmentObject private var model: AppModel
+    @ObservedObject private var updates = AppUpdateController.shared
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            headerControls
+            if let version = updates.availableVersion {
+                HStack(spacing: 8) {
+                    Label("Update \(version) available", systemImage: "arrow.down.circle")
+                        .font(.caption.weight(.semibold))
+                    Spacer(minLength: 0)
+                    Button("Review Update") { updates.checkForUpdates() }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                }
+                .padding(.horizontal, 8)
+            }
+        }
+    }
+
+    private var headerControls: some View {
         HStack(alignment: .center, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Token Monitor")

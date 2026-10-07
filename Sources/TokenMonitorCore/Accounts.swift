@@ -19,6 +19,15 @@ public struct MonitoredAccount: Codable, Equatable, Identifiable, Sendable {
         MonitoredAccount(id: service.dataStoreIdentifier, service: service,
                          name: service.displayName, isPrimary: true)
     }
+
+    public static func nextName(for service: ServiceKind, in accounts: [MonitoredAccount]) -> String {
+        let names = Set(accounts.filter { $0.service == service }.map { $0.name.lowercased() })
+        let base = service.displayName
+        if !names.contains(base.lowercased()) { return base }
+        var suffix = 2
+        while names.contains("\(base) \(suffix)".lowercased()) { suffix += 1 }
+        return "\(base) \(suffix)"
+    }
 }
 
 public protocol AccountPersisting {
