@@ -74,6 +74,15 @@ See [concept review and intake decisions](headroom-assessment.md), reviewed agai
 - Next candidates, not implemented: per-provider menu-bar limit selection/reordering and opt-in notification when a confirmed new banked reset arrives. Extend existing menu-bar settings and the reset reminder controller.
 - No Headroom source, installer, credentials, sync mechanism, or additional runtime dependency is imported. Its download repository is not an app source repository.
 
+## Deferred Idea: Project Usage Analytics
+
+See [source review and proposed scope](project-usage-analytics-assessment.md), based on Claire Vo's project-usage analysis workflow.
+
+- Candidate: a separate, opt-in local **Projects & Usage** window, not more rows or token/cost figures in the capacity dropdown.
+- Keep recorded usage, actual costs, subscription allocations, and API price equivalents distinct. No automatic business-impact or ROI claim.
+- Status: documented only. No source scanning, conversation import, cloud processing, new account access, or runtime integration is enabled. Source feasibility and implementation require a separate explicit request.
+- The session overview below remains deferred; this concept review does not resume it.
+
 ## Deferred Idea: Optional Session Overview
 
 **Status: documented and deferred by the product owner on 2026-10-07. No implementation, scanner, hook, or integration is enabled. Resume only after an explicit implementation request.**
