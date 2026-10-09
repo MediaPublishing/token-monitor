@@ -2,6 +2,26 @@ import Foundation
 import Testing
 
 struct AppSourceBehaviorTests {
+    @Test func refreshIndicatorStaysInsideTheFixedSizeButton() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let view = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/DashboardPopoverView.swift"),
+            encoding: .utf8
+        )
+        let label = try #require(view.range(of: "} label: {"))
+        let buttonEnd = try #require(view.range(of: ".buttonStyle(.bordered)", range: label.upperBound..<view.endIndex))
+        let buttonLabel = view[label.upperBound..<buttonEnd.lowerBound]
+        #expect(buttonLabel.contains("ProgressView()"))
+        #expect(buttonLabel.contains(".frame(width: 24, height: 24)"))
+        #expect(buttonLabel.contains(".opacity(isRefreshing ? 0 : 1)"))
+        #expect(view.components(separatedBy: "ProgressView()").count == 2)
+        #expect(!view.contains("if case .refreshing = status.refreshState {\n                ProgressView()"))
+        #expect(view.contains(".help(subtitle)"))
+    }
+
     @Test func automaticChatGPTRefreshDoesNotOrderAWindowToTheFront() throws {
         let rootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

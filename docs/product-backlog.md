@@ -1,11 +1,11 @@
 # Token Monitor Product Backlog
 
-Last reviewed: 2026-10-07
+Last reviewed: 2026-10-09
 
 ## Current Release State
 
-- Current public preview release: `v1.0.41` / build `42`.
-- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.41`.
+- Current public preview release: `v1.0.42` / build `43`.
+- Public download: `https://github.com/MediaPublishing/token-monitor/releases/tag/v1.0.42`.
 - Public marketing landing page: `https://token-monitor-landing.pages.dev/`.
 - GitHub Pages release and update host: `https://mediapublishing.github.io/token-monitor/`.
 - Sparkle appcast: `https://mediapublishing.github.io/token-monitor/appcast.xml`.
@@ -65,6 +65,14 @@ Last reviewed: 2026-10-07
 - Whether to pursue the Mac App Store track separately.
 - Whether to add a formal public license or keep the public repository source-visible without a license.
 - Whether to promote beyond the current preview audience.
+
+## Headroom-Inspired Improvements
+
+See [concept review and intake decisions](headroom-assessment.md), reviewed against Headroom 1.5 (41).
+
+- Implemented: fixed-footprint provider refresh indicator and complete reset hints on hover.
+- Next candidates, not implemented: per-provider menu-bar limit selection/reordering and opt-in notification when a confirmed new banked reset arrives. Extend existing menu-bar settings and the reset reminder controller.
+- No Headroom source, installer, credentials, sync mechanism, or additional runtime dependency is imported. Its download repository is not an app source repository.
 
 ## Deferred Idea: Optional Session Overview
 

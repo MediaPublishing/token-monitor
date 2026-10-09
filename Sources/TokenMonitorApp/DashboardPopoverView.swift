@@ -48,12 +48,22 @@ struct ServiceSectionView: View {
                 Button {
                     refreshOrConnect()
                 } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 12, weight: .semibold))
-                        .frame(width: 24, height: 24)
+                    ZStack {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 12, weight: .semibold))
+                            .opacity(isRefreshing ? 0 : 1)
+                        if isRefreshing {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
+                    }
+                    .frame(width: 24, height: 24)
                 }
                 .buttonStyle(.bordered)
                 .clipShape(Circle())
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(status.connectionStatus == .authRequired ? "Connect \(status.accountName)" : "Refresh \(status.accountName)")
+                .accessibilityValue(isRefreshing ? "Refreshing" : "")
                 .help(status.connectionStatus == .authRequired ? "Connect" : "Refresh")
             }
 
@@ -61,11 +71,6 @@ struct ServiceSectionView: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-
-            if case .refreshing = status.refreshState {
-                ProgressView()
-                    .controlSize(.small)
-            }
 
             if let snapshot = status.snapshot, !visibleMetrics(from: snapshot).isEmpty {
                 LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
@@ -98,6 +103,11 @@ struct ServiceSectionView: View {
         .overlay(alignment: .bottom) {
             Divider()
         }
+    }
+
+    private var isRefreshing: Bool {
+        if case .refreshing = status.refreshState { return true }
+        return false
     }
 
     private func refreshOrConnect() {
@@ -227,6 +237,7 @@ private struct MetricCardView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                    .help(subtitle)
             } else {
                 Spacer(minLength: 0)
             }
