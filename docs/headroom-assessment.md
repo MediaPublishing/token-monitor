@@ -25,6 +25,6 @@ Reviewed: 2026-10-09. Scope: concepts for Token Monitor, not installation or sou
 
 ## Small Readability Correction
 
-Long provider reset hints already stay on one line to preserve dashboard geometry. Their full display text is now available on hover; this avoids adding height solely for a long localized reset description.
+Long provider reset hints already stay on one line to preserve dashboard geometry. Their full display text is now available on hover; this avoids adding height solely for a long localized reset description. Popover size updates are also queued on the main run loop so they read committed account/detail settings, not the previous value emitted during `@Published`'s will-set notification.
 
 The previously deferred active-session overview remains deferred. Headroom research does not resume it.

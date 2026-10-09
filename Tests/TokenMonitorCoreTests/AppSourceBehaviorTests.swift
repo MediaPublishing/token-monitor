@@ -2,6 +2,19 @@ import Foundation
 import Testing
 
 struct AppSourceBehaviorTests {
+    @Test func popoverSizingWaitsForPublishedStateToBeCommitted() throws {
+        let rootURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let source = try String(
+            contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/AppDelegate.swift"),
+            encoding: .utf8
+        )
+        #expect(source.contains("dashboardSubscription = model.$dashboardState\n            .receive(on: RunLoop.main)"))
+        #expect(source.contains("model.$showUsageDetails\n        )\n            .receive(on: RunLoop.main)"))
+    }
+
     @Test func refreshIndicatorStaysInsideTheFixedSizeButton() throws {
         let rootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

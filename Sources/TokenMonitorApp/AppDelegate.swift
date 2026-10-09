@@ -108,7 +108,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         updateSubscription = AppUpdateController.shared.$availableVersion.sink { [weak self] version in
             self?.updateStatusItem(availableUpdate: version)
         }
+        // @Published emits before storage changes; size from committed state on the next run loop.
         dashboardSubscription = model.$dashboardState
+            .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 self?.updateStatusItem()
                 self?.updatePopoverSize()
@@ -122,6 +124,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             model.$popoverScreen,
             model.$showUsageDetails
         )
+            .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 self?.updatePopoverSize()
             }
