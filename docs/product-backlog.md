@@ -78,8 +78,8 @@ See [concept review and intake decisions](headroom-assessment.md), reviewed agai
 
 See [source review and proposed scope](project-usage-analytics-assessment.md), based on Claire Vo's project-usage analysis workflow.
 
-- Candidate: a separate, opt-in local **Projects & Usage** window, not more rows or token/cost figures in the capacity dropdown.
-- Keep recorded usage, actual costs, subscription allocations, and API price equivalents distinct. No automatic business-impact or ROI claim.
+- Candidate: a separate, opt-in local **Projects & Usage** window aggregating recorded tokens by project or topic. Provider/model details and threads appear only on drill-down, not as the primary view or extra capacity-dropdown rows.
+- Owner clarification, 2026-10-09: no monetary estimates, API price equivalents, or business-impact/ROI claims. Thread counters are source-dependent; token shares describe recorded activity, not subscription capacity.
 - Status: documented only. No source scanning, conversation import, cloud processing, new account access, or runtime integration is enabled. Source feasibility and implementation require a separate explicit request.
 - The session overview below remains deferred; this concept review does not resume it.
 
