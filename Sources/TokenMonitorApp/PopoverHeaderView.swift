@@ -3,6 +3,7 @@ import SwiftUI
 struct PopoverHeaderView: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject private var updates = AppUpdateController.shared
+    @ObservedObject var analytics: ProjectAnalyticsModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -26,7 +27,7 @@ struct PopoverHeaderView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Token Monitor")
                     .font(.headline.weight(.semibold))
-                Text(model.lastRefreshText)
+                Text(model.popoverScreen == .analytics ? "Lokaler Tokenverbrauch" : model.lastRefreshText)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -35,11 +36,12 @@ struct PopoverHeaderView: View {
             Spacer(minLength: 6)
 
             headerButton(systemImage: "arrow.clockwise", action: {
-                model.refreshAll(trigger: .manual)
+                if model.popoverScreen == .analytics { analytics.refresh() }
+                else { model.refreshAll(trigger: .manual) }
             })
-            .opacity(model.isRefreshing ? 0.5 : 1.0)
-            .disabled(model.isRefreshing)
-            .help("Refresh connected services")
+            .opacity(headerIsRefreshing ? 0.5 : 1.0)
+            .disabled(headerIsRefreshing)
+            .help(model.popoverScreen == .analytics ? "Lokale Analyse aktualisieren" : "Refresh connected services")
 
             headerButton(
                 systemImage: "chart.bar.xaxis",
@@ -64,6 +66,10 @@ struct PopoverHeaderView: View {
             })
             .help("Close popover")
         }
+    }
+
+    private var headerIsRefreshing: Bool {
+        model.popoverScreen == .analytics ? analytics.refreshing : model.isRefreshing
     }
 
     private func headerButton(

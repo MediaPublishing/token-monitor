@@ -74,13 +74,13 @@ See [concept review and intake decisions](headroom-assessment.md), reviewed agai
 - Next candidates, not implemented: per-provider menu-bar limit selection/reordering and opt-in notification when a confirmed new banked reset arrives. Extend existing menu-bar settings and the reset reminder controller.
 - No Headroom source, installer, credentials, sync mechanism, or additional runtime dependency is imported. Its download repository is not an app source repository.
 
-## Deferred Idea: Project Usage Analytics
+## Optional Project Usage Analytics
 
 See [source review and proposed scope](project-usage-analytics-assessment.md), based on Claire Vo's project-usage analysis workflow.
 
-- Candidate: a separate, opt-in local **Projects & Usage** window aggregating recorded tokens by project or topic. Provider/model details and threads appear only on drill-down, not as the primary view or extra capacity-dropdown rows.
+- Approved local preview: a quiet **Kapazität / Analyse** tab switch, enabled in Settings, aggregating recorded tokens by project or manually assigned topic. Provider details and threads appear only on drill-down, not as extra capacity rows.
 - Owner clarification, 2026-10-09: no monetary estimates, API price equivalents, or business-impact/ROI claims. Thread counters are source-dependent; token shares describe recorded activity, not subscription capacity.
-- Status: documented only. No source scanning, conversation import, cloud processing, new account access, or runtime integration is enabled. Source feasibility and implementation require a separate explicit request.
+- Implemented for local testing in 1.0.43 (44), off by default. Selected Codex and Claude Code JSONL logs are read locally in bounded scans; only token counters and routing metadata are retained in memory. No cloud processing, new account access, or conversation import. Public downloads remain 1.0.42 until a separate release.
 - The session overview below remains deferred; this concept review does not resume it.
 
 ## Deferred Idea: Optional Session Overview

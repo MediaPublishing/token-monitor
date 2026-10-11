@@ -4,18 +4,20 @@ import TokenMonitorCore
 struct SettingsView: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject private var updates = AppUpdateController.shared
+    @ObservedObject private var analytics: ProjectAnalyticsModel
     @State private var renamingAccountID: UUID?
     @State private var draftAccountName = ""
     let compact: Bool
 
-    init(compact: Bool = false) {
+    init(compact: Bool = false, analytics: ProjectAnalyticsModel = AppModel.shared.analytics) {
+        self.analytics = analytics
         self.compact = compact
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: compact ? 10 : 18) {
-                PopoverHeaderView()
+                PopoverHeaderView(analytics: analytics)
 
                 HStack(alignment: .top, spacing: 8) {
                     VStack(alignment: .leading, spacing: 3) {
@@ -49,6 +51,7 @@ struct SettingsView: View {
                         updatesSettingsCard
                     }
                     debuggingSettingsCard
+                    analyticsSettingsCard
                 }
 
                 Spacer(minLength: 0)
@@ -356,6 +359,29 @@ struct SettingsView: View {
             get: { model.launchAtLoginEnabled },
             set: { model.setLaunchAtLoginEnabled($0) }
         )
+    }
+
+    private var analyticsSettingsCard: some View {
+        settingsCard("Projektanalyse (optional)") {
+            settingsToggle(
+                "Analyse-Tab anzeigen",
+                description: "Verbrauch nach Projekt oder Thema. Nur lokal, ohne Geldwerte.",
+                isOn: Binding(get: { analytics.enabled }, set: { model.setProjectAnalyticsEnabled($0) })
+            )
+            if analytics.enabled {
+                HStack(spacing: 16) {
+                    Toggle("Codex", isOn: Binding(get: { analytics.codexEnabled },
+                        set: { analytics.setSource(.codex, enabled: $0) }))
+                    Toggle("Claude Code", isOn: Binding(get: { analytics.claudeEnabled },
+                        set: { analytics.setSource(.claudeCode, enabled: $0) }))
+                }
+                .toggleStyle(.checkbox)
+                Text("Liest Tokenzähler und Arbeitsordner aus lokalen Coding-Protokollen der letzten 30 Tage. Keine Gesprächsinhalte gespeichert, keine Übertragung. Webchats sind nicht enthalten.")
+                    .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Button("Zuordnungen zurücksetzen") { analytics.clearAssignments() }
+                    .controlSize(.small)
+            }
+        }
     }
 
     private var automaticUpdateChecksBinding: Binding<Bool> {

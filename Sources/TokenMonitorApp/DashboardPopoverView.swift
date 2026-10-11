@@ -6,7 +6,8 @@ struct DashboardPopoverView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            PopoverHeaderView()
+            PopoverHeaderView(analytics: model.analytics)
+            DashboardTabsView(analytics: model.analytics)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {

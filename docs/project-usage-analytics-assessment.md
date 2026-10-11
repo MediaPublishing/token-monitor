@@ -4,7 +4,19 @@ Reviewed: 2026-10-09
 
 Owner clarification, 2026-10-09: omit estimated value and monetary figures. Aggregate recorded token consumption by project or topic; a thread list is only an optional drill-down, not the primary experience.
 
-**Decision: adapt the concept as a deferred, opt-in product candidate. Documentation only; no scanning, imports, cloud processing, settings switch, or runtime integration is enabled.**
+**Decision updated 2026-10-10: implementation approved for an optional local tab. Variant 1 plus variant 3 disclosures and the topic switch; no chart or monetary values. The separate active-session navigation idea is still deferred.**
+
+## Implementation Contract
+
+- AC-1: analysis is off by default; enabling it exposes a quiet Capacity / Analysis tab switch. No log reads while disabled. Source switches separately control Codex and Claude Code.
+- AC-2: Projects / Topics grouping, last 7 / 30 days, recorded token totals and shares, with provider disclosures. No financial values or trend chart.
+- AC-3: project/topic assignments are editable locally and survive app restarts. Unknown project/topic values stay unassigned. Thread lists remain secondary.
+- AC-4: normalized local token records only; no conversation text, credentials, external processing, network request, or analytics additions to debug reports. Scan bounded regular JSONL files only; skip symlinks.
+- AC-5: repeated counters/messages, cache/reasoning subsets, source overlap, parent/subagent rollups, fork history, malformed lines, missing data, period boundaries, and disabled/cancelled refreshes have focused tests or explicit conservative coverage limits.
+- AC-6: native screenshots and interaction checks in light/dark and collapsed/expanded states; refreshing does not change the fixed control footprint. Existing capacity tests still pass.
+- AC-7: build and locally install with the same bundle identifier, after backing up the old app. Preserve all provider session/account stores. Verify installed identity and launch.
+- Non-goals: public release/download-page deployment, invoice/API valuation, automatic topic inference, session navigation/control, and Apple distribution changes.
+- Gates: focused tests plus existing suite/build, source review, live UI proof and independent read-only final check. At most three correction cycles. Private live usage records/screenshots are not public artifacts.
 
 ## Source And Evidence
 
@@ -23,7 +35,7 @@ Token Monitor answers **how much subscription capacity remains until reset**. Pr
 
 The current `ServiceSnapshot` and `FileSnapshotStore` hold latest provider capacity readings, not per-project token events or a historical usage ledger. Differences between quota readings cannot reconstruct project spend: resets, rolling windows, concurrent accounts, and provider-specific accounting invalidate that inference.
 
-The useful addition would be a separate optional analysis window. It should not widen the menu-bar meter, add project rows to the capacity dropdown, or interfere with authentication and refresh reliability. No cost/value calculation is part of the proposed feature.
+The approved addition is a separate optional analysis tab. It does not widen the menu-bar meter, add project rows to the capacity view, or interfere with authentication and refresh reliability. No cost/value calculation is part of this feature.
 
 ## Thread Usage Feasibility
 
@@ -34,7 +46,7 @@ The useful addition would be a separate optional analysis window. It should not 
 ## Proposed First Scope
 
 - Settings entry **Project analytics**, off by default. Opening it before setup explains supported sources and requires explicit source selection; enabling it alone grants no cloud access.
-- A separate **Projects & Usage** window, with a week/month selector and **Project / Topic** grouping. One row per group shows recorded tokens, share of covered usage, thread count, and data freshness. Provider/model breakdown and individual threads appear only on drill-down.
+- A separate **Analyse** tab, with a 7/30-day selector and **Projekte / Themen** grouping. One row per group shows recorded tokens, share of covered usage, thread count, and data freshness. Provider breakdown and individual thread identifiers appear only on drill-down.
 - Start with read-only local metadata for Codex and Claude Code, subject to a format/support feasibility check. Native ChatGPT, Claude Desktop, Cowork, Cursor, and OpenCode are not implicitly covered by those importers.
 - Map reliable project/repository metadata to editable project groups across apps. Assign topics manually or through explicit metadata rules initially; no automatic semantic classification of conversation bodies. Keep an **Unassigned** bucket instead of guessing an account or business line.
 - A usage event has one primary project and one primary topic so each grouping reconciles to the same total. Optional overlapping tags are filters, not additive buckets. A mixed-topic thread can be assigned as a whole; splitting it requires supported event-level mapping, not invented precision.
@@ -75,4 +87,16 @@ This is a proposed specification, not a shipped screen or a promise of source co
 - Test duplicate imports, missing/corrupt records, rotated logs, inherited fork totals, parent/subagent rollups, counter resets, period boundaries, multi-account ambiguity, overlapping topic tags, and unavailable sources.
 - Verify that disabling analytics stops all analytics reads and that failures never affect quota refresh, account sessions, or the menu bar.
 
-The existing [optional session overview](product-backlog.md#deferred-idea-optional-session-overview) remains separately deferred. This review does not resume its scanner or navigation work. Implement either feature only after an explicit implementation request; share source adapters later only if both approved scopes genuinely need them.
+The existing [optional session overview](product-backlog.md#deferred-idea-optional-session-overview) remains separately deferred. Project analytics does not resume session navigation or live status work.
+
+## Local Preview Operation
+
+Enable **Settings > Projektanalyse (optional) > Analyse-Tab anzeigen**. Codex and Claude Code can be selected separately. The analysis reads local token counters, not browser quotas; native/web chats and OpenCode are not covered by these source formats. No additional login is needed.
+
+The 7/30-day totals include uncached input, cached input and output exactly once. Codex reasoning output is already included in output. Claude cache creation and cache reads are distinct input categories. Duplicated server messages and repeated cumulative counters are deduplicated; ambiguous baselines or resets are omitted and coverage stays explicitly incomplete. Percentages refer to the displayed recorded total, not remaining subscription capacity.
+
+Expand a project for provider details, optional thread identifiers, and **Zuordnung**. Project aliases and one manual topic per project are saved locally in `~/Library/Application Support/TokenMonitor/Analytics/assignments.json` with restricted permissions. Token records are not persisted or added to debug reports. Disabling the feature cancels scanning and clears in-memory results without changing account sessions or deleting assignments.
+
+Scanner limits: at most 1,500 files and 512 MiB per scan, split fairly across selected sources; 64 MiB per file and 2 MiB per line. Symbolic links and non-regular files are skipped. Events are filtered by their timestamps, not filesystem modification dates. Active logs bypass the parse cache. Old or unsupported formats can leave gaps; this is not a complete billing ledger.
+
+Local preview version: **1.0.43 (44)**. Public downloads and landing pages remain **1.0.42**. Runtime/account connection code is unchanged. Build the synthetic test harness with `bash scripts/build-analytics-qa.sh` after `swift build`; it uses isolated logs and assignment/preferences stores and does not start account refreshes. `TOKEN_MONITOR_QA_SDK` can select a compiler-compatible SDK.

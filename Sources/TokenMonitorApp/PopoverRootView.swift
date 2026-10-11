@@ -8,8 +8,10 @@ struct PopoverRootView: View {
             switch model.popoverScreen {
             case .dashboard:
                 DashboardPopoverView()
+            case .analytics:
+                ProjectAnalyticsView(analytics: model.analytics)
             case .settings:
-                SettingsView(compact: true)
+                SettingsView(compact: true, analytics: model.analytics)
             }
         }
     }

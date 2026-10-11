@@ -16,6 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var statusMenuSettingsSubscription: AnyCancellable?
     private var menuBarAccountSubscription: AnyCancellable?
     private var updateSubscription: AnyCancellable?
+    private var analyticsSubscription: AnyCancellable?
     private var dashboardHostingController: NSHostingController<AnyView>?
     private var outsideClickMonitor: Any?
 
@@ -128,6 +129,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             .sink { [weak self] _ in
                 self?.updatePopoverSize()
             }
+
+        analyticsSubscription = model.analytics.$enabled
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.updatePopoverSize() }
 
         statusMenuSettingsSubscription = Publishers.CombineLatest4(
             model.$statusMenuUsesColor,

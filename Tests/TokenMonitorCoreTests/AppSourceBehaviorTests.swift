@@ -2,6 +2,16 @@ import Foundation
 import Testing
 
 struct AppSourceBehaviorTests {
+    @Test func analyticsSegmentLabelsStayHiddenWithoutChangingAccountCode() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let view = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProjectAnalyticsView.swift"), encoding: .utf8)
+        #expect(view.components(separatedBy: ".pickerStyle(.segmented)\n").count == 3)
+        #expect(view.components(separatedBy: ".labelsHidden()").count == 4)
+        let model = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProjectAnalyticsModel.swift"), encoding: .utf8)
+        #expect(model.contains("\"projectAnalyticsEnabled\": false"))
+        #expect(!model.contains("SessionCoordinator"))
+        #expect(!model.contains("URLSession"))
+    }
     @Test func popoverSizingWaitsForPublishedStateToBeCommitted() throws {
         let rootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

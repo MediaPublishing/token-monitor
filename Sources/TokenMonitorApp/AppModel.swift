@@ -4,8 +4,9 @@ import Foundation
 import ServiceManagement
 import TokenMonitorCore
 
-enum PopoverScreen {
+enum PopoverScreen: Hashable {
     case dashboard
+    case analytics
     case settings
 }
 
@@ -59,6 +60,7 @@ final class AppModel: ObservableObject {
     let snapshotDirectoryURL: URL
     let diagnosticsDirectoryURL: URL
     let resetReminders = ResetReminderController()
+    let analytics: ProjectAnalyticsModel
 
     private let snapshotStore: SnapshotPersisting
     private let accountStore: AccountPersisting
@@ -73,9 +75,11 @@ final class AppModel: ObservableObject {
     init(
         snapshotStore: SnapshotPersisting = FileSnapshotStore(),
         accountStore: AccountPersisting = FileAccountStore(),
-        updateController: AppUpdateController = .shared
+        updateController: AppUpdateController = .shared,
+        analytics: ProjectAnalyticsModel = ProjectAnalyticsModel()
     ) {
         self.snapshotStore = snapshotStore
+        self.analytics = analytics
         self.accountStore = accountStore
         self.updateController = updateController
         UserDefaults.standard.register(defaults: [
@@ -163,6 +167,17 @@ final class AppModel: ObservableObject {
 
     func showDashboardInPopover() {
         popoverScreen = .dashboard
+    }
+
+    func showAnalyticsInPopover() {
+        guard analytics.enabled else { return }
+        popoverScreen = .analytics
+        analytics.refreshIfNeeded()
+    }
+
+    func setProjectAnalyticsEnabled(_ enabled: Bool) {
+        analytics.setEnabled(enabled)
+        if !enabled, popoverScreen == .analytics { popoverScreen = .dashboard }
     }
 
     func refreshAll(trigger: RefreshTrigger) {
@@ -414,7 +429,9 @@ final class AppModel: ObservableObject {
         switch popoverScreen {
         case .dashboard:
             let visible = dashboardServices.count
-            return min(760, (showUsageDetails ? 650 : 540) + 32 + CGFloat(max(0, visible - 3)) * 150)
+            return min(760, (showUsageDetails ? 650 : 540) + 32 + (analytics.enabled ? 28 : 0) + CGFloat(max(0, visible - 3)) * 150)
+        case .analytics:
+            return 650
         case .settings:
             return 700
         }
