@@ -6,7 +6,7 @@ cd "$ROOT"
 SDK="${TOKEN_MONITOR_QA_SDK:-/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk}"
 if [[ ! -d "$SDK" ]]; then SDK="$(xcrun --show-sdk-path)"; fi
 CORE="$ROOT/.build/analytics-qa-core"
-APP="$ROOT/dist/AnalyticsQA.app"
+APP="$ROOT/.build/analytics-qa/AnalyticsQA.app"
 SPARKLE="$ROOT/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64"
 if [[ ! -d "$SPARKLE/Sparkle.framework" ]]; then
     printf 'Run swift build first to resolve Sparkle.\n' >&2

@@ -7,10 +7,21 @@ struct AppSourceBehaviorTests {
         let view = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProjectAnalyticsView.swift"), encoding: .utf8)
         #expect(view.components(separatedBy: ".pickerStyle(.segmented)\n").count == 3)
         #expect(view.components(separatedBy: ".labelsHidden()").count == 4)
+        #expect(view.components(separatedBy: "Picker(\"\", selection:").count == 4)
+        for label in ["Ansicht", "Zeitraum", "Gruppierung"] {
+            #expect(!view.contains("Picker(\"\(label)\""))
+            #expect(view.contains(".accessibilityLabel(\"\(label)\")"))
+        }
         let model = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProjectAnalyticsModel.swift"), encoding: .utf8)
         #expect(model.contains("\"projectAnalyticsEnabled\": false"))
         #expect(!model.contains("SessionCoordinator"))
         #expect(!model.contains("URLSession"))
+    }
+    @Test func syntheticAnalyticsAppStaysInsideHiddenBuildDirectory() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let script = try String(contentsOf: root.appendingPathComponent("scripts/build-analytics-qa.sh"), encoding: .utf8)
+        #expect(script.contains("APP=\"$ROOT/.build/analytics-qa/AnalyticsQA.app\""))
+        #expect(!script.contains("$ROOT/dist/AnalyticsQA.app"))
     }
     @Test func popoverSizingWaitsForPublishedStateToBeCommitted() throws {
         let rootURL = URL(fileURLWithPath: #filePath)

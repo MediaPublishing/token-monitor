@@ -7,7 +7,7 @@ struct DashboardTabsView: View {
 
     var body: some View {
         if analytics.enabled {
-            Picker("Ansicht", selection: Binding(
+            Picker("", selection: Binding(
                 get: { model.popoverScreen },
                 set: { if $0 == .analytics { model.showAnalyticsInPopover() } else { model.showDashboardInPopover() } }
             )) {
@@ -16,6 +16,7 @@ struct DashboardTabsView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .accessibilityLabel("Ansicht")
             .frame(width: 190)
             .padding(.leading, 8)
         }
@@ -34,22 +35,24 @@ struct ProjectAnalyticsView: View {
             HStack {
                 Text("Projektanalyse").font(.title3.weight(.semibold))
                 Spacer()
-                Picker("Zeitraum", selection: $analytics.period) {
+                Picker("", selection: $analytics.period) {
                     Text("Letzte 7 Tage").tag(AnalyticsPeriod.week)
                     Text("Letzte 30 Tage").tag(AnalyticsPeriod.month)
                 }
                 .labelsHidden()
+                .accessibilityLabel("Zeitraum")
                 .frame(width: 145)
             }
             .padding(.horizontal, 8)
 
             HStack {
-                Picker("Gruppierung", selection: $analytics.grouping) {
+                Picker("", selection: $analytics.grouping) {
                     Text("Projekte").tag(AnalyticsGrouping.projects)
                     Text("Themen").tag(AnalyticsGrouping.topics)
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
+                .accessibilityLabel("Gruppierung")
                 .frame(width: 180)
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
