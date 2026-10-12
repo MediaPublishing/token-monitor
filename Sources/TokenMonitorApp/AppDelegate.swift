@@ -8,7 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     static weak var shared: AppDelegate?
     static let popoverWidth: CGFloat = 488
 
-    private let model = AppModel.shared
+    private let model: AppModel
     private var statusItem: NSStatusItem?
     private var popover = NSPopover()
     private var dashboardSubscription: AnyCancellable?
@@ -19,6 +19,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var analyticsSubscription: AnyCancellable?
     private var dashboardHostingController: NSHostingController<AnyView>?
     private var outsideClickMonitor: Any?
+
+    init(model: AppModel = .shared) {
+        self.model = model
+        super.init()
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Self.shared = self
@@ -117,9 +122,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 self?.updatePopoverSize()
             }
 
-        menuBarAccountSubscription = model.$menuBarAccountIDs.sink { [weak self] _ in
-            self?.updateStatusItem()
-        }
+        menuBarAccountSubscription = model.$menuBarAccountSelection
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.updateStatusItem()
+            }
 
         popoverScreenSubscription = Publishers.CombineLatest(
             model.$popoverScreen,
@@ -140,6 +147,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             model.$statusMenuLimitDisplay,
             model.$openCodeGoEnabled
         )
+        .receive(on: RunLoop.main)
         .sink { [weak self] _ in
             self?.updateStatusItem()
         }
@@ -159,12 +167,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         button.toolTip = tooltipText() + (availableUpdate.map { "\nUpdate \($0) available. Open Token Monitor to review." } ?? "")
     }
 
-    private func makeCapacityStatusImage(for appearance: NSAppearance?) -> NSImage? {
+    func makeCapacityStatusImage(for appearance: NSAppearance?) -> NSImage? {
         let services = model.statusMenuServices
+        let columns = model.statusMenuAccountColumns
         let showsBothLimits = model.statusMenuLimitDisplay == .both
-        let width: CGFloat = model.statusMenuShowsPercentages
+        let columnWidth: CGFloat = model.statusMenuShowsPercentages
             ? (showsBothLimits ? 74 : 56)
             : 20
+        let columnGap: CGFloat = 6
+        let width = columnWidth * CGFloat(columns.count) + columnGap * CGFloat(max(0, columns.count - 1))
         let height: CGFloat = services.count > 2
             ? (model.statusMenuShowsPercentages ? 21 : 18)
             : 16
@@ -172,20 +183,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let image = NSImage(size: size)
         let foregroundColor = statusBarForegroundColor(for: appearance)
         let trackColor = statusBarTrackColor(for: appearance)
-        let statusValueFontSize: CGFloat = services.count > 2 ? 6 : 7
         image.lockFocus()
 
         NSColor.clear.setFill()
         NSBezierPath(rect: NSRect(origin: .zero, size: size)).fill()
 
-        let rowHeight = size.height / CGFloat(max(services.count, 1))
-        let barHeight: CGFloat = services.count > 2 ? 5 : 6
+        for (index, column) in columns.enumerated() {
+            let offset = CGFloat(index) * (columnWidth + columnGap)
+            if index > 0 {
+                trackColor.setFill()
+                NSBezierPath(rect: NSRect(x: offset - columnGap / 2, y: 2, width: 0.5, height: height - 4)).fill()
+            }
+            drawStatusColumn(column, width: columnWidth, height: height, offset: offset,
+                             showsBothLimits: showsBothLimits, foregroundColor: foregroundColor, trackColor: trackColor)
+        }
 
-        for (index, service) in services.enumerated() {
-            let rowY = CGFloat(services.count - index - 1) * rowHeight
+        image.unlockFocus()
+        image.isTemplate = false
+        return image
+    }
+
+    private func drawStatusColumn(_ accounts: [ServiceStatus?], width: CGFloat, height: CGFloat, offset: CGFloat,
+                                  showsBothLimits: Bool, foregroundColor: NSColor, trackColor: NSColor) {
+        let rowHeight = height / CGFloat(max(accounts.count, 1))
+        let barHeight: CGFloat = accounts.count > 2 ? 5 : 6
+        let statusValueFontSize: CGFloat = accounts.count > 2 ? 6 : 7
+        for (index, account) in accounts.enumerated() {
+            guard let account else { continue }
+            let rowY = CGFloat(accounts.count - index - 1) * rowHeight
             let barY = rowY + (rowHeight - barHeight) / 2
-            let status = model.statusMenuStatus(for: service)?.connectionStatus ?? .authRequired
-            let scores = model.statusMenuScores(for: service)
+            let status = account.connectionStatus
+            let scores = model.statusMenuScores(for: account.accountID)
             let selectedScore = model.statusMenuLimitDisplay == .session
                 ? scores.session
                 : scores.total
@@ -195,12 +223,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                     drawStatusPair(
                         session: scores.session,
                         total: scores.total,
-                        in: NSRect(x: 0, y: rowY, width: 39, height: rowHeight),
+                        in: NSRect(x: offset, y: rowY, width: 39, height: rowHeight),
                         foregroundColor: foregroundColor,
                         fontSize: statusValueFontSize
                     )
                     drawCombinedBar(
-                        in: NSRect(x: 43, y: barY, width: width - 44, height: barHeight),
+                        in: NSRect(x: offset + 43, y: barY, width: width - 44, height: barHeight),
                         sessionScore: scores.session,
                         totalScore: scores.total,
                         status: status,
@@ -210,12 +238,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 } else {
                     drawStatusValue(
                         for: selectedScore,
-                        in: NSRect(x: 0, y: rowY, width: 25, height: rowHeight),
+                        in: NSRect(x: offset, y: rowY, width: 25, height: rowHeight),
                         foregroundColor: foregroundColor,
                         fontSize: statusValueFontSize
                     )
                     drawBar(
-                        in: NSRect(x: 29, y: barY, width: width - 30, height: barHeight),
+                        in: NSRect(x: offset + 29, y: barY, width: width - 30, height: barHeight),
                         score: selectedScore,
                         status: status,
                         foregroundColor: foregroundColor,
@@ -224,7 +252,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 }
             } else if showsBothLimits {
                 drawCombinedBar(
-                    in: NSRect(x: 1, y: barY, width: width - 2, height: barHeight),
+                    in: NSRect(x: offset + 1, y: barY, width: width - 2, height: barHeight),
                     sessionScore: scores.session,
                     totalScore: scores.total,
                     status: status,
@@ -233,7 +261,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 )
             } else {
                 drawBar(
-                    in: NSRect(x: 1, y: barY, width: width - 2, height: barHeight),
+                    in: NSRect(x: offset + 1, y: barY, width: width - 2, height: barHeight),
                     score: selectedScore,
                     status: status,
                     foregroundColor: foregroundColor,
@@ -242,9 +270,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             }
         }
 
-        image.unlockFocus()
-        image.isTemplate = false
-        return image
     }
 
     private func drawBar(
@@ -418,9 +443,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func tooltipText() -> String {
-        let statuses = model.statusMenuServices.compactMap { service -> String? in
-            guard let status = model.statusMenuStatus(for: service) else { return nil }
-            return "\(status.accountName): \(model.stateDescription(for: status))"
+        let columns = model.statusMenuAccountColumns
+        let statuses = columns.enumerated().flatMap { index, column -> [String] in
+            let heading = columns.count > 1 ? ["Column \(index + 1)"] : []
+            return heading + column.compactMap { status -> String? in
+                guard let status else { return nil }
+                let name = status.accountName == status.service.displayName
+                    ? status.accountName : "\(status.service.displayName) (\(status.accountName))"
+                return "\(name): \(model.stateDescription(for: status))"
+            }
         }
         let limitDescription = model.statusMenuLimitDisplay == .both
             ? "Menu bar: Session / Total"

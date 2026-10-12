@@ -153,7 +153,7 @@ struct SettingsView: View {
 
     private var providerSettingsCard: some View {
         settingsCard("Providers") {
-            Text("Add accounts without replacing existing sign-ins. Choose one account per provider for the menu bar.")
+            Text("Add accounts without replacing existing sign-ins. Show one account or add others alongside in the menu bar.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             ForEach([ServiceKind.chatGPT, .claude, .openCodeGo], id: \.self) { service in
@@ -182,10 +182,12 @@ struct SettingsView: View {
                         Text(providerStatusLabel(for: status))
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(providerStatusColor(for: status))
-                        if model.menuBarAccountID(for: service) == status.accountID {
+                        let selectedAccounts = model.menuBarAccounts(for: service)
+                        let column = selectedAccounts.firstIndex(where: { $0.id == status.accountID })
+                        if let column {
                             Image(systemName: "menubar.rectangle")
                                 .foregroundStyle(.secondary)
-                                .help("Shown in menu bar")
+                                .help("Menu bar column \(column + 1)")
                         }
                         Menu {
                             Button("Connect / Reconnect") { model.openLogin(accountID: status.accountID) }
@@ -194,7 +196,18 @@ struct SettingsView: View {
                                 renamingAccountID = status.accountID
                             }
                             if model.menuBarAccountID(for: service) != status.accountID {
-                                Button("Show in menu bar") { model.setMenuBarAccount(status.accountID, for: service) }
+                                Button(column == nil ? "Show in menu bar" : "Move to first menu bar column") {
+                                    model.setMenuBarAccount(status.accountID, for: service)
+                                }
+                            }
+                            if column == nil {
+                                Button("Show alongside in menu bar") {
+                                    model.showMenuBarAccountAlongside(status.accountID, for: service)
+                                }
+                                .disabled(selectedAccounts.count >= MenuBarAccountSelection.maximumColumns)
+                                .help("Show up to four accounts per provider side by side.")
+                            } else if selectedAccounts.count > 1 {
+                                Button("Hide from menu bar") { model.hideMenuBarAccount(status.accountID, for: service) }
                             }
                             Divider()
                             Button("Switch account...") {

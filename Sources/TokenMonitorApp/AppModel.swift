@@ -41,11 +41,12 @@ final class AppModel: ObservableObject {
         static let showUsageDetails = "showUsageDetails"
         static let openCodeGoEnabled = "openCodeGoEnabled"
         static let menuBarAccountIDs = "menuBarAccountIDs"
+        static let menuBarSelectionIDs = "menuBarSelectionIDs"
     }
 
     @Published private(set) var dashboardState: DashboardState
     @Published private(set) var accounts: [MonitoredAccount]
-    @Published private(set) var menuBarAccountIDs: [String: String]
+    @Published private(set) var menuBarAccountSelection: MenuBarAccountSelection
     @Published private(set) var popoverScreen: PopoverScreen = .dashboard
     @Published private(set) var isPopoverVisible = false
     @Published private(set) var launchAtLoginEnabled: Bool
@@ -101,7 +102,10 @@ final class AppModel: ObservableObject {
         ) ?? .total
         showUsageDetails = UserDefaults.standard.bool(forKey: Keys.showUsageDetails)
         openCodeGoEnabled = UserDefaults.standard.bool(forKey: Keys.openCodeGoEnabled)
-        menuBarAccountIDs = UserDefaults.standard.dictionary(forKey: Keys.menuBarAccountIDs) as? [String: String] ?? [:]
+        menuBarAccountSelection = MenuBarAccountSelection(
+            accountIDs: UserDefaults.standard.dictionary(forKey: Keys.menuBarSelectionIDs) as? [String: [String]],
+            legacyAccountIDs: UserDefaults.standard.dictionary(forKey: Keys.menuBarAccountIDs) as? [String: String] ?? [:]
+        )
         automaticallyChecksForUpdates = updateController.automaticallyChecksForUpdates
         let snapshots = (try? snapshotStore.loadSnapshots()) ?? [:]
         let savedAccounts = try? accountStore.loadAccounts()
@@ -396,9 +400,9 @@ final class AppModel: ObservableObject {
             await self.sessionCoordinator.remove(accountID)
             self.accounts.removeAll { $0.id == accountID }
             self.dashboardState.services.removeAll { $0.accountID == accountID }
-            if self.menuBarAccountIDs[account.service.rawValue] == accountID.uuidString {
-                self.setMenuBarAccount(account.service.dataStoreIdentifier, for: account.service)
-            }
+            var selection = self.menuBarAccountSelection
+            selection.reconcile(available: self.accounts)
+            self.storeMenuBarSelection(selection)
             if account.service == .openCodeGo && self.accounts.filter({ $0.service == .openCodeGo }).count == 1,
                self.dashboardState.service(.openCodeGo).snapshot == nil {
                 self.setOpenCodeGoEnabledWithoutRefreshing(false)
@@ -408,17 +412,46 @@ final class AppModel: ObservableObject {
     }
 
     func menuBarAccountID(for service: ServiceKind) -> UUID {
-        guard let raw = menuBarAccountIDs[service.rawValue], let id = UUID(uuidString: raw),
-              accounts.contains(where: { $0.id == id && $0.service == service }) else {
-            return service.dataStoreIdentifier
+        menuBarAccounts(for: service).first?.id ?? service.dataStoreIdentifier
+    }
+
+    func menuBarAccounts(for service: ServiceKind) -> [MonitoredAccount] {
+        menuBarAccountSelection.accounts(for: service, available: accounts)
+    }
+
+    var statusMenuAccountColumns: [[ServiceStatus?]] {
+        let rows = statusMenuServices.map { service in
+            menuBarAccounts(for: service).map { dashboardState.account($0.id) }
         }
-        return id
+        let count = max(1, rows.map(\.count).max() ?? 1)
+        return (0..<count).map { column in
+            rows.map { row in row.indices.contains(column) ? row[column] : nil }
+        }
     }
 
     func setMenuBarAccount(_ accountID: UUID, for service: ServiceKind) {
-        guard accounts.contains(where: { $0.id == accountID && $0.service == service }) else { return }
-        menuBarAccountIDs[service.rawValue] = accountID.uuidString
-        UserDefaults.standard.set(menuBarAccountIDs, forKey: Keys.menuBarAccountIDs)
+        var selection = menuBarAccountSelection
+        guard selection.select(accountID, for: service, available: accounts) else { return }
+        storeMenuBarSelection(selection)
+    }
+
+    func showMenuBarAccountAlongside(_ accountID: UUID, for service: ServiceKind) {
+        var selection = menuBarAccountSelection
+        guard selection.showAlongside(accountID, for: service, available: accounts) else { return }
+        storeMenuBarSelection(selection)
+    }
+
+    func hideMenuBarAccount(_ accountID: UUID, for service: ServiceKind) {
+        var selection = menuBarAccountSelection
+        guard selection.hide(accountID, for: service, available: accounts) else { return }
+        storeMenuBarSelection(selection)
+    }
+
+    private func storeMenuBarSelection(_ selection: MenuBarAccountSelection) {
+        menuBarAccountSelection = selection
+        UserDefaults.standard.set(selection.accountIDs, forKey: Keys.menuBarSelectionIDs)
+        // Keep the first-column preference readable by earlier app versions.
+        UserDefaults.standard.set(selection.accountIDs.compactMapValues(\.first), forKey: Keys.menuBarAccountIDs)
     }
 
     func openUsagePageInDefaultBrowser(for service: ServiceKind) {
@@ -644,7 +677,11 @@ final class AppModel: ObservableObject {
     }
 
     func statusMenuScores(for service: ServiceKind) -> (session: Double?, total: Double?) {
-        guard let snapshot = statusMenuStatus(for: service)?.snapshot else {
+        statusMenuScores(for: menuBarAccountID(for: service))
+    }
+
+    func statusMenuScores(for accountID: UUID) -> (session: Double?, total: Double?) {
+        guard let snapshot = dashboardState.account(accountID)?.snapshot else {
             return (nil, nil)
         }
         return (snapshot.statusMenuSessionScore, snapshot.statusMenuTotalScore)

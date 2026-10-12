@@ -36,6 +36,26 @@ struct AppSourceBehaviorTests {
         #expect(source.contains("model.$showUsageDetails\n        )\n            .receive(on: RunLoop.main)"))
     }
 
+    @Test func menuBarAccountChangesRenderCommittedStateWithoutAccountRefresh() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let delegate = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/AppDelegate.swift"), encoding: .utf8)
+        let model = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/AppModel.swift"), encoding: .utf8)
+        let settings = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/SettingsView.swift"), encoding: .utf8)
+        #expect(delegate.contains("menuBarAccountSubscription = model.$menuBarAccountSelection\n            .receive(on: RunLoop.main)"))
+        #expect(delegate.contains("model.$openCodeGoEnabled\n        )\n        .receive(on: RunLoop.main)"))
+        #expect(delegate.contains("model.statusMenuAccountColumns"))
+        #expect(delegate.contains("offset + 1"))
+        let start = try #require(model.range(of: "func setMenuBarAccount("))
+        let end = try #require(model.range(of: "func openUsagePageInDefaultBrowser", range: start.upperBound..<model.endIndex))
+        let selectionMethods = model[start.lowerBound..<end.lowerBound]
+        #expect(!selectionMethods.contains("refresh("))
+        #expect(!selectionMethods.contains("openLogin("))
+        #expect(!selectionMethods.contains("sessionCoordinator"))
+        #expect(model.contains("legacyAccountIDs:"))
+        #expect(settings.contains("Show alongside in menu bar"))
+        #expect(settings.contains("Hide from menu bar"))
+    }
+
     @Test func refreshIndicatorStaysInsideTheFixedSizeButton() throws {
         let rootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -132,9 +152,9 @@ struct AppSourceBehaviorTests {
         #expect(appDelegate.contains("model.statusMenuShowsPercentages"))
         #expect(appDelegate.contains("showsBothLimits ? 74 : 56"))
         #expect(appDelegate.contains("model.statusMenuShowsPercentages ? 21 : 18"))
-        #expect(appDelegate.contains("services.count > 2 ? 5 : 6"))
+        #expect(appDelegate.contains("accounts.count > 2 ? 5 : 6"))
         #expect(appDelegate.contains("model.statusMenuServices"))
-        #expect(appDelegate.contains("model.statusMenuScores(for: service)"))
+        #expect(appDelegate.contains("model.statusMenuScores(for: account.accountID)"))
         #expect(appDelegate.contains("model.$statusMenuLimitDisplay"))
         #expect(appDelegate.contains("drawCombinedBar"))
         #expect(appDelegate.contains("drawStatusPair"))

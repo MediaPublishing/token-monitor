@@ -124,6 +124,8 @@ Version 1.0.38 reads Claude's updated **This week** and **Fable this week** usag
 
 In **Settings > Providers**, click **+** next to Claude, ChatGPT, or OpenCode Go to add another account. Give it a name with **More > Rename**. Each additional account keeps its own persistent sign-in and appears separately in the dashboard. The original account and its existing sign-in stay in place. Choose **Show in menu bar** on the account whose capacity the provider's menu-bar indicator should show. Disconnecting or removing an additional account clears only that account's login data. The original provider accounts remain available for compatibility with previous versions.
 
+**Local preview 1.0.43 (46):** Switching the menu-bar account updates its cached capacity immediately, without a manual refresh. **Show alongside in menu bar** adds another account in a separate column; **Hide from menu bar** removes it from the indicator without disconnecting it. Up to four accounts per provider can be shown, with names and column order in the tooltip. **Move to first menu bar column** changes their order. Public downloads remain on 1.0.42.
+
 #### Banked resets
 
 The ChatGPT section includes a compact reset count and the next expiry in local 24-hour time. Click it for individual reset types and dates. These saved resets are separate from remaining capacity; Token Monitor never redeems them. Missing or loading data is not treated as zero, and older reset data is marked **Last seen** until confirmed by a fresh reading.
@@ -251,6 +253,8 @@ Version 1.0.38 liest Claudes neue Nutzungslabels **This week** und **Fable this 
 #### Mehrere Accounts
 
 Unter **Settings > Providers** kannst du mit **+** für Claude, ChatGPT oder OpenCode Go weitere Accounts hinzufügen und über **More > Rename** benennen. Jeder zusätzliche Account bekommt eine eigene dauerhafte Anmeldung und erscheint separat im Dashboard. Der bisherige Account samt Login bleibt bestehen. Mit **Show in menu bar** bestimmst du, welcher Account eines Providers die Balken in der Menüleiste liefert. Das Trennen oder Entfernen eines zusätzlichen Accounts löscht nur dessen Login-Daten.
+
+**Lokale Vorschau 1.0.43 (46):** Beim Kontowechsel zeigt die Menüleiste sofort die zuletzt erfasste Kapazität des gewählten Kontos, ohne manuellen Refresh. Mit **Show alongside in menu bar** erscheint ein weiteres Konto in einer eigenen Spalte daneben. **Hide from menu bar** blendet es nur aus, ohne es zu trennen. Bis zu vier Konten je Anbieter sind möglich; Namen und Spaltenreihenfolge stehen im Tooltip. **Move to first menu bar column** ändert die Reihenfolge. Der öffentliche Download bleibt auf 1.0.42.
 
 #### Banked Resets
 
