@@ -104,6 +104,16 @@ struct ResetReminderSettingsView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             Toggle("Reset reminders", isOn: Binding(get: { reminders.enabled }, set: { reminders.setEnabled($0) }))
                 .labelsHidden().toggleStyle(.switch).controlSize(.small).fixedSize()
+                .disabled(reminders.requestingAuthorization)
+        }
+        if reminders.authorizationState == .denied {
+            Button("Open Notification Settings") { reminders.openNotificationSettings() }
+                .font(.caption).controlSize(.small)
+                .help("Allow Token Monitor notifications in macOS System Settings.")
+        }
+        if reminders.schedulingError != nil {
+            Button("Retry") { reminders.setEnabled(true) }
+                .font(.caption).controlSize(.small)
         }
     }
 }

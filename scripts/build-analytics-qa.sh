@@ -13,6 +13,8 @@ if [[ ! -d "$SPARKLE/Sparkle.framework" ]]; then
     exit 1
 fi
 mkdir -p "$CORE" "$APP/Contents/MacOS"
+mkdir -p "$APP/Contents/Resources"
+ditto "$ROOT/Sources/TokenMonitorApp/Resources/ProviderLogos" "$APP/Contents/Resources/ProviderLogos"
 swiftc -swift-version 6 -sdk "$SDK" -emit-library -emit-module -module-name TokenMonitorCore \
     Sources/TokenMonitorCore/*.swift -emit-module-path "$CORE/TokenMonitorCore.swiftmodule" \
     -o "$CORE/libTokenMonitorCore.dylib"
@@ -22,7 +24,7 @@ while IFS= read -r file; do sources+=("$file"); done < <(
 )
 swiftc -swift-version 6 -sdk "$SDK" -parse-as-library -I "$CORE" -L "$CORE" -lTokenMonitorCore \
     -F "$SPARKLE" -framework Sparkle -Xlinker -rpath -Xlinker "$SPARKLE" \
-    -Xlinker -rpath -Xlinker "$CORE" "${sources[@]}" scripts/analytics-qa.swift \
+    -Xlinker -rpath -Xlinker "$CORE" "${sources[@]}" scripts/analytics-qa.swift scripts/native-layout-proof.swift \
     -o "$APP/Contents/MacOS/AnalyticsQA"
 cp Sources/TokenMonitorApp/Resources/Info.plist "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier com.mediapublishing.tokenmonitor.analytics-qa' \

@@ -15,19 +15,9 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: compact ? 10 : 18) {
-                PopoverHeaderView(analytics: analytics)
-
+        VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .top, spacing: 8) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(compact ? "Settings" : "Token Monitor Settings")
-                            .font(compact ? .headline.weight(.semibold) : .title3.weight(.semibold))
-                        Text("Updates preserve your sign-in. Providers may still require reauthentication.")
-                            .font(compact ? .caption : .subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(compact ? 2 : nil)
-                    }
+                    Text("Settings").font(.headline.weight(.semibold))
 
                     Spacer(minLength: 0)
 
@@ -40,27 +30,28 @@ struct SettingsView: View {
                     }
                 }
 
-                VStack(spacing: 10) {
-                    providerSettingsCard
-                    settingsRow(height: 205) {
+                providerSettingsCard.id("settings-providers")
+                Grid(horizontalSpacing: 10, verticalSpacing: 10) {
+                    GridRow(alignment: .top) {
                         appSettingsCard
                         statusMenuSettingsCard
                     }
-                    settingsRow(height: 205) {
+                    .id("settings-app")
+                    GridRow(alignment: .top) {
                         usageDetailsSettingsCard
                         updatesSettingsCard
                     }
-                    debuggingSettingsCard
-                    analyticsSettingsCard
+                    .id("settings-usage")
+                    GridRow(alignment: .top) {
+                        analyticsSettingsCard
+                        debuggingSettingsCard
+                    }
+                    .id("settings-projects")
                 }
-
-                Spacer(minLength: 0)
-            }
-            .padding(compact ? 10 : 22)
-            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .frame(width: compact ? AppDelegate.popoverWidth : 560, height: 700, alignment: .topLeading)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .scrollTargetLayout()
+        .onAppear { model.resetReminders.refreshAuthorization() }
         .alert("Rename account", isPresented: Binding(
             get: { renamingAccountID != nil },
             set: { if !$0 { renamingAccountID = nil } }
@@ -78,9 +69,10 @@ struct SettingsView: View {
 
     private func settingsCard<Content: View>(
         _ title: String,
+        spacing: CGFloat = 8,
         @ViewBuilder content: () -> Content
     ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: spacing) {
             Text(title)
                 .font(.headline)
             content()
@@ -88,21 +80,12 @@ struct SettingsView: View {
         .padding(10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Color(nsColor: .textBackgroundColor))
         )
-    }
-
-    private func settingsRow<Left: View, Right: View>(
-        height: CGFloat,
-        @ViewBuilder content: () -> TupleView<(Left, Right)>
-    ) -> some View {
-        let views = content().value
-        return HStack(alignment: .top, spacing: 10) {
-            views.0
-                .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .topLeading)
-            views.1
-                .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .topLeading)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color(nsColor: .separatorColor).opacity(0.5), lineWidth: 0.5)
         }
     }
 
@@ -134,7 +117,7 @@ struct SettingsView: View {
         settingsCard("App") {
             settingsToggle(
                 "Launch at login",
-                description: "Start Token Monitor automatically after restart.",
+                description: "Start automatically after restart.",
                 isOn: launchAtLoginBinding
             )
 
@@ -152,25 +135,11 @@ struct SettingsView: View {
     }
 
     private var providerSettingsCard: some View {
-        settingsCard("Providers") {
-            Text("Add accounts without replacing existing sign-ins. Show one account or add others alongside in the menu bar.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        settingsCard("Providers", spacing: 4) {
             ForEach([ServiceKind.chatGPT, .claude, .openCodeGo], id: \.self) { service in
-                HStack {
-                    Text(service.displayName).font(.subheadline.weight(.semibold))
-                    Spacer()
-                    Button {
-                        model.addAccount(for: service)
-                    } label: {
-                        Label("Add \(service.displayName) account", systemImage: "plus")
-                            .labelStyle(.iconOnly)
-                    }
-                    .buttonStyle(.borderless)
-                    .help("Add \(service.displayName) account")
-                }
-                ForEach(model.providerSettingsServices(for: service), id: \.accountID) { status in
+                ForEach(Array(model.providerSettingsServices(for: service).enumerated()), id: \.element.accountID) { index, status in
                     HStack(spacing: 8) {
+                        ProviderLogoView(service: service)
                         Button {
                             model.openLogin(accountID: status.accountID)
                         } label: {
@@ -179,16 +148,18 @@ struct SettingsView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .buttonStyle(.plain)
+                        .help("\(service.displayName): \(status.accountName)")
                         Text(providerStatusLabel(for: status))
                             .font(.caption2.weight(.semibold))
                             .foregroundStyle(providerStatusColor(for: status))
+                            .frame(width: 88, alignment: .trailing)
                         let selectedAccounts = model.menuBarAccounts(for: service)
                         let column = selectedAccounts.firstIndex(where: { $0.id == status.accountID })
-                        if let column {
-                            Image(systemName: "menubar.rectangle")
-                                .foregroundStyle(.secondary)
-                                .help("Menu bar column \(column + 1)")
-                        }
+                        Image(systemName: "menubar.rectangle")
+                            .foregroundStyle(.secondary)
+                            .opacity(column == nil ? 0 : 1)
+                            .frame(width: 18)
+                            .help(column.map { "Menu bar column \($0 + 1)" } ?? "Not shown in menu bar")
                         Menu {
                             Button("Connect / Reconnect") { model.openLogin(accountID: status.accountID) }
                             Button("Rename...") {
@@ -225,9 +196,20 @@ struct SettingsView: View {
                             Image(systemName: "ellipsis.circle")
                         }
                         .menuStyle(.borderlessButton)
-                        .fixedSize()
+                        .menuIndicator(.hidden)
+                        .frame(width: 22)
+                        if index == 0 {
+                            Button { model.addAccount(for: service) } label: {
+                                Image(systemName: "plus").frame(width: 22, height: 24)
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Add \(service.displayName) account")
+                            .accessibilityLabel("Add \(service.displayName) account")
+                        } else {
+                            Color.clear.frame(width: 22, height: 24)
+                        }
                     }
-                    .padding(.leading, 10)
+                    .frame(minHeight: 28)
                 }
                 if service != .openCodeGo {
                     Divider()
@@ -240,13 +222,13 @@ struct SettingsView: View {
         settingsCard("Status menu") {
             settingsToggle(
                 "Use colored status bars",
-                description: "Turn off for a black-and-white menu bar icon.",
+                description: "Remaining capacity in color.",
                 isOn: statusMenuColorBinding
             )
 
             settingsToggle(
                 "Menu bar percentages",
-                description: "Show the selected limit next to every status bar.",
+                description: "Limits next to the bars.",
                 isOn: statusMenuPercentagesBinding
             )
 
@@ -276,13 +258,10 @@ struct SettingsView: View {
         settingsCard("Usage details") {
             settingsToggle(
                 "Show usage details",
-                description: "Show Extra usage and Monthly limit / Balance in the overview.",
+                description: "Extra usage, limits and balance.",
                 isOn: showUsageDetailsBinding
             )
 
-            Text("Turn this off to keep the dashboard focused on remaining capacity and reset times.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
             Divider()
             ResetReminderSettingsView(reminders: model.resetReminders)
         }
@@ -301,7 +280,7 @@ struct SettingsView: View {
         settingsCard("Updates") {
             settingsToggle(
                 "Automatically check for updates",
-                description: "Check hourly. Review and install available updates.",
+                description: "Check hourly. Review before installing.",
                 isOn: automaticUpdateChecksBinding
             )
 
@@ -337,11 +316,11 @@ struct SettingsView: View {
         settingsCard("Debugging") {
             settingsToggle(
                 "Enable debug mode",
-                description: "Store redacted refresh diagnostics locally.",
+                description: "Redacted logs, local only.",
                 isOn: debugModeBinding
             )
 
-            Text("Reports open as drafts for review before submitting.")
+            Text("Review reports before sending.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -375,24 +354,31 @@ struct SettingsView: View {
     }
 
     private var analyticsSettingsCard: some View {
-        settingsCard("Project usage (optional)") {
+        settingsCard("Project details") {
             settingsToggle(
-                "Show analysis tab",
-                description: "Usage by project or topic. Local only, without monetary values.",
+                "Show analysis",
+                description: "Local usage by project or topic.",
                 isOn: Binding(get: { analytics.enabled }, set: { model.setProjectAnalyticsEnabled($0) })
             )
             if analytics.enabled {
-                HStack(spacing: 16) {
+                HStack(spacing: 8) {
                     Toggle("Codex", isOn: Binding(get: { analytics.codexEnabled },
                         set: { analytics.setSource(.codex, enabled: $0) }))
                     Toggle("Claude Code", isOn: Binding(get: { analytics.claudeEnabled },
                         set: { analytics.setSource(.claudeCode, enabled: $0) }))
                 }
                 .toggleStyle(.checkbox)
-                Text("Reads token counters and working folders from local coding logs for the last 30 days. No conversation content is stored or uploaded. Web chats are not included.")
+                .controlSize(.small)
+                Text("Local coding logs only. No web chats.")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                Button("Reset assignments") { analytics.clearAssignments() }
-                    .controlSize(.small)
+                Menu {
+                    Button("Reset assignments") { analytics.clearAssignments() }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .frame(width: 24)
             }
         }
     }

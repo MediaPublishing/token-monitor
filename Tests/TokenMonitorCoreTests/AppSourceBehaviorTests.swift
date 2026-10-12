@@ -23,9 +23,9 @@ struct AppSourceBehaviorTests {
                      "Sources/TokenMonitorCore/ProjectAnalytics.swift"]
         let sources = try files.map { try String(contentsOf: root.appendingPathComponent($0), encoding: .utf8) }
         let combined = sources.joined(separator: "\n")
-        for label in ["Capacity", "Analysis", "Project usage", "Projects", "Topics", "Show analysis tab",
+        for label in ["Capacity", "Analysis", "Project usage", "Projects", "Topics", "Show analysis",
                       "Incomplete coverage", "Unassigned", "Local logs"] {
-            #expect(combined.contains("\"\(label)"))
+            #expect(combined.contains(label))
         }
         for label in ["Kapazität", "Analyse", "Projektanalyse", "Projekte", "Themen", "Zuordnung",
                       "Lokale Protokolle", "Nicht zugeordnet", "Aktualisiert", "Erfassung unvollständig"] {
@@ -33,14 +33,22 @@ struct AppSourceBehaviorTests {
         }
     }
 
-    @Test func analyticsSegmentLabelsStayHiddenWithoutChangingAccountCode() throws {
+    @Test func sharedPopoverShellOwnsScrollingAndIconNavigationWithoutChangingAccountCode() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let view = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProjectAnalyticsView.swift"), encoding: .utf8)
-        #expect(view.components(separatedBy: ".pickerStyle(.segmented)\n").count == 3)
-        #expect(view.components(separatedBy: ".labelsHidden()").count == 4)
-        #expect(view.components(separatedBy: "Picker(\"\", selection:").count == 4)
-        for label in ["View", "Period", "Grouping"] {
-            #expect(!view.contains("Picker(\"\(label)\""))
+        let shell = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/PopoverRootView.swift"), encoding: .utf8)
+        let header = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/PopoverHeaderView.swift"), encoding: .utf8)
+        #expect(!view.contains("DashboardTabsView"))
+        #expect(!view.contains("ScrollView"))
+        #expect(!view.contains("height: model.desiredPopoverHeight()"))
+        #expect(shell.components(separatedBy: "ScrollView {").count == 2)
+        #expect(shell.contains(".scrollDisabled(!layout.scrolls)"))
+        #expect(shell.contains(".fixedSize(horizontal: false, vertical: true)"))
+        #expect(header.contains("if analytics.enabled"))
+        for symbol in ["arrow.clockwise", "chart.bar.xaxis", "chart.pie", "gearshape", "xmark"] {
+            #expect(header.contains("\"\(symbol)\""))
+        }
+        for label in ["Period", "Grouping"] {
             #expect(view.contains(".accessibilityLabel(\"\(label)\")"))
         }
         let model = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProjectAnalyticsModel.swift"), encoding: .utf8)
@@ -167,13 +175,14 @@ struct AppSourceBehaviorTests {
         #expect(dashboardView.contains("isUsedPercentageMetric"))
         #expect(dashboardView.contains("% remaining"))
         #expect(!dashboardView.contains("showsProgressPercentage"))
-        #expect(dashboardView.contains("ScrollView"))
+        #expect(!dashboardView.contains("ScrollView"))
         #expect(dashboardView.contains("ServiceSectionView(status: status)"))
         #expect(dashboardView.contains("count: 3"))
         #expect(dashboardView.contains("Image(systemName: \"arrow.clockwise\")"))
         #expect(dashboardView.contains("minHeight: 58"))
         #expect(dashboardView.contains("model.showUsageDetails"))
-        #expect(dashboardView.contains("height: model.desiredPopoverHeight()"))
+        #expect(!dashboardView.contains("desiredPopoverHeight"))
+        #expect(dashboardView.contains("ProviderLogoView(service: status.service)"))
         #expect(dashboardView.contains("extra-usage-spend"))
         #expect(dashboardView.contains("monthly-spend-limit"))
         #expect(dashboardView.contains("current-balance"))
@@ -229,7 +238,8 @@ struct AppSourceBehaviorTests {
         #expect(appModel.contains("Keys.statusMenuShowsPercentages: false"))
         #expect(appModel.contains("Keys.statusMenuLimitDisplay: StatusMenuLimitDisplay.total.rawValue"))
         #expect(appModel.contains("case both"))
-        #expect(appModel.contains("showUsageDetails ? 650 : 540"))
+        #expect(!appModel.contains("showUsageDetails ? 650 : 540"))
+        #expect(appModel.contains("popoverMaximumHeight"))
         #expect(appModel.contains("snapshot.statusMenuSessionScore, snapshot.statusMenuTotalScore"))
         #expect(appDelegate.contains("Menu bar: Session / Total"))
         #expect(appModel.contains("Keys.showUsageDetails: false"))

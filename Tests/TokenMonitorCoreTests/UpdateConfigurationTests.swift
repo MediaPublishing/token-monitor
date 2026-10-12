@@ -11,7 +11,7 @@ struct UpdateConfigurationTests {
 
         #expect(plist["SUFeedURL"] as? String == "https://mediapublishing.github.io/token-monitor/appcast.xml")
         #expect(plist["SUPublicEDKey"] as? String == "MaN6KO95WRBx46C9MgCneLyaladlp5XPxnIt+p/R860=")
-        #expect(plist["SUEnableAutomaticChecks"] as? Bool == false)
+        #expect(plist["SUEnableAutomaticChecks"] as? Bool == true)
         #expect(plist["SUAllowsAutomaticUpdates"] as? Bool == true)
         #expect(plist["SUScheduledCheckInterval"] as? Int == 3600)
     }

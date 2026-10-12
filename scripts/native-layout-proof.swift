@@ -1,0 +1,140 @@
+import AppKit
+import SwiftUI
+import TokenMonitorCore
+
+private struct LayoutFixtureSnapshots: SnapshotPersisting {
+    let snapshots: [ServiceKind: ServiceSnapshot]
+    func loadSnapshots() throws -> [ServiceKind: ServiceSnapshot] { snapshots }
+    func saveSnapshots(_ snapshots: [ServiceKind: ServiceSnapshot]) throws { }
+}
+
+private struct LayoutFixtureAccounts: AccountPersisting {
+    let count: Int
+    let snapshots: [ServiceKind: ServiceSnapshot]
+
+    func loadAccounts() throws -> [MonitoredAccount] {
+        var accounts = ServiceKind.allCases.map { service -> MonitoredAccount in
+            var account = MonitoredAccount.primary(for: service)
+            account.snapshot = snapshots[service]
+            return account
+        }
+        for index in 3..<max(3, count) {
+            accounts.append(MonitoredAccount(id: UUID(), service: .claude, name: "Claude \(index - 1)", isPrimary: false,
+                                             snapshot: snapshots[.claude]))
+        }
+        return accounts
+    }
+
+    func saveAccounts(_ accounts: [MonitoredAccount]) throws { }
+}
+
+@MainActor enum NativeLayoutProof {
+    static func run(analytics: ProjectAnalyticsModel, output: URL) async throws {
+        precondition(Bundle.main.bundleIdentifier == "com.mediapublishing.tokenmonitor.analytics-qa")
+        try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+        for _ in 0..<100 where analytics.refreshing { try await Task.sleep(for: .milliseconds(30)) }
+        precondition(analytics.groups.count == 4 && analytics.totalTokens == 4_250_000)
+        precondition(!analytics.hasMeaningfulTopics)
+        precondition(ServiceKind.allCases.allSatisfy { ProviderLogoView.image(for: $0) != nil })
+        precondition(ProviderLogoView.image(for: .openCodeGo, darkAppearance: true) != nil)
+        let window = NSWindow(contentRect: NSRect(x: 120, y: 60, width: 488, height: 180),
+                              styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        window.title = "Token Monitor Native Layout QA"
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+        var records: [[String: Any]] = []
+        let snapshots = fixtures()
+        let scenarios: [(String, Int, PopoverScreen, Bool, Bool, CGFloat, Bool)] = [
+            ("capacity-two-light", 2, .dashboard, false, false, 900, false),
+            ("capacity-three-light", 3, .dashboard, false, false, 900, false),
+            ("capacity-details-light", 3, .dashboard, true, false, 900, false),
+            ("analysis-closed-light", 2, .analytics, false, false, 900, false),
+            ("analysis-open-light", 2, .analytics, false, false, 900, true),
+            ("settings-light", 3, .settings, false, false, 760, false),
+            ("settings-dark-bounded", 6, .settings, false, true, 620, false),
+            ("capacity-dark-bounded", 6, .dashboard, false, true, 480, false)
+        ]
+        for (name, count, screen, details, dark, maximum, expand) in scenarios {
+            UserDefaults.standard.set(count >= 3, forKey: "openCodeGoEnabled")
+            UserDefaults.standard.set(details, forKey: "showUsageDetails")
+            UserDefaults.standard.set(false, forKey: "bankedResetRemindersEnabled")
+            for id in analytics.expandedGroupIDs { analytics.setExpanded(id, false) }
+            if expand, let first = analytics.groups.first { analytics.setExpanded(first.id, true) }
+            let model = AppModel(snapshotStore: LayoutFixtureSnapshots(snapshots: snapshots),
+                                 accountStore: LayoutFixtureAccounts(count: count, snapshots: snapshots), analytics: analytics)
+            model.popoverMaximumHeight = maximum
+            switch screen {
+            case .dashboard: model.showDashboardInPopover()
+            case .analytics: model.showAnalyticsInPopover()
+            case .settings: model.showSettingsInPopover()
+            }
+            window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+            let hosting = NSHostingController(rootView: PopoverRootView(onSizeChange: { _, size in
+                window.setContentSize(size)
+            }).environmentObject(model))
+            window.contentViewController = hosting
+            window.setContentSize(NSSize(width: 488, height: 180))
+            for _ in 0..<12 { try await Task.sleep(for: .milliseconds(50)) }
+            hosting.view.layoutSubtreeIfNeeded()
+            let height = hosting.view.bounds.height
+            precondition(height <= maximum + 1 && height > 80)
+            let scrolls = scrollViews(in: hosting.view)
+            precondition(scrolls.count == 1)
+            let overflowing = scrolls.contains {
+                ($0.documentView?.bounds.height ?? 0) > $0.contentView.bounds.height + 1
+            }
+            if name == "settings-light" { precondition(!overflowing) }
+            guard let bitmap = hosting.view.bitmapImageRepForCachingDisplay(in: hosting.view.bounds) else {
+                throw NSError(domain: "NativeLayoutProof", code: 1)
+            }
+            hosting.view.cacheDisplay(in: hosting.view.bounds, to: bitmap)
+            guard let png = bitmap.representation(using: .png, properties: [:]) else {
+                throw NSError(domain: "NativeLayoutProof", code: 2)
+            }
+            try png.write(to: output.appendingPathComponent(name + ".png"))
+            var colors: Set<String> = []
+            for x in stride(from: 0, to: bitmap.pixelsWide, by: 7) {
+                for y in stride(from: 0, to: bitmap.pixelsHigh, by: 7) {
+                    if let color = bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB) {
+                        colors.insert("\(Int(color.redComponent * 255)),\(Int(color.greenComponent * 255)),\(Int(color.blueComponent * 255))")
+                    }
+                }
+            }
+            precondition(colors.count > 12)
+            records.append(["name": name, "height": Double(height), "maximum": Double(maximum), "scrollAreas": scrolls.count,
+                            "overflowing": overflowing, "colors": colors.count])
+        }
+        let height: (String) -> Double = { name in records.first { $0["name"] as? String == name }!["height"] as! Double }
+        precondition(height("capacity-two-light") < height("capacity-three-light"))
+        precondition(height("capacity-three-light") < height("capacity-details-light"))
+        precondition(height("analysis-closed-light") < height("analysis-open-light"))
+        let data = try JSONSerialization.data(withJSONObject: ["scope": "Native SwiftUI views, synthetic accounts only", "logos": "all decoded", "scenarios": records], options: [.prettyPrinted, .sortedKeys])
+        try data.write(to: output.appendingPathComponent("native-layout-proof.json"))
+        print("NATIVE_LAYOUT_PROOF_PASS \(String(decoding: data, as: UTF8.self))")
+        fflush(stdout)
+        window.close()
+    }
+
+    private static func scrollViews(in view: NSView) -> [NSScrollView] {
+        (view as? NSScrollView).map { [$0] } ?? view.subviews.flatMap { scrollViews(in: $0) }
+    }
+
+    private static func fixtures() -> [ServiceKind: ServiceSnapshot] {
+        let now = Date()
+        func metric(_ key: String, _ title: String, _ remaining: Double, _ reset: String) -> UsageMetric {
+            UsageMetric(key: key, title: title, valueText: "\(Int(remaining * 100))% remaining", subtitle: reset,
+                        progress: remaining, style: .progress)
+        }
+        let claude = [metric("current-session", "Session", 0.89, "Reset in 2h 10m"),
+                      metric("weekly-all-models", "All models", 0.84, "Reset Friday 12:00"),
+                      metric("weekly-fable", "Fable", 0.92, "Separate Fable limit"),
+                      UsageMetric(key: "extra-usage-spend", title: "Extra usage", valueText: "$0.00 spent", subtitle: nil, progress: 1, style: .progress),
+                      UsageMetric(key: "monthly-spend-limit", title: "Monthly limit", valueText: "$200", subtitle: nil, progress: nil, style: .stat)]
+        return [
+            .chatGPT: ServiceSnapshot(service: .chatGPT, capturedAt: now, pageTitle: "Synthetic", url: "https://chatgpt.com", metrics: [metric("weekly-limit", "Weekly", 0.8, "Reset in 5d 8h")],
+                                     bankedResets: BankedResetInventory(capturedAt: now, groups: [.init(title: "Full reset", expiresAt: now.addingTimeInterval(864_000), expiryText: "Expires in 10 days", count: 3)])),
+            .claude: ServiceSnapshot(service: .claude, capturedAt: now, pageTitle: "Synthetic", url: "https://claude.ai", metrics: claude),
+            .openCodeGo: ServiceSnapshot(service: .openCodeGo, capturedAt: now, pageTitle: "Synthetic", url: "https://opencode.ai", metrics: [metric("rolling-usage", "Rolling", 0.96, "Reset in 4h 10m"), metric("weekly-usage", "Weekly", 0.68, "Reset in 2d 3h"), metric("monthly-usage", "Monthly", 0.42, "Reset in 16d 8h")])
+        ]
+    }
+}

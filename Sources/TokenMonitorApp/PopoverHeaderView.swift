@@ -30,6 +30,7 @@ struct PopoverHeaderView: View {
                 Text(model.popoverScreen == .analytics ? "Local token usage" : model.lastRefreshText)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             .padding(.leading, 8)
 
@@ -51,6 +52,17 @@ struct PopoverHeaderView: View {
                 }
             )
             .help("Dashboard")
+            .accessibilityLabel("Capacity")
+
+            if analytics.enabled {
+                headerButton(
+                    systemImage: "chart.pie",
+                    isSelected: model.popoverScreen == .analytics,
+                    action: { model.showAnalyticsInPopover() }
+                )
+                .help("Analysis")
+                .accessibilityLabel("Analysis")
+            }
 
             headerButton(
                 systemImage: "gearshape",
@@ -60,11 +72,13 @@ struct PopoverHeaderView: View {
                 }
             )
             .help("Settings")
+            .accessibilityLabel("Settings")
 
             headerButton(systemImage: "xmark", action: {
                 AppDelegate.shared?.closePopover()
             })
             .help("Close popover")
+            .accessibilityLabel("Close popover")
         }
     }
 
@@ -80,10 +94,9 @@ struct PopoverHeaderView: View {
         Button(action: action) {
             Image(systemName: systemImage)
                 .font(.system(size: 13, weight: .semibold))
-                .frame(width: 28, height: 24)
+                .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
-        .focusEffectDisabled()
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(isSelected ? Color(nsColor: .selectedControlColor) : Color(nsColor: .controlBackgroundColor))

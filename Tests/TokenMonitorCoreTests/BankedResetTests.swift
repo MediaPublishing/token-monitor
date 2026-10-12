@@ -140,6 +140,13 @@ struct BankedResetTests {
         #expect(ResetReminderPlanner.shouldSchedule(reminder, previousFireDate: reminder.fireAt, delivered: false, now: now))
     }
 
+    @Test func reminderIdentifiersAreScopedPerAccount() throws {
+        let inventory = BankedResetInventory(capturedAt: now, groups: [.init(title: "Full reset", expiresAt: now.addingTimeInterval(10 * 86400), expiryText: "")])
+        let first = try #require(ResetReminderPlanner.reminders(for: inventory, now: now, accountID: UUID(uuidString: "AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA" )).first)
+        let second = try #require(ResetReminderPlanner.reminders(for: inventory, now: now, accountID: UUID(uuidString: "BBBBBBBB-BBBB-BBBB-BBBB-BBBBBBBBBBBB" )).first)
+        #expect(first.identifier != second.identifier)
+    }
+
     @Test func reducerPreservesUnknownDataButClearsConsumedResetsAndDisconnectedAccounts() {
         let inventory = BankedResetInventory(capturedAt: now, groups: [.init(title: "Full reset", expiresAt: now.addingTimeInterval(86400), expiryText: "")])
         let old = ServiceSnapshot(service: .chatGPT, capturedAt: now, pageTitle: "Usage", url: "", metrics: [], bankedResets: inventory)

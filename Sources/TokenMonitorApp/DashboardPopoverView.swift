@@ -5,23 +5,13 @@ struct DashboardPopoverView: View {
     @EnvironmentObject private var model: AppModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            PopoverHeaderView(analytics: model.analytics)
-            DashboardTabsView(analytics: model.analytics)
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(model.dashboardServices, id: \.accountID) { status in
-                        ServiceSectionView(status: status)
-                    }
-                }
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(model.dashboardServices, id: \.accountID) { status in
+                ServiceSectionView(status: status)
+                    .id(status.accountID.uuidString)
             }
-
-            Spacer(minLength: 0)
         }
-        .padding(10)
-        .frame(width: AppDelegate.popoverWidth, height: model.desiredPopoverHeight(), alignment: .top)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .scrollTargetLayout()
     }
 
 }
@@ -39,8 +29,11 @@ struct ServiceSectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .center, spacing: 8) {
+                ProviderLogoView(service: status.service)
                 Text(status.accountName)
                     .font(.headline)
+                    .lineLimit(1)
+                    .help(status.accountName)
 
                 StateBadgeView(status: status.connectionStatus)
 

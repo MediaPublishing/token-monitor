@@ -4,7 +4,7 @@ import Foundation
 import ServiceManagement
 import TokenMonitorCore
 
-enum PopoverScreen: Hashable {
+enum PopoverScreen: Hashable, Sendable {
     case dashboard
     case analytics
     case settings
@@ -49,6 +49,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var menuBarAccountSelection: MenuBarAccountSelection
     @Published private(set) var popoverScreen: PopoverScreen = .dashboard
     @Published private(set) var isPopoverVisible = false
+    @Published var popoverMaximumHeight: CGFloat = 760
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var automaticallyChecksForUpdates: Bool
     @Published private(set) var debugModeEnabled: Bool
@@ -141,6 +142,9 @@ final class AppModel: ObservableObject {
 
         syncLaunchAtLoginRegistration()
         resetReminders.start()
+        for account in accounts where account.service == .chatGPT {
+            resetReminders.update(account.snapshot?.bankedResets, accountID: account.id, accountName: account.name)
+        }
         updateController.start()
 
         backgroundRefreshTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
@@ -263,8 +267,8 @@ final class AppModel: ObservableObject {
                         event: .account(accountID, .refreshSucceeded(snapshot))
                     )
                     self.persistSnapshots()
-                    if service == .chatGPT && accountID == ServiceKind.chatGPT.dataStoreIdentifier {
-                        self.resetReminders.update(snapshot.bankedResets)
+                    if service == .chatGPT {
+                        self.resetReminders.update(snapshot.bankedResets, accountID: accountID, accountName: status.accountName)
                     }
                 }
             } catch let parseError as UsageParseError {
@@ -301,7 +305,7 @@ final class AppModel: ObservableObject {
 
         if replacingExistingSession {
             refreshTasks[accountID]?.cancel()
-            if service == .chatGPT && accountID == ServiceKind.chatGPT.dataStoreIdentifier { resetReminders.disconnect() }
+            if service == .chatGPT { resetReminders.disconnect(accountID: accountID) }
             DashboardReducer.reduce(
                 &dashboardState,
                 event: .account(accountID, .disconnected(message: "Connect account"))
@@ -341,7 +345,7 @@ final class AppModel: ObservableObject {
     func disconnect(accountID: UUID) {
         guard let account = accounts.first(where: { $0.id == accountID }) else { return }
         let service = account.service
-        if service == .chatGPT && accountID == ServiceKind.chatGPT.dataStoreIdentifier { resetReminders.disconnect() }
+        if service == .chatGPT { resetReminders.disconnect(accountID: accountID) }
         pendingForcedRefreshes[accountID] = nil
         refreshTasks[accountID]?.cancel()
         sessionCoordinator.cancelRefresh(accountID: accountID)
@@ -392,6 +396,7 @@ final class AppModel: ObservableObject {
 
     func removeAccount(_ accountID: UUID) {
         guard let account = accounts.first(where: { $0.id == accountID }), !account.isPrimary else { return }
+        if account.service == .chatGPT { resetReminders.disconnect(accountID: accountID) }
         pendingForcedRefreshes[accountID] = nil
         refreshTasks[accountID]?.cancel()
         sessionCoordinator.cancelRefresh(accountID: accountID)
@@ -456,18 +461,6 @@ final class AppModel: ObservableObject {
 
     func openUsagePageInDefaultBrowser(for service: ServiceKind) {
         NSWorkspace.shared.open(service.usageURL)
-    }
-
-    func desiredPopoverHeight() -> CGFloat {
-        switch popoverScreen {
-        case .dashboard:
-            let visible = dashboardServices.count
-            return min(760, (showUsageDetails ? 650 : 540) + 32 + (analytics.enabled ? 28 : 0) + CGFloat(max(0, visible - 3)) * 150)
-        case .analytics:
-            return 650
-        case .settings:
-            return 700
-        }
     }
 
     func quitApplication() {
@@ -774,6 +767,9 @@ final class AppModel: ObservableObject {
         lines.append("")
         lines.append("## App updates")
         lines.append(updateController.diagnosticsText)
+        lines.append("")
+        lines.append("## Reset reminders")
+        lines.append(resetReminders.diagnosticsText)
         lines.append("")
         lines.append("## Latest redacted debug records")
 
