@@ -124,7 +124,11 @@ Version 1.0.38 reads Claude's updated **This week** and **Fable this week** usag
 
 In **Settings > Providers**, click **+** next to Claude, ChatGPT, or OpenCode Go to add another account. Give it a name with **More > Rename**. Each additional account keeps its own persistent sign-in and appears separately in the dashboard. The original account and its existing sign-in stay in place. Choose **Show in menu bar** on the account whose capacity the provider's menu-bar indicator should show. Disconnecting or removing an additional account clears only that account's login data. The original provider accounts remain available for compatibility with previous versions.
 
-**Local preview 1.0.43 (47):** Switching the menu-bar account updates its cached capacity immediately, without a manual refresh. **Show alongside in menu bar** adds another account in a separate column; **Hide from menu bar** removes it from the indicator without disconnecting it. Up to four accounts per provider can be shown, with names and column order in the tooltip. **Move to first menu bar column** changes their order. Analysis labels now match the existing English interface. Public downloads remain on 1.0.42.
+**Local preview 1.0.43 (48):** Switching the menu-bar account updates its cached capacity immediately, without a manual refresh. **Show alongside in menu bar** adds another account in a separate column; **Hide from menu bar** removes it from the indicator without disconnecting it. Up to four accounts per provider can be shown, with names and column order in the tooltip. **Move to first menu bar column** changes their order. Analysis labels now match the existing English interface. Public downloads remain on 1.0.42.
+
+ChatGPT Connect now starts on the home page and waits for a positive sign-in signal before opening usage. Blank or canceled loads never reload the login form. If automatic detection is unavailable, **Read usage** opens the usage page after you finish signing in. A connection is completed only after real usage metrics are parsed. No cookies are cleared by this recovery flow.
+
+For local builds, use `bash scripts/install-local-app.sh` after building, or `bash scripts/install-local-app.sh --check` to validate without installing. The previous app is kept outside Trash under `~/AI/backups/token-monitor/`, preventing SmartDelete-style cleaners from offering to remove the app's sign-in data during replacement. The installer does not read or copy account, cookie or session data.
 
 #### Banked resets
 
@@ -254,7 +258,9 @@ Version 1.0.38 liest Claudes neue Nutzungslabels **This week** und **Fable this 
 
 Unter **Settings > Providers** kannst du mit **+** für Claude, ChatGPT oder OpenCode Go weitere Accounts hinzufügen und über **More > Rename** benennen. Jeder zusätzliche Account bekommt eine eigene dauerhafte Anmeldung und erscheint separat im Dashboard. Der bisherige Account samt Login bleibt bestehen. Mit **Show in menu bar** bestimmst du, welcher Account eines Providers die Balken in der Menüleiste liefert. Das Trennen oder Entfernen eines zusätzlichen Accounts löscht nur dessen Login-Daten.
 
-**Lokale Vorschau 1.0.43 (47):** Beim Kontowechsel zeigt die Menüleiste sofort die zuletzt erfasste Kapazität des gewählten Kontos, ohne manuellen Refresh. Mit **Show alongside in menu bar** erscheint ein weiteres Konto in einer eigenen Spalte daneben. **Hide from menu bar** blendet es nur aus, ohne es zu trennen. Bis zu vier Konten je Anbieter sind möglich; Namen und Spaltenreihenfolge stehen im Tooltip. **Move to first menu bar column** ändert die Reihenfolge. Die Analyse verwendet jetzt dieselben englischen Beschriftungen wie die bestehende Oberfläche. Der öffentliche Download bleibt auf 1.0.42.
+**Lokale Vorschau 1.0.43 (48):** Beim Kontowechsel zeigt die Menüleiste sofort die zuletzt erfasste Kapazität des gewählten Kontos, ohne manuellen Refresh. Mit **Show alongside in menu bar** erscheint ein weiteres Konto in einer eigenen Spalte daneben. **Hide from menu bar** blendet es nur aus, ohne es zu trennen. Bis zu vier Konten je Anbieter sind möglich; Namen und Spaltenreihenfolge stehen im Tooltip. **Move to first menu bar column** ändert die Reihenfolge. Die Analyse verwendet jetzt dieselben englischen Beschriftungen wie die bestehende Oberfläche. Der öffentliche Download bleibt auf 1.0.42.
+
+ChatGPT Connect startet auf der Startseite und öffnet die Nutzung erst nach einem positiven Anmeldenachweis. Leere oder abgebrochene Ladevorgänge laden das Login-Formular nicht neu. Falls die automatische Erkennung ausfällt, öffnet **Read usage** nach abgeschlossener Anmeldung die Nutzungsseite. Erst erfolgreich gelesene Nutzungswerte schließen die Verbindung ab. Dabei werden keine Cookies gelöscht.
 
 #### Banked Resets
 

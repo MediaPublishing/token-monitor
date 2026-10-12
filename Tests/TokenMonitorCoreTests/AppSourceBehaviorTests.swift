@@ -2,6 +2,17 @@ import Foundation
 import Testing
 
 struct AppSourceBehaviorTests {
+    @Test func localInstallationDoesNotTrashTheInstalledAppOrTouchSignInData() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let script = try String(contentsOf: root.appendingPathComponent("scripts/install-local-app.sh"), encoding: .utf8)
+        #expect(script.contains("mv \"$TARGET\" \"$PREVIOUS\""))
+        #expect(script.contains("codesign --verify --deep --strict"))
+        #expect(script.contains("--check"))
+        for unsafe in ["trash ", "rm ", "removeData", "httpCookieStore", "accounts.json", "Library/WebKit"] {
+            #expect(!script.contains(unsafe))
+        }
+    }
+
     @Test func analyticsUsesTheSameEnglishInterfaceAsCapacityAndSettings() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let files = ["Sources/TokenMonitorApp/ProjectAnalyticsView.swift",
@@ -286,7 +297,7 @@ struct AppSourceBehaviorTests {
         #expect(sessionController.contains("Usage page refresh timed out"))
     }
 
-    @Test func chatGPTLoginReturnsToUsagePageBeforeCompletingConnection() throws {
+    @Test func chatGPTLoginDoesNotReloadOrTreatAuthNavigationAsSuccessfulSignIn() throws {
         let rootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
@@ -297,11 +308,17 @@ struct AppSourceBehaviorTests {
             encoding: .utf8
         )
 
-        #expect(loginController.contains("didEnterChatGPTAuthenticationFlow"))
-        #expect(loginController.contains("noteChatGPTAuthenticationNavigation"))
-        #expect(loginController.contains("shouldRedirectChatGPTToUsagePage"))
-        #expect(loginController.contains("loadUsagePage()"))
-        #expect(loginController.contains("finishLoadedPage(currentURL: readiness.url)"))
+        #expect(!loginController.contains("reloadUsagePageAfterBlankLoad"))
+        #expect(!loginController.contains("didEnterChatGPTAuthenticationFlow"))
+        #expect(loginController.contains("ChatGPTLoginNavigation.connectionURL"))
+        #expect(loginController.contains("didStartProvisionalNavigation"))
+        #expect(loginController.contains("navigationToken == currentNavigationToken"))
+        #expect(loginController.contains("hasAuthenticatedSession: readiness.hasAuthenticatedSession"))
+        #expect(loginController.contains("webView.callAsyncJavaScript"))
+        #expect(loginController.contains("guard !readiness.hasLoginControls else { continue }"))
+        #expect(loginController.contains("hasAccountMenu"))
+        #expect(loginController.contains("&& !hasLoginControls &&"))
+        #expect(loginController.contains("#selector(readUsageAfterSignIn)"))
     }
 
     @Test func firstChatGPTRefreshAfterLoginUsesTheAuthenticatedLoginPage() throws {
