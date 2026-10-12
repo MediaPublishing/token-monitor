@@ -137,9 +137,9 @@ public struct AnalyticsSnapshot: Sendable {
         for event in unique.values where event.date >= since && event.date <= until && event.tokens.total > 0 {
             guard let thread = rootThread(for: event.threadID) else { continue }
             let assignment = assignments[thread.projectKey] ?? AnalyticsAssignment()
-            let defaultName = thread.projectKey.isEmpty ? "Nicht zugeordnet" : URL(fileURLWithPath: thread.projectKey).lastPathComponent
+            let defaultName = thread.projectKey.isEmpty ? "Unassigned" : URL(fileURLWithPath: thread.projectKey).lastPathComponent
             let projectName = assignment.projectName.isEmpty ? defaultName : assignment.projectName
-            let title = grouping == .projects ? projectName : (assignment.topic.isEmpty ? "Nicht zugeordnet" : assignment.topic)
+            let title = grouping == .projects ? projectName : (assignment.topic.isEmpty ? "Unassigned" : assignment.topic)
             let key: String
             if grouping == .topics { key = "topic:" + title.lowercased() }
             else if !assignment.projectName.isEmpty { key = "project:" + projectName.lowercased() }

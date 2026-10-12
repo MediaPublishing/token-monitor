@@ -27,7 +27,7 @@ struct PopoverHeaderView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Token Monitor")
                     .font(.headline.weight(.semibold))
-                Text(model.popoverScreen == .analytics ? "Lokaler Tokenverbrauch" : model.lastRefreshText)
+                Text(model.popoverScreen == .analytics ? "Local token usage" : model.lastRefreshText)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -41,7 +41,7 @@ struct PopoverHeaderView: View {
             })
             .opacity(headerIsRefreshing ? 0.5 : 1.0)
             .disabled(headerIsRefreshing)
-            .help(model.popoverScreen == .analytics ? "Lokale Analyse aktualisieren" : "Refresh connected services")
+            .help(model.popoverScreen == .analytics ? "Refresh local analysis" : "Refresh connected services")
 
             headerButton(
                 systemImage: "chart.bar.xaxis",

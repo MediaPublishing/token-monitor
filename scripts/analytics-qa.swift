@@ -24,9 +24,9 @@ private struct EmptyAccounts: AccountPersisting {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Synthetische Testdaten").font(.caption)
+                Text("Synthetic test data").font(.caption)
                 Spacer()
-                Toggle("Dunkel", isOn: $dark)
+                Toggle("Dark", isOn: $dark)
             }.padding(10)
             PopoverRootView().environmentObject(model)
         }

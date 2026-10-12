@@ -2,13 +2,33 @@ import Foundation
 import Testing
 
 struct AppSourceBehaviorTests {
+    @Test func analyticsUsesTheSameEnglishInterfaceAsCapacityAndSettings() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let files = ["Sources/TokenMonitorApp/ProjectAnalyticsView.swift",
+                     "Sources/TokenMonitorApp/ProjectAnalyticsModel.swift",
+                     "Sources/TokenMonitorApp/PopoverHeaderView.swift",
+                     "Sources/TokenMonitorApp/SettingsView.swift",
+                     "Sources/TokenMonitorCore/AnalyticsLogScanner.swift",
+                     "Sources/TokenMonitorCore/ProjectAnalytics.swift"]
+        let sources = try files.map { try String(contentsOf: root.appendingPathComponent($0), encoding: .utf8) }
+        let combined = sources.joined(separator: "\n")
+        for label in ["Capacity", "Analysis", "Project usage", "Projects", "Topics", "Show analysis tab",
+                      "Incomplete coverage", "Unassigned", "Local logs"] {
+            #expect(combined.contains("\"\(label)"))
+        }
+        for label in ["Kapazität", "Analyse", "Projektanalyse", "Projekte", "Themen", "Zuordnung",
+                      "Lokale Protokolle", "Nicht zugeordnet", "Aktualisiert", "Erfassung unvollständig"] {
+            #expect(!combined.contains("\"\(label)"))
+        }
+    }
+
     @Test func analyticsSegmentLabelsStayHiddenWithoutChangingAccountCode() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let view = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProjectAnalyticsView.swift"), encoding: .utf8)
         #expect(view.components(separatedBy: ".pickerStyle(.segmented)\n").count == 3)
         #expect(view.components(separatedBy: ".labelsHidden()").count == 4)
         #expect(view.components(separatedBy: "Picker(\"\", selection:").count == 4)
-        for label in ["Ansicht", "Zeitraum", "Gruppierung"] {
+        for label in ["View", "Period", "Grouping"] {
             #expect(!view.contains("Picker(\"\(label)\""))
             #expect(view.contains(".accessibilityLabel(\"\(label)\")"))
         }

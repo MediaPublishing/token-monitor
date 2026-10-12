@@ -375,10 +375,10 @@ struct SettingsView: View {
     }
 
     private var analyticsSettingsCard: some View {
-        settingsCard("Projektanalyse (optional)") {
+        settingsCard("Project usage (optional)") {
             settingsToggle(
-                "Analyse-Tab anzeigen",
-                description: "Verbrauch nach Projekt oder Thema. Nur lokal, ohne Geldwerte.",
+                "Show analysis tab",
+                description: "Usage by project or topic. Local only, without monetary values.",
                 isOn: Binding(get: { analytics.enabled }, set: { model.setProjectAnalyticsEnabled($0) })
             )
             if analytics.enabled {
@@ -389,9 +389,9 @@ struct SettingsView: View {
                         set: { analytics.setSource(.claudeCode, enabled: $0) }))
                 }
                 .toggleStyle(.checkbox)
-                Text("Liest Tokenzähler und Arbeitsordner aus lokalen Coding-Protokollen der letzten 30 Tage. Keine Gesprächsinhalte gespeichert, keine Übertragung. Webchats sind nicht enthalten.")
+                Text("Reads token counters and working folders from local coding logs for the last 30 days. No conversation content is stored or uploaded. Web chats are not included.")
                     .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                Button("Zuordnungen zurücksetzen") { analytics.clearAssignments() }
+                Button("Reset assignments") { analytics.clearAssignments() }
                     .controlSize(.small)
             }
         }

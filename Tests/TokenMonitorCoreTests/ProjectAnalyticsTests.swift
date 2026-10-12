@@ -94,6 +94,17 @@ struct ProjectAnalyticsTests {
         #expect(snapshot.groups(grouping: .projects, since: since).first?.threadCount == 1)
     }
 
+    @Test func fallbackLabelsAreEnglishWithoutTranslatingUserAssignments() {
+        let thread = AnalyticsThread(id: "one", provider: .codex, projectKey: "")
+        let usage = AnalyticsUsage(id: "usage", threadID: thread.id, date: since, tokens: RecordedTokens(input: 10))
+        let snapshot = AnalyticsSnapshot(threads: [thread.id: thread], usage: [usage])
+        #expect(snapshot.groups(grouping: .projects, since: since).first?.title == "Unassigned")
+        #expect(snapshot.groups(grouping: .topics, since: since).first?.title == "Unassigned")
+        let assignments = ["": AnalyticsAssignment(projectName: "Mein Projekt", topic: "Entwicklung")]
+        #expect(snapshot.groups(grouping: .projects, since: since, assignments: assignments).first?.title == "Mein Projekt")
+        #expect(snapshot.groups(grouping: .topics, since: since, assignments: assignments).first?.title == "Entwicklung")
+    }
+
     @Test func scannerSkipsSymlinksAndReportsLimitsWithoutReadingDisabledSources() async throws {
         let home = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: home) }
@@ -108,10 +119,12 @@ struct ProjectAnalyticsTests {
         #expect(disabled.sources.isEmpty && disabled.usage.isEmpty)
         let result = try await scanner.scan(home: home, providers: [.codex], since: since)
         #expect(result.sources.first?.files == 1)
+        #expect(result.sources.first?.state == "Local logs")
         #expect(result.groups(grouping: .projects, since: since).first?.tokens.total == 120)
         let limited = try await AnalyticsLogScanner().scan(home: home, providers: [.codex], since: since, maximumBytes: 1)
         #expect(limited.usage.isEmpty)
         #expect(limited.sources.first?.omitted == 1)
+        #expect(limited.sources.first?.state == "Partially recorded")
     }
 
     @Test func scannerRejectsLinkedAncestorsAndTrailingFragments() async throws {
@@ -124,6 +137,7 @@ struct ProjectAnalyticsTests {
         let rejected = try await scanner.scan(home: home, providers: [.codex], since: since)
         #expect(rejected.usage.isEmpty)
         #expect(rejected.sources.first?.files == 0)
+        #expect(rejected.sources.first?.state == "No local logs")
         try FileManager.default.removeItem(at: home.appendingPathComponent(".codex"))
         let root = home.appendingPathComponent(".codex/sessions")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)

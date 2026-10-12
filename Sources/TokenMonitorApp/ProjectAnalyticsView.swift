@@ -11,12 +11,12 @@ struct DashboardTabsView: View {
                 get: { model.popoverScreen },
                 set: { if $0 == .analytics { model.showAnalyticsInPopover() } else { model.showDashboardInPopover() } }
             )) {
-                Text("Kapazität").tag(PopoverScreen.dashboard)
-                Text("Analyse").tag(PopoverScreen.analytics)
+                Text("Capacity").tag(PopoverScreen.dashboard)
+                Text("Analysis").tag(PopoverScreen.analytics)
             }
             .pickerStyle(.segmented)
             .labelsHidden()
-            .accessibilityLabel("Ansicht")
+            .accessibilityLabel("View")
             .frame(width: 190)
             .padding(.leading, 8)
         }
@@ -33,37 +33,37 @@ struct ProjectAnalyticsView: View {
             PopoverHeaderView(analytics: analytics)
             DashboardTabsView(analytics: analytics)
             HStack {
-                Text("Projektanalyse").font(.title3.weight(.semibold))
+                Text("Project usage").font(.title3.weight(.semibold))
                 Spacer()
                 Picker("", selection: $analytics.period) {
-                    Text("Letzte 7 Tage").tag(AnalyticsPeriod.week)
-                    Text("Letzte 30 Tage").tag(AnalyticsPeriod.month)
+                    Text("Last 7 days").tag(AnalyticsPeriod.week)
+                    Text("Last 30 days").tag(AnalyticsPeriod.month)
                 }
                 .labelsHidden()
-                .accessibilityLabel("Zeitraum")
+                .accessibilityLabel("Period")
                 .frame(width: 145)
             }
             .padding(.horizontal, 8)
 
             HStack {
                 Picker("", selection: $analytics.grouping) {
-                    Text("Projekte").tag(AnalyticsGrouping.projects)
-                    Text("Themen").tag(AnalyticsGrouping.topics)
+                    Text("Projects").tag(AnalyticsGrouping.projects)
+                    Text("Topics").tag(AnalyticsGrouping.topics)
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
-                .accessibilityLabel("Gruppierung")
+                .accessibilityLabel("Grouping")
                 .frame(width: 180)
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(analytics.totalTokens.formatted()) Tokens").font(.subheadline.weight(.semibold)).monospacedDigit()
-                    Text("\(analytics.threadCount) Threads").font(.caption).foregroundStyle(.secondary)
+                    Text("\(analytics.totalTokens.formatted()) tokens").font(.subheadline.weight(.semibold)).monospacedDigit()
+                    Text("\(analytics.threadCount) threads").font(.caption).foregroundStyle(.secondary)
                 }
             }
             .padding(.horizontal, 8)
 
             Divider()
-            Text("Anteil am erfassten Verbrauch")
+            Text("Share of recorded usage")
                 .font(.caption).foregroundStyle(.secondary).padding(.horizontal, 8)
 
             ScrollView {
@@ -75,7 +75,7 @@ struct ProjectAnalyticsView: View {
                             AnalyticsGroupRow(group: group, total: analytics.totalTokens, analytics: analytics)
                         }
                         if analytics.groups.count > 5 {
-                            Button(showAll ? "Weniger anzeigen" : "Alle \(analytics.groups.count) Gruppen anzeigen") { showAll.toggle() }
+                            Button(showAll ? "Show less" : "Show all \(analytics.groups.count) groups") { showAll.toggle() }
                                 .buttonStyle(.borderless)
                                 .font(.caption)
                                 .padding(8)
@@ -99,13 +99,13 @@ struct ProjectAnalyticsView: View {
 
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(analytics.refreshing ? "Lokale Verbrauchsdaten werden gelesen…" : "Noch kein Verbrauch erfasst")
+            Text(analytics.refreshing ? "Reading local usage..." : "No recorded usage yet")
                 .font(.subheadline.weight(.medium))
             Text(analytics.sources.isEmpty && !analytics.refreshing
-                 ? "Wähle Codex oder Claude Code in den Einstellungen."
-                 : "Für diesen Zeitraum sind keine unterstützten Tokenzähler verfügbar. Webchats sind nicht enthalten.")
+                 ? "Select Codex or Claude Code in Settings."
+                 : "No supported token counters are available for this period. Web chats are not included.")
                 .font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-            Button("Einstellungen öffnen") { model.showSettingsInPopover() }.controlSize(.small)
+            Button("Open Settings") { model.showSettingsInPopover() }.controlSize(.small)
         }
         .padding(8)
     }
@@ -113,17 +113,17 @@ struct ProjectAnalyticsView: View {
     private var footer: some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("Nur lokale Protokolle").font(.caption2).foregroundStyle(.secondary)
+                Text("Local logs only").font(.caption2).foregroundStyle(.secondary)
                 Spacer()
-                Text("Erfassung unvollständig").font(.caption2).foregroundStyle(.secondary)
-                    .help("Nur ausgewählte lokale Coding-Protokolle der letzten 30 Tage. Keine Webchats oder Quota-Schätzung; Agenten werden nach Möglichkeit ihrem Hauptthread zugeordnet.")
+                Text("Incomplete coverage").font(.caption2).foregroundStyle(.secondary)
+                    .help("Selected local coding logs from the last 30 days only. No web chats or capacity estimates. Agents are linked to their parent thread where possible.")
             }
             ForEach(analytics.sources, id: \.provider) { source in
-                Text("\(source.provider.title): \(source.state) · \(source.files) Dateien\(source.omitted > 0 ? " · ausgelassene Daten" : "")")
+                Text("\(source.provider.title): \(source.state) · \(source.files) files\(source.omitted > 0 ? " · some data omitted" : "")")
                     .font(.caption2).foregroundStyle(.secondary).lineLimit(2)
             }
             if let date = analytics.capturedAt {
-                Text("Aktualisiert \(date, style: .relative)").font(.caption2).foregroundStyle(.secondary)
+                Text("Updated \(date, style: .relative)").font(.caption2).foregroundStyle(.secondary)
             }
         }
         .padding(.horizontal, 8)
@@ -150,13 +150,13 @@ private struct AnalyticsGroupRow: View {
                         .font(.caption.weight(.semibold)).frame(width: 12)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(group.title).font(.subheadline.weight(.semibold)).lineLimit(1).help(group.title)
-                        Text("\(group.threadCount) Threads").font(.caption2).foregroundStyle(.secondary)
+                        Text("\(group.threadCount) threads").font(.caption2).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 8)
                     VStack(alignment: .trailing, spacing: 3) {
                         Text(group.tokens.total.formatted(.number.notation(.compactName)))
                             .font(.subheadline.weight(.semibold)).monospacedDigit()
-                            .help("\(group.tokens.total.formatted()) Tokens")
+                            .help("\(group.tokens.total.formatted()) tokens")
                         Text(share.formatted(.percent.precision(.fractionLength(0))))
                             .font(.caption2).foregroundStyle(.secondary).monospacedDigit()
                     }
@@ -164,8 +164,8 @@ private struct AnalyticsGroupRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("\(group.title), \(group.tokens.total.formatted()) Tokens, \(group.threadCount) Threads")
-            .accessibilityValue(expanded ? "Aufgeklappt" : "Eingeklappt")
+            .accessibilityLabel("\(group.title), \(group.tokens.total.formatted()) tokens, \(group.threadCount) threads")
+            .accessibilityValue(expanded ? "Expanded" : "Collapsed")
             AnalyticsShareBar(share: share, color: .mint)
                 .padding(.leading, 22)
 
@@ -183,10 +183,10 @@ private struct AnalyticsGroupRow: View {
                         }
                     }
                     HStack {
-                        Button(showThreads ? "Threads ausblenden" : "\(group.threadCount) Threads anzeigen") { showThreads.toggle() }
+                        Button(showThreads ? "Hide threads" : "Show \(group.threadCount) threads") { showThreads.toggle() }
                         Spacer()
                         if analytics.grouping == .projects {
-                            Button(editing ? "Abbrechen" : "Zuordnung…") {
+                            Button(editing ? "Cancel" : "Assignment...") {
                                 let saved = analytics.assignment(for: group.projectKeys.sorted().first ?? "")
                                 projectName = saved.projectName
                                 topic = saved.topic
@@ -216,12 +216,12 @@ private struct AnalyticsGroupRow: View {
 
     private var assignmentEditor: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField("Projektname (optional)", text: $projectName)
-            TextField("Thema, z. B. Entwicklung", text: $topic)
+            TextField("Project name (optional)", text: $projectName)
+            TextField("Topic, e.g. Development", text: $topic)
             HStack {
-                Text("Leeres Thema = nicht zugeordnet").font(.caption2).foregroundStyle(.secondary)
+                Text("Empty topic = unassigned").font(.caption2).foregroundStyle(.secondary)
                 Spacer()
-                Button("Speichern") {
+                Button("Save") {
                     analytics.assign(keys: group.projectKeys, projectName: projectName, topic: topic)
                     editing = false
                 }.controlSize(.small)

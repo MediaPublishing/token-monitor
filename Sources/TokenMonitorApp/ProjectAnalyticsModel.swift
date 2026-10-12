@@ -106,7 +106,7 @@ final class ProjectAnalyticsModel: ObservableObject {
             } catch is CancellationError { }
             catch {
                 guard let self, self.requestID == id, self.enabled else { return }
-                self.errorText = "Lokale Protokolle konnten nicht gelesen werden. Bitte erneut aktualisieren."
+                self.errorText = "Local logs could not be read. Please refresh again."
                 self.refreshing = false
                 self.refreshTask = nil
             }
@@ -134,7 +134,7 @@ final class ProjectAnalyticsModel: ObservableObject {
             errorText = nil
             assignmentError = nil
         } catch {
-            errorText = "Die Zuordnung konnte nicht gespeichert werden. Sie gilt nur bis zum nächsten Start."
+            errorText = "The assignment could not be saved. It will last only until the next launch."
         }
         rebuildGroups()
     }
@@ -150,7 +150,7 @@ final class ProjectAnalyticsModel: ObservableObject {
             rebuildGroups()
             assignmentError = nil
             errorText = nil
-        } catch { errorText = "Zuordnungen konnten nicht zurückgesetzt werden." }
+        } catch { errorText = "Assignments could not be reset." }
     }
 
     private func cancel() {
@@ -170,7 +170,7 @@ final class ProjectAnalyticsModel: ObservableObject {
             assignments = try JSONDecoder().decode([String: AnalyticsAssignment].self, from: Data(contentsOf: assignmentURL))
         } catch {
             assignmentsReadable = false
-            assignmentError = "Gespeicherte Zuordnungen sind nicht lesbar. Die Datei bleibt unverändert."
+            assignmentError = "Saved assignments could not be read. The file is unchanged."
         }
         errorText = assignmentError
     }
