@@ -2,6 +2,18 @@ import Foundation
 import Testing
 
 struct AppSourceBehaviorTests {
+    @Test func toolbarFocusUsesOneFullButtonOutlineInsteadOfAnInnerSymbolHalo() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let header = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/PopoverHeaderView.swift"), encoding: .utf8)
+        #expect(header.contains("@FocusState private var focusedControl: String?"))
+        #expect(header.contains(".focused($focusedControl, equals: systemImage)"))
+        #expect(header.contains(".focusEffectDisabled()"))
+        #expect(header.contains(".strokeBorder("))
+        #expect(header.contains("lineWidth: focusedControl == systemImage ? 2 : 1"))
+        #expect(header.contains(".accessibilityAddTraits(isSelected ? .isSelected : [])"))
+        #expect(header.contains(".frame(width: 28, height: 28)"))
+    }
+
     @Test func localInstallationDoesNotTrashTheInstalledAppOrTouchSignInData() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let script = try String(contentsOf: root.appendingPathComponent("scripts/install-local-app.sh"), encoding: .utf8)

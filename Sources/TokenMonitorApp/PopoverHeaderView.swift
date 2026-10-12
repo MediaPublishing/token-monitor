@@ -4,6 +4,7 @@ struct PopoverHeaderView: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject private var updates = AppUpdateController.shared
     @ObservedObject var analytics: ProjectAnalyticsModel
+    @FocusState private var focusedControl: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -97,13 +98,21 @@ struct PopoverHeaderView: View {
                 .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
+        .focused($focusedControl, equals: systemImage)
+        .focusEffectDisabled()
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(isSelected ? Color(nsColor: .selectedControlColor) : Color(nsColor: .controlBackgroundColor))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Color.black.opacity(isSelected ? 0.14 : 0.10), lineWidth: 1)
+                .strokeBorder(
+                    focusedControl == systemImage
+                        ? Color.primary.opacity(0.65)
+                        : Color.black.opacity(isSelected ? 0.14 : 0.10),
+                    lineWidth: focusedControl == systemImage ? 2 : 1
+                )
         )
     }
 }
