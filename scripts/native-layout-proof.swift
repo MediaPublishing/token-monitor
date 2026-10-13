@@ -35,8 +35,10 @@ private struct LayoutFixtureAccounts: AccountPersisting {
         for _ in 0..<100 where analytics.refreshing { try await Task.sleep(for: .milliseconds(30)) }
         precondition(analytics.groups.count == 4 && analytics.totalTokens == 4_250_000)
         precondition(!analytics.hasMeaningfulTopics)
-        precondition(ServiceKind.allCases.allSatisfy { ProviderLogoView.image(for: $0) != nil })
-        precondition(ProviderLogoView.image(for: .openCodeGo, darkAppearance: true) != nil)
+        let logos = ServiceKind.allCases.compactMap { ProviderLogoView.image(for: $0) }
+            + [ProviderLogoView.image(for: .openCodeGo, darkAppearance: true)].compactMap { $0 }
+        precondition(logos.count == 4)
+        precondition(logos.allSatisfy { $0.representations.contains { $0 is NSPDFImageRep } })
         let window = NSWindow(contentRect: NSRect(x: 120, y: 60, width: 488, height: 180),
                               styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.title = "Token Monitor Native Layout QA"
@@ -92,6 +94,9 @@ private struct LayoutFixtureAccounts: AccountPersisting {
                 throw NSError(domain: "NativeLayoutProof", code: 2)
             }
             try png.write(to: output.appendingPathComponent(name + ".png"))
+            if name == "settings-light" || name == "settings-dark-bounded" {
+                try writeLogoScaleProofs(in: hosting.view, name: name, output: output)
+            }
             var colors: Set<String> = []
             for x in stride(from: 0, to: bitmap.pixelsWide, by: 7) {
                 for y in stride(from: 0, to: bitmap.pixelsHigh, by: 7) {
@@ -108,7 +113,7 @@ private struct LayoutFixtureAccounts: AccountPersisting {
         precondition(height("capacity-two-light") < height("capacity-three-light"))
         precondition(height("capacity-three-light") < height("capacity-details-light"))
         precondition(height("analysis-closed-light") < height("analysis-open-light"))
-        let data = try JSONSerialization.data(withJSONObject: ["scope": "Native SwiftUI views, synthetic accounts only", "logos": "all decoded", "scenarios": records], options: [.prettyPrinted, .sortedKeys])
+        let data = try JSONSerialization.data(withJSONObject: ["scope": "Native SwiftUI views, synthetic accounts only", "logos": "all decoded as vector PDF", "scenarios": records], options: [.prettyPrinted, .sortedKeys])
         try data.write(to: output.appendingPathComponent("native-layout-proof.json"))
         print("NATIVE_LAYOUT_PROOF_PASS \(String(decoding: data, as: UTF8.self))")
         fflush(stdout)
@@ -117,6 +122,37 @@ private struct LayoutFixtureAccounts: AccountPersisting {
 
     private static func scrollViews(in view: NSView) -> [NSScrollView] {
         (view as? NSScrollView).map { [$0] } ?? view.subviews.flatMap { scrollViews(in: $0) }
+    }
+
+    private static func writeLogoScaleProofs(in view: NSView, name: String, output: URL) throws {
+        func logoViews(_ view: NSView) -> [NSImageView] {
+            if let imageView = view as? NSImageView,
+               imageView.image?.representations.contains(where: { $0 is NSPDFImageRep }) == true {
+                return [imageView]
+            }
+            return view.subviews.flatMap(logoViews)
+        }
+        let logos = logoViews(view)
+        precondition(logos.count >= 3)
+        for (index, logo) in logos.enumerated() {
+            precondition(abs(logo.bounds.width - 18) < 0.01 && abs(logo.bounds.height - 18) < 0.01)
+            for scale in [1, 2] {
+                let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 18 * scale, pixelsHigh: 18 * scale,
+                                             bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                             colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+                bitmap.size = logo.bounds.size
+                logo.cacheDisplay(in: logo.bounds, to: bitmap)
+                var occupied = 0
+                for x in 0..<bitmap.pixelsWide {
+                    for y in 0..<bitmap.pixelsHigh where (bitmap.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.05 {
+                        occupied += 1
+                    }
+                }
+                precondition(occupied > 20)
+                let png = bitmap.representation(using: .png, properties: [:])!
+                try png.write(to: output.appendingPathComponent("\(name)-logo-\(index)-\(scale)x.png"))
+            }
+        }
     }
 
     private static func fixtures() -> [ServiceKind: ServiceSnapshot] {

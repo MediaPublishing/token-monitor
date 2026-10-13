@@ -16,8 +16,9 @@ struct ProviderLogoView: View {
         case .openCodeGo: name = darkAppearance ? "opencode-dark" : "opencode"
         }
         if let cached = images[name] { return cached }
-        guard let url = Bundle.main.url(forResource: name, withExtension: "png", subdirectory: "ProviderLogos"),
+        guard let url = Bundle.main.url(forResource: name, withExtension: "pdf", subdirectory: "ProviderLogos"),
               let image = NSImage(contentsOf: url) else { return nil }
+        image.isTemplate = service == .chatGPT
         images[name] = image
         return image
     }
@@ -25,10 +26,7 @@ struct ProviderLogoView: View {
     var body: some View {
         Group {
             if let image = Self.image(for: service, darkAppearance: colorScheme == .dark) {
-                Image(nsImage: image)
-                    .resizable()
-                    .renderingMode(service == .chatGPT ? .template : .original)
-                    .scaledToFit()
+                NativeProviderLogo(image: image, size: size)
             } else {
                 Image(systemName: "questionmark.square").resizable().scaledToFit()
             }
@@ -36,5 +34,25 @@ struct ProviderLogoView: View {
         .frame(width: size, height: size)
         .help(service.displayName)
         .accessibilityLabel(service.displayName)
+    }
+}
+
+private struct NativeProviderLogo: NSViewRepresentable {
+    let image: NSImage
+    let size: CGFloat
+
+    func makeNSView(context: Context) -> NSImageView {
+        let view = NSImageView()
+        view.imageScaling = .scaleProportionallyUpOrDown
+        return view
+    }
+
+    func updateNSView(_ view: NSImageView, context: Context) {
+        if view.image !== image { view.image = image }
+        view.contentTintColor = image.isTemplate ? .labelColor : nil
+    }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: NSImageView, context: Context) -> CGSize? {
+        CGSize(width: size, height: size)
     }
 }

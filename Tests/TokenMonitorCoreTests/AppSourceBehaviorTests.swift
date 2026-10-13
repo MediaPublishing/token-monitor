@@ -2,6 +2,24 @@ import Foundation
 import Testing
 
 struct AppSourceBehaviorTests {
+    @Test func providerLogosKeepVectorResourcesAndNativeDisplayScale() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let source = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProviderLogoView.swift"), encoding: .utf8)
+        #expect(source.contains("withExtension: \"pdf\""))
+        #expect(source.contains("NSImageView"))
+        #expect(source.contains(".scaleProportionallyUpOrDown"))
+        #expect(source.contains("image.isTemplate = service == .chatGPT"))
+        #expect(source.contains("CGSize(width: size, height: size)"))
+        #expect(!source.contains("Image(nsImage: image)"))
+        for name in ["openai", "claude", "opencode", "opencode-dark"] {
+            let url = root.appendingPathComponent("Sources/TokenMonitorApp/Resources/ProviderLogos/\(name).pdf")
+            let data = try Data(contentsOf: url)
+            #expect(data.starts(with: Data("%PDF-".utf8)))
+            let objects = String(decoding: data, as: UTF8.self)
+            #expect(!objects.contains("/Subtype /Image"))
+        }
+    }
+
     @Test func toolbarFocusUsesOneFullButtonOutlineInsteadOfAnInnerSymbolHalo() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let header = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/PopoverHeaderView.swift"), encoding: .utf8)
