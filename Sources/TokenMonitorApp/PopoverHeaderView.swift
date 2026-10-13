@@ -5,6 +5,7 @@ struct PopoverHeaderView: View {
     @ObservedObject private var updates = AppUpdateController.shared
     @ObservedObject var analytics: ProjectAnalyticsModel
     @FocusState private var focusedControl: String?
+    @State private var showsKeyboardFocus = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -21,6 +22,11 @@ struct PopoverHeaderView: View {
                 .padding(.horizontal, 8)
             }
         }
+        .background(ToolbarFocusInputObserver(showsKeyboardFocus: $showsKeyboardFocus).allowsHitTesting(false))
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
+            showsKeyboardFocus = false
+        }
+        .onDisappear { showsKeyboardFocus = false }
     }
 
     private var headerControls: some View {
@@ -92,7 +98,8 @@ struct PopoverHeaderView: View {
         isSelected: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
-        Button(action: action) {
+        let hasKeyboardFocus = showsKeyboardFocus && focusedControl == systemImage
+        return Button(action: action) {
             Image(systemName: systemImage)
                 .font(.system(size: 13, weight: .semibold))
                 .frame(width: 28, height: 28)
@@ -108,11 +115,51 @@ struct PopoverHeaderView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .strokeBorder(
-                    focusedControl == systemImage
+                    hasKeyboardFocus
                         ? Color.primary.opacity(0.65)
                         : Color.black.opacity(isSelected ? 0.14 : 0.10),
-                    lineWidth: focusedControl == systemImage ? 2 : 1
+                    lineWidth: hasKeyboardFocus ? 2 : 1
                 )
         )
+    }
+}
+
+private struct ToolbarFocusInputObserver: NSViewRepresentable {
+    @Binding var showsKeyboardFocus: Bool
+
+    func makeNSView(context: Context) -> InputView {
+        let view = InputView()
+        view.onInput = { showsKeyboardFocus = $0 }
+        return view
+    }
+
+    func updateNSView(_ view: InputView, context: Context) {
+        view.onInput = { showsKeyboardFocus = $0 }
+    }
+
+    static func dismantleNSView(_ view: InputView, coordinator: ()) {
+        view.stopMonitoring()
+    }
+
+    final class InputView: NSView {
+        var onInput: (Bool) -> Void = { _ in }
+        private var monitor: Any?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            stopMonitoring()
+            guard window != nil else { return }
+            // Observe this window's input without consuming or changing its events.
+            monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
+                guard let self, let window = self.window, event.window === window else { return event }
+                self.onInput(event.type == .keyDown)
+                return event
+            }
+        }
+
+        func stopMonitoring() {
+            if let monitor { NSEvent.removeMonitor(monitor) }
+            monitor = nil
+        }
     }
 }

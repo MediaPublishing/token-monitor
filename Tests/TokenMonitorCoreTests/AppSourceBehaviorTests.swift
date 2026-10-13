@@ -20,16 +20,25 @@ struct AppSourceBehaviorTests {
         }
     }
 
-    @Test func toolbarFocusUsesOneFullButtonOutlineInsteadOfAnInnerSymbolHalo() throws {
+    @Test func toolbarFocusOutlineOnlyAppearsForKeyboardInput() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let header = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/PopoverHeaderView.swift"), encoding: .utf8)
         #expect(header.contains("@FocusState private var focusedControl: String?"))
         #expect(header.contains(".focused($focusedControl, equals: systemImage)"))
         #expect(header.contains(".focusEffectDisabled()"))
+        #expect(header.contains("@State private var showsKeyboardFocus = false"))
+        #expect(header.contains("let hasKeyboardFocus = showsKeyboardFocus && focusedControl == systemImage"))
         #expect(header.contains(".strokeBorder("))
-        #expect(header.contains("lineWidth: focusedControl == systemImage ? 2 : 1"))
+        #expect(header.contains("lineWidth: hasKeyboardFocus ? 2 : 1"))
         #expect(header.contains(".accessibilityAddTraits(isSelected ? .isSelected : [])"))
         #expect(header.contains(".frame(width: 28, height: 28)"))
+        #expect(header.contains("event.window === window"))
+        #expect(header.contains("self.onInput(event.type == .keyDown)"))
+        #expect(header.contains("return event"))
+        #expect(header.contains("static func dismantleNSView"))
+        #expect(header.contains("NSEvent.removeMonitor(monitor)"))
+        #expect(header.contains("NSWindow.didResignKeyNotification"))
+        #expect(!header.contains("addGlobalMonitor"))
     }
 
     @Test func localInstallationDoesNotTrashTheInstalledAppOrTouchSignInData() throws {
