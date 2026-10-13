@@ -98,8 +98,17 @@ struct MarketingAssetTests {
         #expect(landingHTML.contains("Open Anyway"))
         #expect(landingHTML.contains("Dennoch öffnen"))
         #expect(landingHTML.contains("Login Items"))
-        #expect(landingHTML.contains("automatic update checks are off by default"))
-        #expect(landingHTML.contains("automatische Update-Prüfungen standardmäßig aus"))
+        #expect(landingHTML.contains("automatic update checks are on by default"))
+        #expect(landingHTML.contains("automatische Update-Prüfungen standardmäßig eingeschaltet"))
+        #expect(landingHTML.contains("An existing opt-out is preserved"))
+        #expect(landingHTML.contains("Show analysis"))
+        #expect(landingHTML.contains("Local logs may be incomplete"))
+        #expect(landingHTML.contains("Example data"))
+        for asset in ["analysis", "settings"] {
+            let path = "assets/screenshots/app/\(asset).png"
+            #expect(landingHTML.contains(path))
+            #expect(FileManager.default.fileExists(atPath: rootURL.appendingPathComponent(path).path))
+        }
         #expect(!landingHTML.contains("Would a PKG avoid"))
         #expect(!landingHTML.contains("How do updates work?"))
         let dmgScript = try String(contentsOf: dmgScriptURL, encoding: .utf8)

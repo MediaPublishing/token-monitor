@@ -113,11 +113,62 @@ private struct LayoutFixtureAccounts: AccountPersisting {
         precondition(height("capacity-two-light") < height("capacity-three-light"))
         precondition(height("capacity-three-light") < height("capacity-details-light"))
         precondition(height("analysis-closed-light") < height("analysis-open-light"))
+        if CommandLine.arguments.contains("--marketing") {
+            try await writeMarketingScreenshots(analytics: analytics, snapshots: snapshots, window: window, output: output)
+        }
         let data = try JSONSerialization.data(withJSONObject: ["scope": "Native SwiftUI views, synthetic accounts only", "logos": "all decoded as vector PDF", "scenarios": records], options: [.prettyPrinted, .sortedKeys])
         try data.write(to: output.appendingPathComponent("native-layout-proof.json"))
         print("NATIVE_LAYOUT_PROOF_PASS \(String(decoding: data, as: UTF8.self))")
         fflush(stdout)
         window.close()
+    }
+
+    private static func writeMarketingScreenshots(analytics: ProjectAnalyticsModel, snapshots: [ServiceKind: ServiceSnapshot], window: NSWindow, output: URL) async throws {
+        UserDefaults.standard.set(true, forKey: "openCodeGoEnabled")
+        UserDefaults.standard.set(false, forKey: "showUsageDetails")
+        let model = AppModel(snapshotStore: LayoutFixtureSnapshots(snapshots: snapshots),
+                             accountStore: LayoutFixtureAccounts(count: 3, snapshots: snapshots), analytics: analytics)
+        model.popoverMaximumHeight = 900
+        model.showDashboardInPopover()
+        window.appearance = NSAppearance(named: .aqua)
+        let statuses = model.dashboardServices.map { status in
+            var ready = status
+            ready.refreshState = .success(lastSuccess: status.snapshot!.capturedAt)
+            return ready
+        }
+
+        func capture<Content: View>(_ content: Content, name: String) async throws {
+            let hosting = NSHostingController(rootView: content.environmentObject(model).frame(width: 488)
+                .fixedSize(horizontal: false, vertical: true).background(Color(nsColor: .windowBackgroundColor)))
+            window.contentViewController = hosting
+            window.setContentSize(NSSize(width: 488, height: 180))
+            for _ in 0..<12 { try await Task.sleep(for: .milliseconds(50)) }
+            window.setContentSize(hosting.view.fittingSize)
+            hosting.view.layoutSubtreeIfNeeded()
+            let bounds = hosting.view.bounds
+            let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(bounds.width * 2), pixelsHigh: Int(bounds.height * 2),
+                                         bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                         colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+            bitmap.size = bounds.size
+            hosting.view.cacheDisplay(in: bounds, to: bitmap)
+            try bitmap.representation(using: .png, properties: [:])!.write(to: output.appendingPathComponent(name + ".png"))
+        }
+
+        try await capture(VStack(alignment: .leading, spacing: 10) {
+            PopoverHeaderView(analytics: analytics)
+            VStack(spacing: 0) {
+                ForEach(statuses, id: \.service) { ServiceSectionView(status: $0) }
+            }
+        }.padding(10), name: "dashboard")
+        for status in statuses where status.service != .openCodeGo {
+            try await capture(ServiceSectionView(status: status).padding(10), name: status.service == .claude ? "claude" : "chatgpt")
+        }
+        if let first = analytics.groups.first { analytics.setExpanded(first.id, true) }
+        model.showAnalyticsInPopover()
+        try await capture(PopoverRootView(), name: "analysis")
+        model.showSettingsInPopover()
+        try await capture(PopoverRootView(), name: "settings")
+        print("MARKETING_SCREENSHOTS_PASS: native production views, synthetic data, 2x display scale")
     }
 
     private static func scrollViews(in view: NSView) -> [NSScrollView] {
