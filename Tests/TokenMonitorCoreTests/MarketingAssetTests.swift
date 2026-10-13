@@ -104,6 +104,13 @@ struct MarketingAssetTests {
         #expect(landingHTML.contains("Show analysis"))
         #expect(landingHTML.contains("Local logs may be incomplete"))
         #expect(landingHTML.contains("Example data"))
+        #expect(landingHTML.contains(".detail img { display: block; width: 100%; height: auto;"))
+        let infoData = try Data(contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/Resources/Info.plist"))
+        let info = try #require(PropertyListSerialization.propertyList(from: infoData, format: nil) as? [String: Any])
+        let version = try #require(info["CFBundleShortVersionString"] as? String)
+        let download = "releases/download/v\(version)/TokenMonitor-macOS.dmg"
+        #expect(readme.contains(download))
+        #expect(landingHTML.contains(download))
         for asset in ["analysis", "settings"] {
             let path = "assets/screenshots/app/\(asset).png"
             #expect(landingHTML.contains(path))
