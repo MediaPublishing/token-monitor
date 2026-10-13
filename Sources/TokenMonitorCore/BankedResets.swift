@@ -167,16 +167,29 @@ public enum ResetReminderPlanner {
     public static let identifierPrefix = "banked-reset-expiry-"
     public static let leadTime: TimeInterval = 72 * 60 * 60
 
-    public static func reminders(for inventory: BankedResetInventory, now: Date) -> [ResetReminder] {
+    public static func reminders(for inventory: BankedResetInventory, now: Date, accountID: UUID? = nil) -> [ResetReminder] {
         let dated = inventory.availableGroups(at: now).filter { $0.expiresAt != nil }
         return Dictionary(grouping: dated, by: { $0.expiresAt! }).map { expiry, groups in
             ResetReminder(
-                identifier: identifierPrefix + String(Int(expiry.timeIntervalSince1970)),
+                identifier: identifier(for: expiry, accountID: accountID),
                 count: groups.reduce(0) { $0 + $1.count },
                 expiresAt: expiry,
                 fireAt: max(expiry.addingTimeInterval(-leadTime), now.addingTimeInterval(1))
             )
         }.sorted { $0.expiresAt < $1.expiresAt }
+    }
+
+    public static func identifier(for expiry: Date, accountID: UUID? = nil) -> String {
+        let scope = accountID.map { "\($0.uuidString)-" } ?? ""
+        return identifierPrefix + scope + String(Int(expiry.timeIntervalSince1970))
+    }
+
+    public static func accountID(from identifier: String) -> UUID? {
+        guard identifier.hasPrefix(identifierPrefix) else { return nil }
+        let suffix = identifier.dropFirst(identifierPrefix.count)
+        guard suffix.count > 37, suffix.dropFirst(36).first == "-",
+              Int(suffix.dropFirst(37)) != nil else { return nil }
+        return UUID(uuidString: String(suffix.prefix(36)))
     }
 
     public static func shouldSchedule(_ reminder: ResetReminder, previousFireDate: Date?, delivered: Bool, now: Date) -> Bool {

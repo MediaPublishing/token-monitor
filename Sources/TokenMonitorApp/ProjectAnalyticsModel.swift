@@ -14,6 +14,8 @@ final class ProjectAnalyticsModel: ObservableObject {
     @Published private(set) var refreshing = false
     @Published private(set) var capturedAt: Date?
     @Published private(set) var errorText: String?
+    @Published private(set) var expandedGroupIDs: Set<String> = []
+    @Published private(set) var sourceFooterExpanded = false
 
     private let defaults: UserDefaults
     private let home: URL
@@ -32,6 +34,8 @@ final class ProjectAnalyticsModel: ObservableObject {
         self.home = home
         self.assignmentURL = assignmentURL ?? home.appendingPathComponent("Library/Application Support/TokenMonitor/Analytics/assignments.json")
         defaults.register(defaults: ["projectAnalyticsEnabled": false, "analyticsCodexEnabled": true, "analyticsClaudeEnabled": true])
+        expandedGroupIDs = Set(defaults.stringArray(forKey: "analyticsExpandedGroupIDs") ?? [])
+        sourceFooterExpanded = defaults.bool(forKey: "analyticsSourceFooterExpanded")
         enabled = defaults.bool(forKey: "projectAnalyticsEnabled")
         codexEnabled = defaults.bool(forKey: "analyticsCodexEnabled")
         claudeEnabled = defaults.bool(forKey: "analyticsClaudeEnabled")
@@ -39,7 +43,21 @@ final class ProjectAnalyticsModel: ObservableObject {
     }
 
     var totalTokens: Int64 { groups.reduce(0) { $0 + $1.tokens.total } }
-    var threadCount: Int { Set(groups.flatMap { $0.threadTokens.keys }).count }
+    var hasMeaningfulTopics: Bool {
+        guard let snapshot else { return false }
+        let now = Date()
+        return snapshot.hasMeaningfulTopics(since: period.start(at: now), until: now, assignments: assignments)
+    }
+
+    func setExpanded(_ id: String, _ expanded: Bool) {
+        if expanded { expandedGroupIDs.insert(id) } else { expandedGroupIDs.remove(id) }
+        defaults.set(Array(expandedGroupIDs), forKey: "analyticsExpandedGroupIDs")
+    }
+
+    func setSourceFooterExpanded(_ expanded: Bool) {
+        sourceFooterExpanded = expanded
+        defaults.set(expanded, forKey: "analyticsSourceFooterExpanded")
+    }
 
     func setEnabled(_ value: Bool) {
         guard enabled != value else { return }
@@ -106,7 +124,7 @@ final class ProjectAnalyticsModel: ObservableObject {
             } catch is CancellationError { }
             catch {
                 guard let self, self.requestID == id, self.enabled else { return }
-                self.errorText = "Lokale Protokolle konnten nicht gelesen werden. Bitte erneut aktualisieren."
+                self.errorText = "Local logs could not be read. Please refresh again."
                 self.refreshing = false
                 self.refreshTask = nil
             }
@@ -134,7 +152,7 @@ final class ProjectAnalyticsModel: ObservableObject {
             errorText = nil
             assignmentError = nil
         } catch {
-            errorText = "Die Zuordnung konnte nicht gespeichert werden. Sie gilt nur bis zum nächsten Start."
+            errorText = "The assignment could not be saved. It will last only until the next launch."
         }
         rebuildGroups()
     }
@@ -150,7 +168,7 @@ final class ProjectAnalyticsModel: ObservableObject {
             rebuildGroups()
             assignmentError = nil
             errorText = nil
-        } catch { errorText = "Zuordnungen konnten nicht zurückgesetzt werden." }
+        } catch { errorText = "Assignments could not be reset." }
     }
 
     private func cancel() {
@@ -170,13 +188,15 @@ final class ProjectAnalyticsModel: ObservableObject {
             assignments = try JSONDecoder().decode([String: AnalyticsAssignment].self, from: Data(contentsOf: assignmentURL))
         } catch {
             assignmentsReadable = false
-            assignmentError = "Gespeicherte Zuordnungen sind nicht lesbar. Die Datei bleibt unverändert."
+            assignmentError = "Saved assignments could not be read. The file is unchanged."
         }
         errorText = assignmentError
     }
 
     private func rebuildGroups() {
         guard enabled, let snapshot else { groups = []; return }
+        if grouping == .topics && !hasMeaningfulTopics { grouping = .projects; return }
         groups = snapshot.groups(grouping: grouping, since: period.start(at: Date()), until: Date(), assignments: assignments)
+        expandedGroupIDs.formIntersection(groups.map(\.id))
     }
 }

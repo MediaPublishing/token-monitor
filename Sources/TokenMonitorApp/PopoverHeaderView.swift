@@ -4,6 +4,8 @@ struct PopoverHeaderView: View {
     @EnvironmentObject private var model: AppModel
     @ObservedObject private var updates = AppUpdateController.shared
     @ObservedObject var analytics: ProjectAnalyticsModel
+    @FocusState private var focusedControl: String?
+    @State private var showsKeyboardFocus = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -20,6 +22,11 @@ struct PopoverHeaderView: View {
                 .padding(.horizontal, 8)
             }
         }
+        .background(ToolbarFocusInputObserver(showsKeyboardFocus: $showsKeyboardFocus).allowsHitTesting(false))
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didResignKeyNotification)) { _ in
+            showsKeyboardFocus = false
+        }
+        .onDisappear { showsKeyboardFocus = false }
     }
 
     private var headerControls: some View {
@@ -27,9 +34,10 @@ struct PopoverHeaderView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Token Monitor")
                     .font(.headline.weight(.semibold))
-                Text(model.popoverScreen == .analytics ? "Lokaler Tokenverbrauch" : model.lastRefreshText)
+                Text(model.popoverScreen == .analytics ? "Local token usage" : model.lastRefreshText)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
             .padding(.leading, 8)
 
@@ -41,7 +49,7 @@ struct PopoverHeaderView: View {
             })
             .opacity(headerIsRefreshing ? 0.5 : 1.0)
             .disabled(headerIsRefreshing)
-            .help(model.popoverScreen == .analytics ? "Lokale Analyse aktualisieren" : "Refresh connected services")
+            .help(model.popoverScreen == .analytics ? "Refresh local analysis" : "Refresh connected services")
 
             headerButton(
                 systemImage: "chart.bar.xaxis",
@@ -51,6 +59,17 @@ struct PopoverHeaderView: View {
                 }
             )
             .help("Dashboard")
+            .accessibilityLabel("Capacity")
+
+            if analytics.enabled {
+                headerButton(
+                    systemImage: "chart.pie",
+                    isSelected: model.popoverScreen == .analytics,
+                    action: { model.showAnalyticsInPopover() }
+                )
+                .help("Analysis")
+                .accessibilityLabel("Analysis")
+            }
 
             headerButton(
                 systemImage: "gearshape",
@@ -60,11 +79,13 @@ struct PopoverHeaderView: View {
                 }
             )
             .help("Settings")
+            .accessibilityLabel("Settings")
 
             headerButton(systemImage: "xmark", action: {
                 AppDelegate.shared?.closePopover()
             })
             .help("Close popover")
+            .accessibilityLabel("Close popover")
         }
     }
 
@@ -77,20 +98,68 @@ struct PopoverHeaderView: View {
         isSelected: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
-        Button(action: action) {
+        let hasKeyboardFocus = showsKeyboardFocus && focusedControl == systemImage
+        return Button(action: action) {
             Image(systemName: systemImage)
                 .font(.system(size: 13, weight: .semibold))
-                .frame(width: 28, height: 24)
+                .frame(width: 28, height: 28)
         }
         .buttonStyle(.plain)
+        .focused($focusedControl, equals: systemImage)
         .focusEffectDisabled()
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(isSelected ? Color(nsColor: .selectedControlColor) : Color(nsColor: .controlBackgroundColor))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Color.black.opacity(isSelected ? 0.14 : 0.10), lineWidth: 1)
+                .strokeBorder(
+                    hasKeyboardFocus
+                        ? Color.primary.opacity(0.65)
+                        : Color.black.opacity(isSelected ? 0.14 : 0.10),
+                    lineWidth: hasKeyboardFocus ? 2 : 1
+                )
         )
+    }
+}
+
+private struct ToolbarFocusInputObserver: NSViewRepresentable {
+    @Binding var showsKeyboardFocus: Bool
+
+    func makeNSView(context: Context) -> InputView {
+        let view = InputView()
+        view.onInput = { showsKeyboardFocus = $0 }
+        return view
+    }
+
+    func updateNSView(_ view: InputView, context: Context) {
+        view.onInput = { showsKeyboardFocus = $0 }
+    }
+
+    static func dismantleNSView(_ view: InputView, coordinator: ()) {
+        view.stopMonitoring()
+    }
+
+    final class InputView: NSView {
+        var onInput: (Bool) -> Void = { _ in }
+        private var monitor: Any?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            stopMonitoring()
+            guard window != nil else { return }
+            // Observe this window's input without consuming or changing its events.
+            monitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown, .leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
+                guard let self, let window = self.window, event.window === window else { return event }
+                self.onInput(event.type == .keyDown)
+                return event
+            }
+        }
+
+        func stopMonitoring() {
+            if let monitor { NSEvent.removeMonitor(monitor) }
+            monitor = nil
+        }
     }
 }

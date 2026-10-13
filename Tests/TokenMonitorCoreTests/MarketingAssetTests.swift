@@ -98,8 +98,24 @@ struct MarketingAssetTests {
         #expect(landingHTML.contains("Open Anyway"))
         #expect(landingHTML.contains("Dennoch öffnen"))
         #expect(landingHTML.contains("Login Items"))
-        #expect(landingHTML.contains("automatic update checks are off by default"))
-        #expect(landingHTML.contains("automatische Update-Prüfungen standardmäßig aus"))
+        #expect(landingHTML.contains("automatic update checks are on by default"))
+        #expect(landingHTML.contains("automatische Update-Prüfungen standardmäßig eingeschaltet"))
+        #expect(landingHTML.contains("An existing opt-out is preserved"))
+        #expect(landingHTML.contains("Show analysis"))
+        #expect(landingHTML.contains("Local logs may be incomplete"))
+        #expect(landingHTML.contains("Example data"))
+        #expect(landingHTML.contains(".detail img { display: block; width: 100%; height: auto;"))
+        let infoData = try Data(contentsOf: rootURL.appendingPathComponent("Sources/TokenMonitorApp/Resources/Info.plist"))
+        let info = try #require(PropertyListSerialization.propertyList(from: infoData, format: nil) as? [String: Any])
+        let version = try #require(info["CFBundleShortVersionString"] as? String)
+        let download = "releases/download/v\(version)/TokenMonitor-macOS.dmg"
+        #expect(readme.contains(download))
+        #expect(landingHTML.contains(download))
+        for asset in ["analysis", "settings"] {
+            let path = "assets/screenshots/app/\(asset).png"
+            #expect(landingHTML.contains(path))
+            #expect(FileManager.default.fileExists(atPath: rootURL.appendingPathComponent(path).path))
+        }
         #expect(!landingHTML.contains("Would a PKG avoid"))
         #expect(!landingHTML.contains("How do updates work?"))
         let dmgScript = try String(contentsOf: dmgScriptURL, encoding: .utf8)

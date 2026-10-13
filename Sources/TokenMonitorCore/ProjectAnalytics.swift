@@ -116,6 +116,11 @@ public struct AnalyticsSnapshot: Sendable {
         self.capturedAt = capturedAt
     }
 
+    public func hasMeaningfulTopics(since: Date, until: Date, assignments: [String: AnalyticsAssignment]) -> Bool {
+        let topics = groups(grouping: .topics, since: since, until: until, assignments: assignments)
+        return topics.count > 1 && topics.contains { $0.id != "topic:unassigned" }
+    }
+
     public func rootThread(for id: String) -> AnalyticsThread? {
         guard var thread = threads[id] else { return nil }
         var visited: Set<String> = [id]
@@ -137,9 +142,9 @@ public struct AnalyticsSnapshot: Sendable {
         for event in unique.values where event.date >= since && event.date <= until && event.tokens.total > 0 {
             guard let thread = rootThread(for: event.threadID) else { continue }
             let assignment = assignments[thread.projectKey] ?? AnalyticsAssignment()
-            let defaultName = thread.projectKey.isEmpty ? "Nicht zugeordnet" : URL(fileURLWithPath: thread.projectKey).lastPathComponent
+            let defaultName = thread.projectKey.isEmpty ? "Unassigned" : URL(fileURLWithPath: thread.projectKey).lastPathComponent
             let projectName = assignment.projectName.isEmpty ? defaultName : assignment.projectName
-            let title = grouping == .projects ? projectName : (assignment.topic.isEmpty ? "Nicht zugeordnet" : assignment.topic)
+            let title = grouping == .projects ? projectName : (assignment.topic.isEmpty ? "Unassigned" : assignment.topic)
             let key: String
             if grouping == .topics { key = "topic:" + title.lowercased() }
             else if !assignment.projectName.isEmpty { key = "project:" + projectName.lowercased() }
@@ -163,6 +168,14 @@ public struct AnalyticsGroup: Identifiable, Sendable {
     public var threadTokens: [String: RecordedTokens] = [:]
     public var providerTokens: [AnalyticsProvider: RecordedTokens] = [:]
     public var threadCount: Int { threadTokens.count }
+
+    public var sortedThreadIDs: [String] {
+        threadTokens.keys.sorted {
+            let lhs = threadTokens[$0]?.total ?? 0
+            let rhs = threadTokens[$1]?.total ?? 0
+            return lhs == rhs ? $0 < $1 : lhs > rhs
+        }
+    }
 
     public init(id: String, title: String) {
         self.id = id

@@ -228,7 +228,7 @@ public actor AnalyticsLogScanner {
                 snapshot.usage += parsed.usage
             }
             snapshot.sources.append(AnalyticsSourceStatus(provider: provider, files: scanned,
-                state: !foundRoot ? "Keine lokalen Protokolle" : (omitted > 0 ? "Teilweise erfasst" : "Lokale Protokolle"), omitted: omitted))
+                state: !foundRoot ? "No local logs" : (omitted > 0 ? "Partially recorded" : "Local logs"), omitted: omitted))
         }
         return snapshot
     }

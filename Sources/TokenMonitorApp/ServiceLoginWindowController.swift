@@ -10,12 +10,13 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     private let webView: WKWebView
     private let statusBanner = NSView()
     private let statusLabel = NSTextField(wrappingLabelWithString: "")
+    private let readUsageButton = NSButton(title: "Read usage", target: nil, action: nil)
     private var didNotifyAuthenticated = false
-    private var didAutoRetryBlankChatGPTPage = false
-    private var didEnterChatGPTAuthenticationFlow = false
+    private var chatGPTLoginNavigation = ChatGPTLoginNavigation()
+    private var currentNavigationToken = UUID()
     private var forcesGoogleAccountSelection = false
     private var didRewriteGoogleAuthorizationRequest = false
-    private var blankPageCheckTask: Task<Void, Never>?
+    private var chatGPTReadinessTask: Task<Void, Never>?
     private var openCodeGoReadinessTask: Task<Void, Never>?
     private var didTryOpenCodeConsole = false
 
@@ -85,12 +86,11 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     func showWindowAndActivate(usageURL: URL? = nil) {
-        didAutoRetryBlankChatGPTPage = false
-        didEnterChatGPTAuthenticationFlow = false
+        chatGPTLoginNavigation = ChatGPTLoginNavigation()
         didTryOpenCodeConsole = false
         openCodeGoReadinessTask?.cancel()
         showStatusBannerIfNeeded("Loading ChatGPT connection page...")
-        loadUsagePage(url: usageURL)
+        loadUsagePage(url: service == .chatGPT ? ChatGPTLoginNavigation.connectionURL : usageURL)
         showWindow(nil)
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -101,27 +101,24 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         onDismissed: @escaping @MainActor () -> Void
     ) {
         didNotifyAuthenticated = false
-        didAutoRetryBlankChatGPTPage = false
-        didEnterChatGPTAuthenticationFlow = false
+        chatGPTLoginNavigation = ChatGPTLoginNavigation()
         forcesGoogleAccountSelection = false
         didRewriteGoogleAuthorizationRequest = false
-        openCodeGoReadinessTask?.cancel()
+        invalidateReadinessChecks()
         onAuthenticated = callback
         onAuthenticationDismissed = onDismissed
     }
 
     func loadUsagePage(url: URL? = nil) {
-        blankPageCheckTask?.cancel()
-        openCodeGoReadinessTask?.cancel()
+        invalidateReadinessChecks()
         let request = URLRequest(url: url ?? service.usageURL, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 60)
         webView.load(request)
     }
 
     func prepareForSessionReset() {
-        blankPageCheckTask?.cancel()
-        openCodeGoReadinessTask?.cancel()
+        invalidateReadinessChecks()
         didNotifyAuthenticated = false
-        didEnterChatGPTAuthenticationFlow = false
+        chatGPTLoginNavigation = ChatGPTLoginNavigation()
         forcesGoogleAccountSelection = true
         didRewriteGoogleAuthorizationRequest = false
         webView.stopLoading()
@@ -134,7 +131,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         }
 
         if service == .chatGPT {
-            scheduleChatGPTBlankPageCheck()
+            scheduleChatGPTAuthenticationCheck()
             return
         }
 
@@ -151,11 +148,14 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         decidePolicyFor navigationAction: WKNavigationAction,
         decisionHandler: @escaping @MainActor @Sendable (WKNavigationActionPolicy) -> Void
     ) {
-        noteChatGPTAuthenticationNavigation(navigationAction.request.url)
-
         guard allowsEmbeddedWebNavigation(navigationAction) else {
             decisionHandler(.cancel)
             return
+        }
+
+        if navigationAction.targetFrame?.isMainFrame != false {
+            invalidateReadinessChecks()
+            chatGPTLoginNavigation.navigationStarted(at: navigationAction.request.url)
         }
 
         if let accountSelectionRequest = googleAccountSelectionRequest(from: navigationAction.request) {
@@ -192,11 +192,12 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         for navigationAction: WKNavigationAction,
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
-        noteChatGPTAuthenticationNavigation(navigationAction.request.url)
-
         guard allowsEmbeddedWebNavigation(navigationAction), let url = navigationAction.request.url else {
             return nil
         }
+
+        invalidateReadinessChecks()
+        chatGPTLoginNavigation.navigationStarted(at: url)
 
         if let accountSelectionRequest = googleAccountSelectionRequest(from: navigationAction.request) {
             webView.load(accountSelectionRequest)
@@ -208,94 +209,90 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     private func finishLoadedPage(currentURL: String) {
-        if isAuthenticatedUsagePageURL(currentURL),
-           !didNotifyAuthenticated {
-            didNotifyAuthenticated = true
-            forcesGoogleAccountSelection = false
-            let callback = onAuthenticated
-            onAuthenticated = nil
-            onAuthenticationDismissed = nil
-            callback?()
-        }
-
+        if isAuthenticatedUsagePageURL(currentURL) { notifyAuthenticated() }
     }
 
-    private func scheduleChatGPTBlankPageCheck() {
-        blankPageCheckTask?.cancel()
-        blankPageCheckTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 4_000_000_000)
+    private func notifyAuthenticated() {
+        guard !didNotifyAuthenticated else { return }
+        didNotifyAuthenticated = true
+        forcesGoogleAccountSelection = false
+        let callback = onAuthenticated
+        onAuthenticated = nil
+        onAuthenticationDismissed = nil
+        callback?()
+    }
 
-            guard !Task.isCancelled else {
-                return
-            }
+    private func invalidateReadinessChecks() {
+        currentNavigationToken = UUID()
+        chatGPTReadinessTask?.cancel()
+        openCodeGoReadinessTask?.cancel()
+    }
 
-            guard let readiness = await readChatGPTPageReadiness() else {
-                showStatusBannerIfNeeded("ChatGPT did not return a readable page. Retrying without clearing your local session...")
-                reloadUsagePageAfterBlankLoad()
-                return
-            }
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        invalidateReadinessChecks()
+    }
 
-            if readiness.isBlank {
-                if !didAutoRetryBlankChatGPTPage {
-                    didAutoRetryBlankChatGPTPage = true
-                    showStatusBannerIfNeeded("ChatGPT returned an empty connection page. Retrying without clearing your local session...")
-                    reloadUsagePageAfterBlankLoad()
+    private func scheduleChatGPTAuthenticationCheck() {
+        chatGPTReadinessTask?.cancel()
+        let navigationToken = currentNavigationToken
+        chatGPTReadinessTask = Task { @MainActor in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                guard !Task.isCancelled, navigationToken == currentNavigationToken,
+                      window?.isVisible == true, !didNotifyAuthenticated, onAuthenticated != nil else { return }
+                let readiness = await readChatGPTPageReadiness()
+                // JavaScript can finish after the user has already started another navigation.
+                guard !Task.isCancelled, navigationToken == currentNavigationToken else { return }
+                guard let readiness, webView.url?.absoluteString == readiness.url else { continue }
+                if readiness.isBlank { continue }
+                let page = ServicePageExtract(service: .chatGPT, pageTitle: readiness.title,
+                                              url: readiness.url, bodyText: readiness.bodyText, segments: [])
+                switch chatGPTLoginNavigation.action(for: page, hasAuthenticatedSession: readiness.hasAuthenticatedSession) {
+                case .wait:
+                    showStatusBannerIfNeeded("Finish signing in here. If you are already signed in, click Read usage.")
+                    continue
+                case .loadUsage:
+                    showStatusBannerIfNeeded("ChatGPT is signed in. Loading usage limits...")
+                    loadUsagePage()
+                    return
+                case .complete:
+                    hideStatusBannerIfNeeded()
+                    notifyAuthenticated()
                     return
                 }
-
-                showStatusBannerIfNeeded("ChatGPT still returned an empty page after retrying. Token Monitor will mark this reconnect as failed instead of showing Healthy.")
-            } else {
-                hideStatusBannerIfNeeded()
             }
-
-            if shouldRedirectChatGPTToUsagePage(readiness.url) {
-                didEnterChatGPTAuthenticationFlow = false
-                showStatusBannerIfNeeded("ChatGPT login completed. Loading usage limits...")
-                loadUsagePage()
-                return
-            }
-
-            finishLoadedPage(currentURL: readiness.url)
         }
-    }
-
-    private func noteChatGPTAuthenticationNavigation(_ url: URL?) {
-        guard service == .chatGPT, let url else {
-            return
-        }
-
-        let host = url.host()?.lowercased() ?? ""
-        let path = url.path.lowercased()
-        if host == "auth.openai.com"
-            || host.hasSuffix(".auth.openai.com")
-            || path == "/auth"
-            || path.hasPrefix("/auth/")
-            || path.contains("/log-in") {
-            didEnterChatGPTAuthenticationFlow = true
-        }
-    }
-
-    private func shouldRedirectChatGPTToUsagePage(_ currentURL: String) -> Bool {
-        guard service == .chatGPT,
-              didEnterChatGPTAuthenticationFlow,
-              !isAuthenticatedUsagePageURL(currentURL),
-              let url = URL(string: currentURL),
-              let host = url.host()?.lowercased() else {
-            return false
-        }
-
-        return host == "chatgpt.com" || host.hasSuffix(".chatgpt.com")
     }
 
     private func readChatGPTPageReadiness() async -> ChatGPTPageReadiness? {
-        let payload = try? await evaluateJavaScript(
+        let payload = try? await evaluateAsyncJavaScript(
             """
-            JSON.stringify({
-              title: document.title || "",
-              url: location.href,
-              bodyText: ((document.body && (document.body.innerText || document.body.textContent)) || "").trim(),
-              elementCount: document.body ? document.body.querySelectorAll("*").length : 0
-            })
+              let hasAuthenticatedSession = false;
+              if (location.origin === 'https://chatgpt.com') {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3000);
+                try {
+                  const response = await fetch('/api/auth/session', {
+                    credentials: 'same-origin', cache: 'no-store', signal: controller.signal
+                  });
+                  if (response.ok) {
+                    const session = await response.json();
+                    hasAuthenticatedSession = typeof session?.user?.id === 'string' && session.user.id.length > 0;
+                  }
+                } catch (_) { } finally { clearTimeout(timeout); }
+              }
+              const visible = node => node && node.getClientRects().length > 0;
+              const hasLoginControls = Array.from(document.querySelectorAll('input[type="email"], input[type="password"], input[autocomplete="username"]')).some(visible)
+                || Array.from(document.querySelectorAll('button, a')).some(node => visible(node) && /^(?:log in|sign in|anmelden|melde dich an)$/i.test((node.innerText || '').trim()));
+              const hasAccountMenu = Array.from(document.querySelectorAll('[data-testid="accounts-profile-button"], [data-testid="profile-button"], [data-testid="user-menu-button"]')).some(visible);
+              hasAuthenticatedSession = location.origin === 'https://chatgpt.com'
+                && !hasLoginControls && (hasAuthenticatedSession || hasAccountMenu);
+              // Return only a boolean, never session tokens or account identifiers.
+              return JSON.stringify({
+                title: document.title || "", url: location.href,
+                bodyText: ((document.body && (document.body.innerText || document.body.textContent)) || "").trim(),
+                hasAuthenticatedSession
+              });
             """
         )
 
@@ -306,20 +303,14 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         return try? JSONDecoder().decode(ChatGPTPageReadiness.self, from: data)
     }
 
-    private func reloadUsagePageAfterBlankLoad() {
-        blankPageCheckTask?.cancel()
-        Task { @MainActor in
-            loadUsagePage()
-        }
-    }
-
     private func scheduleOpenCodeGoAuthenticationCheck(currentURL: String) {
         openCodeGoReadinessTask?.cancel()
+        let navigationToken = currentNavigationToken
         openCodeGoReadinessTask = Task { @MainActor in
             // Console is a SPA: completing login need not trigger didFinish.
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
-                guard !Task.isCancelled, window?.isVisible == true,
+                guard !Task.isCancelled, navigationToken == currentNavigationToken, window?.isVisible == true,
                       !didNotifyAuthenticated, onAuthenticated != nil else {
                     return
                 }
@@ -327,6 +318,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
                 guard let readiness = await readOpenCodeGoPageReadiness() else {
                     continue
                 }
+                guard !Task.isCancelled, navigationToken == currentNavigationToken else { return }
+                guard !readiness.hasLoginControls else { continue }
 
                 if !didTryOpenCodeConsole, OpenCodeGoNavigation.isConsoleURL(readiness.url),
                    OpenCodeGoNavigation.workspaceURL(from: readiness.url) == nil,
@@ -356,6 +349,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
             JSON.stringify({
               url: location.href,
               bodyText: ((document.body && (document.body.innerText || document.body.textContent)) || "").trim(),
+              hasLoginControls: Array.from(document.querySelectorAll('input[type="email"], input[type="password"], input[autocomplete="username"]')).some(node => node.getClientRects().length > 0)
+                || Array.from(document.querySelectorAll('button, a')).some(node => node.getClientRects().length > 0 && /^(?:log in|sign in|login|continue with google|continue with github|anmelden|mit google fortfahren)$/i.test((node.innerText || '').trim())),
               hasUsageLabels: ["Weekly Usage", "Monthly Usage", "Rolling Usage", "5-hour Usage", "5 hour Usage", "5-Stunden-Nutzung", "Wöchentliche Nutzung"].some(label => (document.body?.innerText || "").toLowerCase().includes(label.toLowerCase())),
               workspaceURL: Array.from(document.querySelectorAll('a[href]')).map(node => {
                 try {
@@ -445,15 +440,28 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         statusLabel.font = .systemFont(ofSize: 12)
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
+        readUsageButton.target = self
+        readUsageButton.action = #selector(readUsageAfterSignIn)
+        readUsageButton.bezelStyle = .rounded
+        readUsageButton.translatesAutoresizingMaskIntoConstraints = false
+        readUsageButton.toolTip = "After signing in, open usage limits without clearing your session."
 
         statusBanner.addSubview(statusLabel)
+        statusBanner.addSubview(readUsageButton)
         NSLayoutConstraint.activate([
             statusLabel.leadingAnchor.constraint(equalTo: statusBanner.leadingAnchor, constant: 14),
-            statusLabel.trailingAnchor.constraint(equalTo: statusBanner.trailingAnchor, constant: -14),
+            statusLabel.trailingAnchor.constraint(equalTo: readUsageButton.leadingAnchor, constant: -12),
             statusLabel.topAnchor.constraint(equalTo: statusBanner.topAnchor, constant: 10),
             statusLabel.bottomAnchor.constraint(equalTo: statusBanner.bottomAnchor, constant: -10),
+            readUsageButton.trailingAnchor.constraint(equalTo: statusBanner.trailingAnchor, constant: -14),
+            readUsageButton.centerYAnchor.constraint(equalTo: statusBanner.centerYAnchor),
             statusBanner.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
         ])
+    }
+
+    @objc private func readUsageAfterSignIn() {
+        showStatusBannerIfNeeded("Loading usage limits from your existing session...")
+        loadUsagePage()
     }
 
     private func showStatusBannerIfNeeded(_ message: String) {
@@ -461,6 +469,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
             return
         }
 
+        guard statusLabel.stringValue != message || statusBanner.isHidden else { return }
         statusLabel.stringValue = message
         statusBanner.isHidden = false
     }
@@ -474,11 +483,18 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        if isCancelledNavigation(error) { return }
         showStatusBannerIfNeeded("ChatGPT connection page could not be loaded. Try again without clearing your local session.")
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+        if isCancelledNavigation(error) { return }
         showStatusBannerIfNeeded("ChatGPT connection page could not be loaded. Try again without clearing your local session.")
+    }
+
+    private func isCancelledNavigation(_ error: Error) -> Bool {
+        let error = error as NSError
+        return error.domain == NSURLErrorDomain && error.code == NSURLErrorCancelled
     }
 
     func currentPageTitle() -> String {
@@ -506,9 +522,14 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         }
     }
 
+    private func evaluateAsyncJavaScript(_ script: String) async throws -> String {
+        let value = try await webView.callAsyncJavaScript(script, arguments: [:], in: nil, contentWorld: .page)
+        guard let payload = value as? String else { throw SessionControllerError.invalidPayload }
+        return payload
+    }
+
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        blankPageCheckTask?.cancel()
-        openCodeGoReadinessTask?.cancel()
+        invalidateReadinessChecks()
         forcesGoogleAccountSelection = false
         sender.orderOut(nil)
         let dismissCallback = onAuthenticationDismissed
@@ -522,7 +543,7 @@ private struct ChatGPTPageReadiness: Decodable {
     let title: String
     let url: String
     let bodyText: String
-    let elementCount: Int
+    let hasAuthenticatedSession: Bool
 
     var isBlank: Bool {
         let visibleText = bodyText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -534,6 +555,7 @@ private struct OpenCodeGoPageReadiness: Decodable {
     let url: String
     let bodyText: String
     let hasUsageLabels: Bool
+    let hasLoginControls: Bool
     let workspaceURL: String?
 
     var isAuthenticated: Bool {

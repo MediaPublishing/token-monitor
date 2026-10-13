@@ -1,6 +1,6 @@
 # Token Monitor Privacy
 
-Last reviewed: 2026-05-13
+Last reviewed: 2026-10-12
 
 Token Monitor is designed as a local macOS utility. It does not require a Token Monitor account and does not send usage data to Token Monitor server infrastructure.
 
@@ -18,6 +18,11 @@ Token Monitor can store data on your Mac, including:
 - Last known usage snapshots.
 - App settings such as refresh behavior, launch-at-login preference, and debug mode.
 - Opt-in diagnostic files when debug mode is enabled.
+- Optional project/topic assignments and token totals derived from local Codex and Claude Code logs when **Show analysis** is enabled.
+
+## Optional Local Analysis
+
+Project analysis is off by default. When enabled, Token Monitor reads supported local Codex and Claude Code session logs to aggregate recorded token usage by project or manually assigned topic. Expanded groups display local thread identifiers and any available titles. These records can be incomplete and are not a replacement for provider capacity limits. The app does not upload these logs, thread details, token totals or assignments to Token Monitor servers. Disable **Show analysis** to stop scanning; exclude either source in Settings. No pricing estimate or conversation-history timeline is generated.
 
 ## Data Sent To Token Monitor
 

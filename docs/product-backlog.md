@@ -78,9 +78,9 @@ See [concept review and intake decisions](headroom-assessment.md), reviewed agai
 
 See [source review and proposed scope](project-usage-analytics-assessment.md), based on Claire Vo's project-usage analysis workflow.
 
-- Approved local preview: a quiet **Kapazität / Analyse** tab switch, enabled in Settings, aggregating recorded tokens by project or manually assigned topic. Provider details and threads appear only on drill-down, not as extra capacity rows.
+- Approved local preview: a quiet **Capacity / Analysis** tab switch, enabled in Settings, aggregating recorded tokens by project or manually assigned topic. Provider details and threads appear only on drill-down, not as extra capacity rows.
 - Owner clarification, 2026-10-09: no monetary estimates, API price equivalents, or business-impact/ROI claims. Thread counters are source-dependent; token shares describe recorded activity, not subscription capacity.
-- Implemented for local testing in 1.0.43 (46), off by default. Selected Codex and Claude Code JSONL logs are read locally in bounded scans; only token counters and routing metadata are retained in memory. No cloud processing, new account access, or conversation import. Public downloads remain 1.0.42 until a separate release.
+- Implemented for local testing in 1.0.43 (48), off by default. Selected Codex and Claude Code JSONL logs are read locally in bounded scans; only token counters and routing metadata are retained in memory. No cloud processing, new account access, or conversation import. Public downloads remain 1.0.42 until a separate release.
 - The session overview below remains deferred; this concept review does not resume it.
 
 ## Deferred Idea: Optional Session Overview

@@ -24,9 +24,9 @@ private struct EmptyAccounts: AccountPersisting {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Synthetische Testdaten").font(.caption)
+                Text("Synthetic test data").font(.caption)
                 Spacer()
-                Toggle("Dunkel", isOn: $dark)
+                Toggle("Dark", isOn: $dark)
             }.padding(10)
             PopoverRootView().environmentObject(model)
         }
@@ -65,6 +65,26 @@ private struct EmptyAccounts: AccountPersisting {
         model.showAnalyticsInPopover()
         let app = NSApplication.shared
         app.setActivationPolicy(.regular)
+        if CommandLine.arguments.contains("--proof") {
+            guard let flag = CommandLine.arguments.firstIndex(of: "--proof"), CommandLine.arguments.count > flag + 1 else {
+                fatalError("--proof requires an output directory")
+            }
+            let output = URL(fileURLWithPath: CommandLine.arguments[flag + 1])
+            Timer.scheduledTimer(withTimeInterval: 0.2, repeats: false) { _ in
+                Task { @MainActor in
+                    do {
+                        try await NativeLayoutProof.run(analytics: analytics, output: output)
+                        app.terminate(nil)
+                    } catch {
+                        print("NATIVE_LAYOUT_PROOF_FAILED: \(error)")
+                        fflush(stdout)
+                        exit(1)
+                    }
+                }
+            }
+            app.run()
+            return
+        }
         let window = NSWindow(contentRect: NSRect(x: 200, y: 120, width: 488, height: 700),
                               styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.title = "Token Monitor Analytics QA"

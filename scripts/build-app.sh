@@ -20,6 +20,7 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$FRAMEWORKS_DIR"
 
 cp "$ROOT_DIR/Sources/TokenMonitorApp/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
 cp "$ROOT_DIR/Sources/TokenMonitorApp/Resources/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
+ditto "$ROOT_DIR/Sources/TokenMonitorApp/Resources/ProviderLogos" "$RESOURCES_DIR/ProviderLogos"
 cp "$BUILD_DIR/TokenMonitorApp" "$MACOS_DIR/TokenMonitorApp"
 ditto "$SPARKLE_FRAMEWORK_DIR" "$FRAMEWORKS_DIR/Sparkle.framework"
 chmod +x "$MACOS_DIR/TokenMonitorApp"

@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.42/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.43/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.42`.
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.43` (build 52).
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -20,6 +20,8 @@
 ### Dashboard
 ![Token Monitor dashboard screenshot](assets/screenshots/app/dashboard.png)
 
+Native app views with synthetic example data, not private account usage. / Native App-Ansichten mit synthetischen Beispieldaten, keine privaten Kontodaten.
+
 Watch Claude and ChatGPT/Codex side by side from the macOS menu bar. Enable OpenCode Go in Settings when you want to track its Rolling, Weekly, and Monthly usage too.
 
 Claude und ChatGPT/Codex bleiben direkt in der macOS-Menüleiste nebeneinander sichtbar. OpenCode Go lässt sich in den Settings optional zuschalten.
@@ -27,16 +29,26 @@ Claude und ChatGPT/Codex bleiben direkt in der macOS-Menüleiste nebeneinander s
 ### Claude Usage
 ![Token Monitor Claude usage screenshot](assets/screenshots/app/claude.png)
 
-Keep Claude usage source-native: session, model, Sonnet, balance, extra usage, and reset timing stay separate.
+Keep Claude session, all-model and Fable limits separate, with remaining capacity and reset timing.
 
-Claude bleibt quellnah: Session, Modell, Sonnet, Balance, Extra Usage und Reset-Zeit werden getrennt angezeigt.
+Session, All models und Fable bleiben getrennt, mit verbleibender Kapazität und Reset-Zeiten.
 
 ### ChatGPT + Codex Usage
 ![Token Monitor ChatGPT usage screenshot](assets/screenshots/app/chatgpt.png)
 
-Track ChatGPT daily, weekly, Codex, and credit limits without digging through browser tabs.
+Track the limits reported by ChatGPT/Codex and saved resets without digging through browser tabs.
 
-ChatGPT Daily, Weekly, Codex und Credits bleiben sichtbar, ohne Browser-Tab-Suche.
+Die von ChatGPT/Codex gemeldeten Limits und gespeicherte Resets bleiben ohne Browser-Tab-Suche sichtbar.
+
+### Optional Local Analysis
+![Token Monitor local project analysis with example data](assets/screenshots/app/analysis.png)
+
+Enable **Settings > Project details > Show analysis** to group recorded Codex and Claude Code tokens by project, or by manually assigned topic. Expand a group to its threads. Local logs can be incomplete; these totals are not the provider's remaining capacity. No cost estimates or thread-history timeline.
+
+Mit **Settings > Project details > Show analysis** gruppierst du erfasste Codex- und Claude-Code-Tokens nach Projekt oder selbst zugewiesenem Thema. Gruppen klappen direkt zu ihren Threads auf. Lokale Protokolle können unvollständig sein; die Summen sind nicht die verbleibende Provider-Kapazität. Keine Geldschätzung und kein Thread-Verlauf.
+
+### Settings
+![Token Monitor compact Settings](assets/screenshots/app/settings.png)
 
 ---
 
@@ -77,7 +89,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.42/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.43/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -110,7 +122,7 @@ Token Monitor tries to register itself as a login item when **Launch at login** 
 
 #### Updates
 
-Automatic update checks are off by default from version `1.0.22`. From version `1.0.41`, enabling **Automatically check for updates** checks immediately, then hourly while the app is running. An **Update** indicator in the menu bar and a **Review Update** button in the dashboard make available updates visible without hidden background windows. Review and confirm installation in Sparkle; enabling checks does not enable silent installation. **Check for Updates...** remains available in Settings. The debug report now includes update timing, preferences, results, and error codes. Existing sign-ins are preserved.
+Automatic update checks are off by default from version `1.0.22` through public version `1.0.42`. Version `1.0.43` enables automatic checks by default, while preserving an existing opt-out. From version `1.0.41`, enabling **Automatically check for updates** checks immediately, then hourly while the app is running. An **Update** indicator in the menu bar and a **Review Update** button in the dashboard make available updates visible without hidden background windows. Review and confirm installation in Sparkle; enabling checks does not enable silent installation. **Check for Updates...** remains available in Settings. The debug report includes update timing, preferences, results, and error codes. Existing sign-ins are preserved.
 
 #### Optional OpenCode Go
 
@@ -124,7 +136,11 @@ Version 1.0.38 reads Claude's updated **This week** and **Fable this week** usag
 
 In **Settings > Providers**, click **+** next to Claude, ChatGPT, or OpenCode Go to add another account. Give it a name with **More > Rename**. Each additional account keeps its own persistent sign-in and appears separately in the dashboard. The original account and its existing sign-in stay in place. Choose **Show in menu bar** on the account whose capacity the provider's menu-bar indicator should show. Disconnecting or removing an additional account clears only that account's login data. The original provider accounts remain available for compatibility with previous versions.
 
-**Local preview 1.0.43 (46):** Switching the menu-bar account updates its cached capacity immediately, without a manual refresh. **Show alongside in menu bar** adds another account in a separate column; **Hide from menu bar** removes it from the indicator without disconnecting it. Up to four accounts per provider can be shown, with names and column order in the tooltip. **Move to first menu bar column** changes their order. Public downloads remain on 1.0.42.
+**Version 1.0.43 (52):** Capacity, analysis, and Settings resize to their content, with scrolling only when the active display cannot fit the content. The existing native toolbar gains an optional analysis icon. Genuine, bundled vector provider logos accompany visible account names and render natively at the display's scale. Toolbar focus uses the full button outline only during keyboard navigation, not after opening the popover or clicking with the mouse. Project details expand directly to threads; token counts and shares appear together, with neutral usage bars. Settings use aligned rows, and reset reminders report notification permission problems and target the correct ChatGPT account. Switching the menu-bar account updates its cached capacity immediately, without a manual refresh. **Show alongside in menu bar** adds another account in a separate column; **Hide from menu bar** removes it from the indicator without disconnecting it. Up to four accounts per provider can be shown, with names and column order in the tooltip. **Move to first menu bar column** changes their order.
+
+ChatGPT Connect now starts on the home page and waits for a positive sign-in signal before opening usage. Blank or canceled loads never reload the login form. If automatic detection is unavailable, **Read usage** opens the usage page after you finish signing in. A connection is completed only after real usage metrics are parsed. No cookies are cleared by this recovery flow.
+
+For local builds, use `bash scripts/install-local-app.sh` after building, or `bash scripts/install-local-app.sh --check` to validate without installing. The previous app is kept outside Trash under `~/AI/backups/token-monitor/`, preventing SmartDelete-style cleaners from offering to remove the app's sign-in data during replacement. The installer does not read or copy account, cookie or session data.
 
 #### Banked resets
 
@@ -207,7 +223,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.42/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.43/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -240,7 +256,7 @@ Token Monitor versucht, sich als Login Item zu registrieren, wenn **Launch at lo
 
 #### Updates
 
-Automatische Update-Prüfungen sind ab Version `1.0.22` standardmäßig aus. Ab Version `1.0.41` prüft **Automatically check for updates** beim Einschalten sofort und danach stündlich, solange die App läuft. Ein **Update**-Hinweis in der Menüleiste und **Review Update** im Dashboard machen verfügbare Updates sichtbar, statt ein Fenster im Hintergrund zu verstecken. Die Installation wird in Sparkle bestätigt; der Schalter aktiviert keine stille Installation. **Check for Updates...** bleibt in den Settings verfügbar. Der Debug-Bericht enthält jetzt Prüfzeiten, Update-Einstellungen, Ergebnisse und Fehlercodes. Bestehende Anmeldungen bleiben erhalten.
+Automatische Update-Prüfungen sind ab Version `1.0.22` standardmäßig aus, bis einschließlich der öffentlichen Version `1.0.42`. Version `1.0.43` aktiviert automatische Prüfungen standardmäßig, respektiert aber eine bereits gespeicherte Abschaltung. Ab Version `1.0.41` prüft **Automatically check for updates** beim Einschalten sofort und danach stündlich, solange die App läuft. Ein **Update**-Hinweis in der Menüleiste und **Review Update** im Dashboard machen verfügbare Updates sichtbar, statt ein Fenster im Hintergrund zu verstecken. Die Installation wird in Sparkle bestätigt; der Schalter aktiviert keine stille Installation. **Check for Updates...** bleibt in den Settings verfügbar. Der Debug-Bericht enthält Prüfzeiten, Update-Einstellungen, Ergebnisse und Fehlercodes. Bestehende Anmeldungen bleiben erhalten.
 
 #### Optionales OpenCode Go
 
@@ -254,7 +270,9 @@ Version 1.0.38 liest Claudes neue Nutzungslabels **This week** und **Fable this 
 
 Unter **Settings > Providers** kannst du mit **+** für Claude, ChatGPT oder OpenCode Go weitere Accounts hinzufügen und über **More > Rename** benennen. Jeder zusätzliche Account bekommt eine eigene dauerhafte Anmeldung und erscheint separat im Dashboard. Der bisherige Account samt Login bleibt bestehen. Mit **Show in menu bar** bestimmst du, welcher Account eines Providers die Balken in der Menüleiste liefert. Das Trennen oder Entfernen eines zusätzlichen Accounts löscht nur dessen Login-Daten.
 
-**Lokale Vorschau 1.0.43 (46):** Beim Kontowechsel zeigt die Menüleiste sofort die zuletzt erfasste Kapazität des gewählten Kontos, ohne manuellen Refresh. Mit **Show alongside in menu bar** erscheint ein weiteres Konto in einer eigenen Spalte daneben. **Hide from menu bar** blendet es nur aus, ohne es zu trennen. Bis zu vier Konten je Anbieter sind möglich; Namen und Spaltenreihenfolge stehen im Tooltip. **Move to first menu bar column** ändert die Reihenfolge. Der öffentliche Download bleibt auf 1.0.42.
+**Version 1.0.43 (52):** Kapazität, Analyse und Settings passen ihre Höhe an den Inhalt an. Nur wenn der Platz auf dem aktiven Bildschirm nicht reicht, wird gescrollt. Die native Kopfzeile erhält ein optionales Analyse-Icon. Echte, lokal gebündelte Vektorlogos stehen neben den lesbaren Kontonamen und werden nativ in der Bildschirmauflösung gezeichnet. Der Toolbar-Fokus verwendet den ganzen Button-Rahmen nur bei Tastaturbedienung, nicht beim Öffnen oder nach Mausklicks. Projekte klappen direkt zu ihren Threads auf; Tokenzahl und Anteil stehen zusammen, die Analysebalken bleiben neutral. Die Settings sind in abgestimmten Zeilen angeordnet. Reset-Erinnerungen zeigen Berechtigungsprobleme an und öffnen das richtige ChatGPT-Konto. Beim Kontowechsel zeigt die Menüleiste sofort die zuletzt erfasste Kapazität des gewählten Kontos, ohne manuellen Refresh. Mit **Show alongside in menu bar** erscheint ein weiteres Konto in einer eigenen Spalte daneben. **Hide from menu bar** blendet es nur aus, ohne es zu trennen. Bis zu vier Konten je Anbieter sind möglich; Namen und Spaltenreihenfolge stehen im Tooltip. **Move to first menu bar column** ändert die Reihenfolge.
+
+ChatGPT Connect startet auf der Startseite und öffnet die Nutzung erst nach einem positiven Anmeldenachweis. Leere oder abgebrochene Ladevorgänge laden das Login-Formular nicht neu. Falls die automatische Erkennung ausfällt, öffnet **Read usage** nach abgeschlossener Anmeldung die Nutzungsseite. Erst erfolgreich gelesene Nutzungswerte schließen die Verbindung ab. Dabei werden keine Cookies gelöscht.
 
 #### Banked Resets
 

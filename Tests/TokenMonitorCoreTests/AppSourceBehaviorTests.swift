@@ -2,14 +2,92 @@ import Foundation
 import Testing
 
 struct AppSourceBehaviorTests {
-    @Test func analyticsSegmentLabelsStayHiddenWithoutChangingAccountCode() throws {
+    @Test func providerLogosKeepVectorResourcesAndNativeDisplayScale() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let source = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProviderLogoView.swift"), encoding: .utf8)
+        #expect(source.contains("withExtension: \"pdf\""))
+        #expect(source.contains("NSImageView"))
+        #expect(source.contains(".scaleProportionallyUpOrDown"))
+        #expect(source.contains("image.isTemplate = service == .chatGPT"))
+        #expect(source.contains("CGSize(width: size, height: size)"))
+        #expect(!source.contains("Image(nsImage: image)"))
+        for name in ["openai", "claude", "opencode", "opencode-dark"] {
+            let url = root.appendingPathComponent("Sources/TokenMonitorApp/Resources/ProviderLogos/\(name).pdf")
+            let data = try Data(contentsOf: url)
+            #expect(data.starts(with: Data("%PDF-".utf8)))
+            let objects = String(decoding: data, as: UTF8.self)
+            #expect(!objects.contains("/Subtype /Image"))
+        }
+    }
+
+    @Test func toolbarFocusOutlineOnlyAppearsForKeyboardInput() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let header = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/PopoverHeaderView.swift"), encoding: .utf8)
+        #expect(header.contains("@FocusState private var focusedControl: String?"))
+        #expect(header.contains(".focused($focusedControl, equals: systemImage)"))
+        #expect(header.contains(".focusEffectDisabled()"))
+        #expect(header.contains("@State private var showsKeyboardFocus = false"))
+        #expect(header.contains("let hasKeyboardFocus = showsKeyboardFocus && focusedControl == systemImage"))
+        #expect(header.contains(".strokeBorder("))
+        #expect(header.contains("lineWidth: hasKeyboardFocus ? 2 : 1"))
+        #expect(header.contains(".accessibilityAddTraits(isSelected ? .isSelected : [])"))
+        #expect(header.contains(".frame(width: 28, height: 28)"))
+        #expect(header.contains("event.window === window"))
+        #expect(header.contains("self.onInput(event.type == .keyDown)"))
+        #expect(header.contains("return event"))
+        #expect(header.contains("static func dismantleNSView"))
+        #expect(header.contains("NSEvent.removeMonitor(monitor)"))
+        #expect(header.contains("NSWindow.didResignKeyNotification"))
+        #expect(!header.contains("addGlobalMonitor"))
+    }
+
+    @Test func localInstallationDoesNotTrashTheInstalledAppOrTouchSignInData() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let script = try String(contentsOf: root.appendingPathComponent("scripts/install-local-app.sh"), encoding: .utf8)
+        #expect(script.contains("mv \"$TARGET\" \"$PREVIOUS\""))
+        #expect(script.contains("codesign --verify --deep --strict"))
+        #expect(script.contains("--check"))
+        for unsafe in ["trash ", "rm ", "removeData", "httpCookieStore", "accounts.json", "Library/WebKit"] {
+            #expect(!script.contains(unsafe))
+        }
+    }
+
+    @Test func analyticsUsesTheSameEnglishInterfaceAsCapacityAndSettings() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let files = ["Sources/TokenMonitorApp/ProjectAnalyticsView.swift",
+                     "Sources/TokenMonitorApp/ProjectAnalyticsModel.swift",
+                     "Sources/TokenMonitorApp/PopoverHeaderView.swift",
+                     "Sources/TokenMonitorApp/SettingsView.swift",
+                     "Sources/TokenMonitorCore/AnalyticsLogScanner.swift",
+                     "Sources/TokenMonitorCore/ProjectAnalytics.swift"]
+        let sources = try files.map { try String(contentsOf: root.appendingPathComponent($0), encoding: .utf8) }
+        let combined = sources.joined(separator: "\n")
+        for label in ["Capacity", "Analysis", "Project usage", "Projects", "Topics", "Show analysis",
+                      "Incomplete coverage", "Unassigned", "Local logs"] {
+            #expect(combined.contains(label))
+        }
+        for label in ["Kapazität", "Analyse", "Projektanalyse", "Projekte", "Themen", "Zuordnung",
+                      "Lokale Protokolle", "Nicht zugeordnet", "Aktualisiert", "Erfassung unvollständig"] {
+            #expect(!combined.contains("\"\(label)"))
+        }
+    }
+
+    @Test func sharedPopoverShellOwnsScrollingAndIconNavigationWithoutChangingAccountCode() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let view = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProjectAnalyticsView.swift"), encoding: .utf8)
-        #expect(view.components(separatedBy: ".pickerStyle(.segmented)\n").count == 3)
-        #expect(view.components(separatedBy: ".labelsHidden()").count == 4)
-        #expect(view.components(separatedBy: "Picker(\"\", selection:").count == 4)
-        for label in ["Ansicht", "Zeitraum", "Gruppierung"] {
-            #expect(!view.contains("Picker(\"\(label)\""))
+        let shell = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/PopoverRootView.swift"), encoding: .utf8)
+        let header = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/PopoverHeaderView.swift"), encoding: .utf8)
+        #expect(!view.contains("DashboardTabsView"))
+        #expect(!view.contains("ScrollView"))
+        #expect(!view.contains("height: model.desiredPopoverHeight()"))
+        #expect(shell.components(separatedBy: "ScrollView {").count == 2)
+        #expect(shell.contains(".scrollDisabled(!layout.scrolls)"))
+        #expect(shell.contains(".fixedSize(horizontal: false, vertical: true)"))
+        #expect(header.contains("if analytics.enabled"))
+        for symbol in ["arrow.clockwise", "chart.bar.xaxis", "chart.pie", "gearshape", "xmark"] {
+            #expect(header.contains("\"\(symbol)\""))
+        }
+        for label in ["Period", "Grouping"] {
             #expect(view.contains(".accessibilityLabel(\"\(label)\")"))
         }
         let model = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProjectAnalyticsModel.swift"), encoding: .utf8)
@@ -136,13 +214,14 @@ struct AppSourceBehaviorTests {
         #expect(dashboardView.contains("isUsedPercentageMetric"))
         #expect(dashboardView.contains("% remaining"))
         #expect(!dashboardView.contains("showsProgressPercentage"))
-        #expect(dashboardView.contains("ScrollView"))
+        #expect(!dashboardView.contains("ScrollView"))
         #expect(dashboardView.contains("ServiceSectionView(status: status)"))
         #expect(dashboardView.contains("count: 3"))
         #expect(dashboardView.contains("Image(systemName: \"arrow.clockwise\")"))
         #expect(dashboardView.contains("minHeight: 58"))
         #expect(dashboardView.contains("model.showUsageDetails"))
-        #expect(dashboardView.contains("height: model.desiredPopoverHeight()"))
+        #expect(!dashboardView.contains("desiredPopoverHeight"))
+        #expect(dashboardView.contains("ProviderLogoView(service: status.service)"))
         #expect(dashboardView.contains("extra-usage-spend"))
         #expect(dashboardView.contains("monthly-spend-limit"))
         #expect(dashboardView.contains("current-balance"))
@@ -198,7 +277,8 @@ struct AppSourceBehaviorTests {
         #expect(appModel.contains("Keys.statusMenuShowsPercentages: false"))
         #expect(appModel.contains("Keys.statusMenuLimitDisplay: StatusMenuLimitDisplay.total.rawValue"))
         #expect(appModel.contains("case both"))
-        #expect(appModel.contains("showUsageDetails ? 650 : 540"))
+        #expect(!appModel.contains("showUsageDetails ? 650 : 540"))
+        #expect(appModel.contains("popoverMaximumHeight"))
         #expect(appModel.contains("snapshot.statusMenuSessionScore, snapshot.statusMenuTotalScore"))
         #expect(appDelegate.contains("Menu bar: Session / Total"))
         #expect(appModel.contains("Keys.showUsageDetails: false"))
@@ -266,7 +346,7 @@ struct AppSourceBehaviorTests {
         #expect(sessionController.contains("Usage page refresh timed out"))
     }
 
-    @Test func chatGPTLoginReturnsToUsagePageBeforeCompletingConnection() throws {
+    @Test func chatGPTLoginDoesNotReloadOrTreatAuthNavigationAsSuccessfulSignIn() throws {
         let rootURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
@@ -277,11 +357,17 @@ struct AppSourceBehaviorTests {
             encoding: .utf8
         )
 
-        #expect(loginController.contains("didEnterChatGPTAuthenticationFlow"))
-        #expect(loginController.contains("noteChatGPTAuthenticationNavigation"))
-        #expect(loginController.contains("shouldRedirectChatGPTToUsagePage"))
-        #expect(loginController.contains("loadUsagePage()"))
-        #expect(loginController.contains("finishLoadedPage(currentURL: readiness.url)"))
+        #expect(!loginController.contains("reloadUsagePageAfterBlankLoad"))
+        #expect(!loginController.contains("didEnterChatGPTAuthenticationFlow"))
+        #expect(loginController.contains("ChatGPTLoginNavigation.connectionURL"))
+        #expect(loginController.contains("didStartProvisionalNavigation"))
+        #expect(loginController.contains("navigationToken == currentNavigationToken"))
+        #expect(loginController.contains("hasAuthenticatedSession: readiness.hasAuthenticatedSession"))
+        #expect(loginController.contains("webView.callAsyncJavaScript"))
+        #expect(loginController.contains("guard !readiness.hasLoginControls else { continue }"))
+        #expect(loginController.contains("hasAccountMenu"))
+        #expect(loginController.contains("&& !hasLoginControls &&"))
+        #expect(loginController.contains("#selector(readUsageAfterSignIn)"))
     }
 
     @Test func firstChatGPTRefreshAfterLoginUsesTheAuthenticatedLoginPage() throws {

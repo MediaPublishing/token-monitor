@@ -19,6 +19,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var analyticsSubscription: AnyCancellable?
     private var dashboardHostingController: NSHostingController<AnyView>?
     private var outsideClickMonitor: Any?
+    private var measuredPopoverSizes: [PopoverScreen: CGSize] = [:]
+    private var screenSubscription: AnyCancellable?
 
     init(model: AppModel = .shared) {
         self.model = model
@@ -40,6 +42,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     func showSettingsWindow() {
         model.showSettingsInPopover()
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !popover.isShown { togglePopover(nil) }
+        return false
     }
 
     func closePopover() {
@@ -78,6 +85,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         }
 
         model.didOpenPopover()
+        updatePopoverSize()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         popover.contentViewController?.view.window?.becomeKey()
         installOutsideClickMonitor()
@@ -85,7 +93,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     private func configurePopover() {
         let rootView = AnyView(
-            PopoverRootView()
+            PopoverRootView(onSizeChange: { [weak self] screen, size in
+                self?.applyMeasuredPopoverSize(size, for: screen)
+            })
                 .environmentObject(model)
         )
 
@@ -94,9 +104,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         popover.delegate = self
         popover.behavior = .transient
         popover.animates = true
-        popover.contentSize = NSSize(width: Self.popoverWidth, height: model.desiredPopoverHeight())
+        popover.contentSize = NSSize(width: Self.popoverWidth, height: 180)
         popover.contentViewController = hostingController
         updatePopoverSize()
+        screenSubscription = NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.updatePopoverSize() }
     }
 
     private func configureStatusItem() {
@@ -460,9 +473,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     }
 
     private func updatePopoverSize() {
-        let targetWidth = Self.popoverWidth
-        let targetHeight = model.desiredPopoverHeight()
-        popover.contentSize = NSSize(width: targetWidth, height: targetHeight)
+        let window = statusItem?.button?.window
+        let screen = window?.screen ?? NSScreen.main
+        if let screen {
+            let anchorY = window.map { $0.convertToScreen($0.contentView?.bounds ?? .zero).minY }
+                ?? screen.visibleFrame.maxY
+            let maximum = max(100, anchorY - screen.visibleFrame.minY - 24)
+            if abs(model.popoverMaximumHeight - maximum) > 1 { model.popoverMaximumHeight = maximum }
+        }
+        if let cached = measuredPopoverSizes[model.popoverScreen] {
+            applyMeasuredPopoverSize(cached, for: model.popoverScreen)
+        }
+    }
+
+    private func applyMeasuredPopoverSize(_ size: CGSize, for screen: PopoverScreen) {
+        measuredPopoverSizes[screen] = size
+        guard screen == model.popoverScreen else { return }
+        let bounded = CGSize(width: Self.popoverWidth, height: min(size.height, model.popoverMaximumHeight))
+        guard abs(popover.contentSize.height - bounded.height) > 1 else { return }
+        popover.animates = !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        popover.contentSize = bounded
     }
 
     func popoverDidClose(_ notification: Notification) {
