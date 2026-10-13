@@ -77,19 +77,21 @@ struct MenuBarAccountSelectionTests {
         #expect(selection.accountIDs[ServiceKind.chatGPT.rawValue] == [chatGPT.id.uuidString])
     }
 
-    @Test func menuWidthIsBoundedToFourColumns() {
-        let extras = (0..<5).map { MonitoredAccount(id: UUID(), service: .claude, name: "Account \($0)", isPrimary: false) }
+    @Test func accountSelectionPreservesOverflowWithoutTruncatingSavedChoices() {
+        let extras = (0..<7).map { MonitoredAccount(id: UUID(), service: .claude, name: "Account \($0)", isPrimary: false) }
         let available = [primary] + extras
         var selection = MenuBarAccountSelection()
-        for account in extras.prefix(3) {
+        for account in extras {
             let added = selection.showAlongside(account.id, for: .claude, available: available)
             #expect(added)
         }
-        let overflow = selection.showAlongside(extras[3].id, for: .claude, available: available)
+        let overflow = selection.showAlongside(extras[0].id, for: .claude, available: available)
         #expect(!overflow)
-        #expect(selection.accounts(for: .claude, available: available).count == 4)
+        #expect(selection.accounts(for: .claude, available: available).map(\.id) == available.map(\.id))
         let oversized = MenuBarAccountSelection(accountIDs: [ServiceKind.claude.rawValue: available.map { $0.id.uuidString }])
-        #expect(oversized.accounts(for: .claude, available: available).count == 4)
+        #expect(oversized.accounts(for: .claude, available: available).map(\.id) == available.map(\.id))
+        selection.reconcile(available: available)
+        #expect(selection.accountIDs[ServiceKind.claude.rawValue] == available.map { $0.id.uuidString })
     }
 
     @MainActor @Test func queuedPublishedObserverReadsNewAccountWithoutRefresh() async throws {

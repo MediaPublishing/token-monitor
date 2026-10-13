@@ -121,7 +121,8 @@ struct AppSourceBehaviorTests {
         let settings = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/SettingsView.swift"), encoding: .utf8)
         #expect(delegate.contains("menuBarAccountSubscription = model.$menuBarAccountSelection\n            .receive(on: RunLoop.main)"))
         #expect(delegate.contains("model.$openCodeGoEnabled\n        )\n        .receive(on: RunLoop.main)"))
-        #expect(delegate.contains("model.statusMenuAccountColumns"))
+        #expect(delegate.contains("model.statusMenuAccountLayout"))
+        #expect(delegate.contains("accounts.prefix(layout.visibleCount)"))
         #expect(delegate.contains("offset + 1"))
         let start = try #require(model.range(of: "func setMenuBarAccount("))
         let end = try #require(model.range(of: "func openUsagePageInDefaultBrowser", range: start.upperBound..<model.endIndex))
@@ -130,7 +131,7 @@ struct AppSourceBehaviorTests {
         #expect(!selectionMethods.contains("openLogin("))
         #expect(!selectionMethods.contains("sessionCoordinator"))
         #expect(model.contains("legacyAccountIDs:"))
-        #expect(settings.contains("Show alongside in menu bar"))
+        #expect(settings.contains("Add to menu bar"))
         #expect(settings.contains("Hide from menu bar"))
     }
 
@@ -151,7 +152,7 @@ struct AppSourceBehaviorTests {
         #expect(buttonLabel.contains(".opacity(isRefreshing ? 0 : 1)"))
         #expect(view.components(separatedBy: "ProgressView()").count == 2)
         #expect(!view.contains("if case .refreshing = status.refreshState {\n                ProgressView()"))
-        #expect(view.contains(".help(subtitle)"))
+        #expect(view.contains(".help(metric.subtitle ?? subtitle)"))
     }
 
     @Test func automaticChatGPTRefreshDoesNotOrderAWindowToTheFront() throws {
@@ -231,8 +232,10 @@ struct AppSourceBehaviorTests {
         #expect(appDelegate.contains("model.statusMenuShowsPercentages"))
         #expect(appDelegate.contains("showsBothLimits ? 74 : 56"))
         #expect(appDelegate.contains("model.statusMenuShowsPercentages ? 21 : 18"))
-        #expect(appDelegate.contains("accounts.count > 2 ? 5 : 6"))
-        #expect(appDelegate.contains("model.statusMenuServices"))
+        #expect(appDelegate.contains("rowCount > 2 ? 4 : 5"))
+        #expect(appDelegate.contains("model.statusMenuAccounts"))
+        #expect(appDelegate.contains("for scale in [1, 2]"))
+        #expect(!appDelegate.contains("image.lockFocus()"))
         #expect(appDelegate.contains("model.statusMenuScores(for: account.accountID)"))
         #expect(appDelegate.contains("model.$statusMenuLimitDisplay"))
         #expect(appDelegate.contains("drawCombinedBar"))

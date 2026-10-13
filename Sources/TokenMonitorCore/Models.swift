@@ -150,22 +150,57 @@ public struct UsageMetric: Codable, Equatable, Identifiable, Sendable {
     }
 
     private func compactResetText(_ text: String) -> String {
-        let withoutLongYear = text.replacingOccurrences(
-            of: #",\s*\d{4}"#,
-            with: "",
-            options: .regularExpression
-        )
-        let shortenedPrefix = withoutLongYear.replacingOccurrences(
-            of: #"^Resets\b"#,
-            with: "Reset",
-            options: [.regularExpression, .caseInsensitive]
-        )
+        let normalized = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)
+        let options: String.CompareOptions = [.regularExpression, .caseInsensitive]
+        let prefix = #"^(?:resets?\b\s*:?\s*|zurück(?:setzung|setzen|gesetzt)\b\s*:?\s*|bis zum zurücksetzen\s*:\s*)"#
+        var reset = normalized.replacingOccurrences(of: prefix, with: "", options: options)
+        if reset == normalized {
+            guard normalized.range(of: #"^wird\b.*\bzurückgesetzt[.!]?$"#, options: options) != nil else {
+                return text
+            }
+            reset = normalized.replacingOccurrences(of: #"^wird\s+"#, with: "", options: options)
+                .replacingOccurrences(of: #"\s+zurückgesetzt[.!]?$"#, with: "", options: options)
+        }
+        guard !reset.isEmpty else { return "Reset" }
+        reset = Self.convertingMeridiemTimesToTwentyFourHour(reset)
+        if !reset.lowercased().hasPrefix("in ") {
+            reset = reset.replacingOccurrences(of: #",\s*\d{4}\b|\s+\d{4}\b"#, with: "", options: .regularExpression)
+        }
+        reset = reset.replacingOccurrences(of: #"\b(?:at|on|am|um)\s+"#, with: "", options: options)
 
-        return Self.convertingMeridiemTimesToTwentyFourHour(shortenedPrefix)
+        let abbreviations = [
+            ("Monday", "Mon"), ("Tuesday", "Tue"), ("Wednesday", "Wed"),
+            ("Thursday", "Thu"), ("Friday", "Fri"), ("Saturday", "Sat"), ("Sunday", "Sun"),
+            ("Montag", "Mo"), ("Dienstag", "Di"), ("Mittwoch", "Mi"),
+            ("Donnerstag", "Do"), ("Freitag", "Fr"), ("Samstag", "Sa"), ("Sonntag", "So"),
+            ("January", "Jan"), ("February", "Feb"), ("March", "Mar"), ("April", "Apr"),
+            ("June", "Jun"), ("July", "Jul"), ("August", "Aug"), ("September", "Sep"),
+            ("October", "Oct"), ("November", "Nov"), ("December", "Dec"),
+            ("Januar", "Jan"), ("Februar", "Feb"), ("März", "Mär"), ("Mai", "Mai"),
+            ("Juni", "Jun"), ("Juli", "Jul"), ("Oktober", "Okt"), ("Dezember", "Dez")
+        ]
+        for (word, short) in abbreviations {
+            reset = reset.replacingOccurrences(of: "\\b\(word)\\b", with: short, options: options)
+        }
+        let units = [
+            (#"(?<=\d)\s*(?:days?|d)\b\.?"#, "d"),
+            (#"(?<=\d)\s*(?:hours?|hrs?|h)\b\.?"#, "h"),
+            (#"(?<=\d)\s*(?:minutes?|mins?|min)\b\.?"#, "min"),
+            (#"(?<=\d)\s*(?:Tage[n]?|T)\b\.?"#, "T"),
+            (#"(?<=\d)\s*(?:Stunden?|Std)\b\.?"#, "Std"),
+            (#"(?<=\d)\s*Minuten?\b\.?"#, "min")
+        ]
+        for (pattern, short) in units {
+            reset = reset.replacingOccurrences(of: pattern, with: short, options: options)
+        }
+        reset = reset.replacingOccurrences(of: #",\s*"#, with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return "Reset: \(reset)"
     }
 
     private static func convertingMeridiemTimesToTwentyFourHour(_ text: String) -> String {
-        let pattern = #"\b(\d{1,2}):(\d{2})\s*([AP]M)\b"#
+        let pattern = #"\b(\d{1,2})(?::(\d{2}))?\s*([AP]M)\b"#
         guard let expression = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
             return text
         }
@@ -178,14 +213,14 @@ public struct UsageMetric: Codable, Equatable, Identifiable, Sendable {
             guard
                 let fullRange = Range(match.range(at: 0), in: result),
                 let hourRange = Range(match.range(at: 1), in: result),
-                let minuteRange = Range(match.range(at: 2), in: result),
                 let meridiemRange = Range(match.range(at: 3), in: result),
-                let hour = Int(result[hourRange])
+                let hour = Int(result[hourRange]), (1...12).contains(hour)
             else {
                 continue
             }
 
-            let minute = result[minuteRange]
+            let minute = Range(match.range(at: 2), in: result).map { String(result[$0]) } ?? "00"
+            guard let minuteValue = Int(minute), (0...59).contains(minuteValue) else { continue }
             let meridiem = result[meridiemRange].uppercased()
             let convertedHour: Int
             if meridiem == "AM" {

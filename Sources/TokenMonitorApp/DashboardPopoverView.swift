@@ -231,7 +231,7 @@ private struct MetricCardView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
-                    .help(subtitle)
+                    .help(metric.subtitle ?? subtitle)
             } else {
                 Spacer(minLength: 0)
             }

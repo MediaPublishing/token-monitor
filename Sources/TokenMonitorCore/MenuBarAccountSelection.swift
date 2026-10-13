@@ -1,7 +1,6 @@
 import Foundation
 
 public struct MenuBarAccountSelection: Equatable, Sendable {
-    public static let maximumColumns = 4
     public private(set) var accountIDs: [String: [String]]
 
     public init(accountIDs: [String: [String]]? = nil, legacyAccountIDs: [String: String] = [:]) {
@@ -15,7 +14,7 @@ public struct MenuBarAccountSelection: Equatable, Sendable {
             guard let id = UUID(uuidString: raw), seen.insert(id).inserted else { return nil }
             return candidates.first { $0.id == id }
         }
-        if !selected.isEmpty { return Array(selected.prefix(Self.maximumColumns)) }
+        if !selected.isEmpty { return selected }
         return (candidates.first { $0.isPrimary } ?? candidates.first).map { [$0] } ?? []
     }
 
@@ -38,7 +37,7 @@ public struct MenuBarAccountSelection: Equatable, Sendable {
     public mutating func showAlongside(_ id: UUID, for service: ServiceKind, available: [MonitoredAccount]) -> Bool {
         guard available.contains(where: { $0.id == id && $0.service == service }) else { return false }
         var ids = accounts(for: service, available: available).map(\.id)
-        guard !ids.contains(id), ids.count < Self.maximumColumns else { return false }
+        guard !ids.contains(id) else { return false }
         ids.append(id)
         accountIDs[service.rawValue] = ids.map(\.uuidString)
         return true

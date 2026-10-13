@@ -154,12 +154,12 @@ struct SettingsView: View {
                             .foregroundStyle(providerStatusColor(for: status))
                             .frame(width: 88, alignment: .trailing)
                         let selectedAccounts = model.menuBarAccounts(for: service)
-                        let column = selectedAccounts.firstIndex(where: { $0.id == status.accountID })
+                        let selected = selectedAccounts.contains(where: { $0.id == status.accountID })
                         Image(systemName: "menubar.rectangle")
                             .foregroundStyle(.secondary)
-                            .opacity(column == nil ? 0 : 1)
+                            .opacity(selected ? 1 : 0)
                             .frame(width: 18)
-                            .help(column.map { "Menu bar column \($0 + 1)" } ?? "Not shown in menu bar")
+                            .help(model.menuBarPositionDescription(for: status.accountID))
                         Menu {
                             Button("Connect / Reconnect") { model.openLogin(accountID: status.accountID) }
                             Button("Rename...") {
@@ -167,16 +167,15 @@ struct SettingsView: View {
                                 renamingAccountID = status.accountID
                             }
                             if model.menuBarAccountID(for: service) != status.accountID {
-                                Button(column == nil ? "Show in menu bar" : "Move to first menu bar column") {
+                                Button(selected ? "Show first for \(service.displayName)" : "Show in menu bar") {
                                     model.setMenuBarAccount(status.accountID, for: service)
                                 }
                             }
-                            if column == nil {
-                                Button("Show alongside in menu bar") {
+                            if !selected {
+                                Button("Add to menu bar") {
                                     model.showMenuBarAccountAlongside(status.accountID, for: service)
                                 }
-                                .disabled(selectedAccounts.count >= MenuBarAccountSelection.maximumColumns)
-                                .help("Show up to four accounts per provider side by side.")
+                                .help("One bar per selected account. Up to six visible; additional accounts appear as +N.")
                             } else if selectedAccounts.count > 1 {
                                 Button("Hide from menu bar") { model.hideMenuBarAccount(status.accountID, for: service) }
                             }

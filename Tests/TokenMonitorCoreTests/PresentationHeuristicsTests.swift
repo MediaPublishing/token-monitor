@@ -139,8 +139,42 @@ struct PresentationHeuristicsTests {
             style: .progress
         )
 
-        #expect(shortReset.displaySubtitle == "Reset 17:55")
-        #expect(longReset.displaySubtitle == "Reset May 11 18:30")
-        #expect(noonReset.displaySubtitle == "Reset Fri 12:00")
+        #expect(shortReset.displaySubtitle == "Reset: 17:55")
+        #expect(longReset.displaySubtitle == "Reset: May 11 18:30")
+        #expect(noonReset.displaySubtitle == "Reset: Fri 12:00")
+    }
+
+    @Test(arguments: [
+        ("Wird um 23:10 zurückgesetzt", "Reset: 23:10"),
+        ("Zurücksetzung am Montag, 12:00", "Reset: Mo 12:00"),
+        ("Zurückgesetzt am Freitag um 19:30", "Reset: Fr 19:30"),
+        ("Wird in 5 Std. 0 Min. zurückgesetzt", "Reset: in 5Std 0min"),
+        ("Zurücksetzung in 7 Tagen 2 Stunden", "Reset: in 7T 2Std"),
+        ("Bis zum Zurücksetzen: 5 Std. 10 Min.", "Reset: 5Std 10min"),
+        ("Resets in 5 days 11 hours", "Reset: in 5d 11h"),
+        ("Resets in 1 hour 37 minutes", "Reset: in 1h 37min"),
+        ("Resets Friday at 12 PM", "Reset: Fri 12:00"),
+        ("Resets on Wednesday at 12:01 AM", "Reset: Wed 00:01"),
+        ("Resets September 29, 2026 8:50 AM", "Reset: Sep 29 08:50"),
+        ("Zurücksetzung am 22. Oktober 2026 um 16:28", "Reset: 22. Okt 16:28"),
+        ("Reset: Fr 12:00", "Reset: Fr 12:00"),
+        ("Starts with your first message", "Starts with your first message"),
+        ("Paused until the weekly reset", "Paused until the weekly reset"),
+        ("Reset time unavailable", "Reset: time unavailable")
+    ])
+    func resetPresentationKeepsDatesAndPreservesRawProviderText(input: String, expected: String) {
+        let metric = UsageMetric(key: "current-session", title: "Session", valueText: "86% remaining",
+                                 subtitle: input, progress: 0.86, style: .progress)
+        #expect(metric.displaySubtitle == expected)
+        #expect(metric.subtitle == input)
+    }
+
+    @Test func missingResetAndSeparateModelLimitsStayHonest() {
+        let missing = UsageMetric(key: "weekly-limit", title: "Weekly", valueText: "80% remaining",
+                                  subtitle: nil, progress: 0.8, style: .progress)
+        #expect(missing.displaySubtitle == nil)
+        let fable = UsageMetric(key: "weekly-fable", title: "Fable", valueText: "90% remaining",
+                                subtitle: "Separate weekly limit for Fable", progress: 0.9, style: .progress)
+        #expect(fable.displaySubtitle == "Separate Fable limit")
     }
 }

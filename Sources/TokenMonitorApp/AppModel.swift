@@ -424,14 +424,24 @@ final class AppModel: ObservableObject {
         menuBarAccountSelection.accounts(for: service, available: accounts)
     }
 
-    var statusMenuAccountColumns: [[ServiceStatus?]] {
-        let rows = statusMenuServices.map { service in
-            menuBarAccounts(for: service).map { dashboardState.account($0.id) }
+    var statusMenuAccounts: [ServiceStatus] {
+        statusMenuServices.flatMap { service in
+            menuBarAccounts(for: service).compactMap { dashboardState.account($0.id) }
         }
-        let count = max(1, rows.map(\.count).max() ?? 1)
-        return (0..<count).map { column in
-            rows.map { row in row.indices.contains(column) ? row[column] : nil }
+    }
+
+    var statusMenuAccountLayout: MenuBarAccountLayout {
+        MenuBarAccountLayout(accountCount: statusMenuAccounts.count)
+    }
+
+    func menuBarPositionDescription(for accountID: UUID) -> String {
+        guard let index = statusMenuAccounts.firstIndex(where: { $0.accountID == accountID }) else {
+            return "Not shown in menu bar"
         }
+        guard let position = statusMenuAccountLayout.position(at: index) else {
+            return "Additional selected account. Open the menu to see all accounts."
+        }
+        return "Menu bar: column \(position.column + 1), row \(position.row + 1)"
     }
 
     func setMenuBarAccount(_ accountID: UUID, for service: ServiceKind) {
@@ -455,7 +465,7 @@ final class AppModel: ObservableObject {
     private func storeMenuBarSelection(_ selection: MenuBarAccountSelection) {
         menuBarAccountSelection = selection
         UserDefaults.standard.set(selection.accountIDs, forKey: Keys.menuBarSelectionIDs)
-        // Keep the first-column preference readable by earlier app versions.
+        // Keep the primary-account preference readable by earlier app versions.
         UserDefaults.standard.set(selection.accountIDs.compactMapValues(\.first), forKey: Keys.menuBarAccountIDs)
     }
 

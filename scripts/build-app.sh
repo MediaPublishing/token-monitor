@@ -3,7 +3,12 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 CONFIGURATION="${1:-release}"
-BUILD_DIR="$(cd "$ROOT_DIR" && swift build --show-bin-path -c "$CONFIGURATION")"
+build_args=()
+if [[ -n "${TOKEN_MONITOR_BUILD_SDK:-}" ]]; then
+  [[ -d "$TOKEN_MONITOR_BUILD_SDK" ]] || { printf 'Build SDK not found.\n' >&2; exit 1; }
+  build_args=(--sdk "$TOKEN_MONITOR_BUILD_SDK" --build-system native)
+fi
+BUILD_DIR="$(cd "$ROOT_DIR" && swift build "${build_args[@]}" --show-bin-path -c "$CONFIGURATION")"
 APP_DIR="$ROOT_DIR/dist/TokenMonitor.app"
 MACOS_DIR="$APP_DIR/Contents/MacOS"
 RESOURCES_DIR="$APP_DIR/Contents/Resources"
@@ -13,7 +18,7 @@ CODESIGN_IDENTITY="${TOKEN_MONITOR_CODESIGN_IDENTITY:--}"
 
 cd "$ROOT_DIR"
 
-swift build -c "$CONFIGURATION"
+swift build "${build_args[@]}" -c "$CONFIGURATION"
 
 rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$FRAMEWORKS_DIR"

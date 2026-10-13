@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.43/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.44/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.43` (build 52).
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.44` (build 53).
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -89,7 +89,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.43/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.44/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -135,6 +135,8 @@ Version 1.0.38 reads Claude's updated **This week** and **Fable this week** usag
 #### Multiple accounts
 
 In **Settings > Providers**, click **+** next to Claude, ChatGPT, or OpenCode Go to add another account. Give it a name with **More > Rename**. Each additional account keeps its own persistent sign-in and appears separately in the dashboard. The original account and its existing sign-in stay in place. Choose **Show in menu bar** on the account whose capacity the provider's menu-bar indicator should show. Disconnecting or removing an additional account clears only that account's login data. The original provider accounts remain available for compatibility with previous versions.
+
+**Version 1.0.44 (53):** Selected accounts share one compact menu-bar item: two or three stacked, four in a 2-by-2 grid, and five or six in two columns of up to three. Additional selected accounts appear as **+N**; open the normal menu to see all accounts. Use **Add to menu bar**, **Hide from menu bar**, and **Show first for Claude** (or the other provider) in each account's Settings menu. Order and existing selections are preserved, with immediate cached updates and no reauthentication. Session/Total/**Both** still uses one track per account; optional percentages remain available. Native 1x/2x drawing keeps the small bars sharp. Reset subtitles use concise **Reset:** labels with short weekdays, dates and 24-hour times; hover to read the unchanged original provider text.
 
 **Version 1.0.43 (52):** Capacity, analysis, and Settings resize to their content, with scrolling only when the active display cannot fit the content. The existing native toolbar gains an optional analysis icon. Genuine, bundled vector provider logos accompany visible account names and render natively at the display's scale. Toolbar focus uses the full button outline only during keyboard navigation, not after opening the popover or clicking with the mouse. Project details expand directly to threads; token counts and shares appear together, with neutral usage bars. Settings use aligned rows, and reset reminders report notification permission problems and target the correct ChatGPT account. Switching the menu-bar account updates its cached capacity immediately, without a manual refresh. **Show alongside in menu bar** adds another account in a separate column; **Hide from menu bar** removes it from the indicator without disconnecting it. Up to four accounts per provider can be shown, with names and column order in the tooltip. **Move to first menu bar column** changes their order.
 
@@ -223,7 +225,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.43/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.44/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -269,6 +271,8 @@ Version 1.0.38 liest Claudes neue Nutzungslabels **This week** und **Fable this 
 #### Mehrere Accounts
 
 Unter **Settings > Providers** kannst du mit **+** für Claude, ChatGPT oder OpenCode Go weitere Accounts hinzufügen und über **More > Rename** benennen. Jeder zusätzliche Account bekommt eine eigene dauerhafte Anmeldung und erscheint separat im Dashboard. Der bisherige Account samt Login bleibt bestehen. Mit **Show in menu bar** bestimmst du, welcher Account eines Providers die Balken in der Menüleiste liefert. Das Trennen oder Entfernen eines zusätzlichen Accounts löscht nur dessen Login-Daten.
+
+**Version 1.0.44 (53):** Ausgewählte Konten teilen sich ein kompaktes Menüleisten-Symbol: zwei oder drei untereinander, vier als 2×2 und fünf oder sechs in zwei Spalten mit höchstens drei Zeilen. Weitere ausgewählte Konten erscheinen als **+N**; das normale Menü zeigt alle Konten. Im Kontomenü der Settings heißen die Aktionen **Add to menu bar**, **Hide from menu bar** und **Show first for Claude** (beziehungsweise den anderen Anbieter). Reihenfolge und bestehende Auswahl bleiben erhalten, Änderungen zeigen sofort die gecachten Werte ohne Neuanmeldung. Session/Total/**Both** verwendet weiterhin einen gemeinsamen Balken je Konto, Prozentwerte bleiben optional. Native 1x-/2x-Darstellung hält kleine Balken scharf. Kurze **Reset:**-Texte mit abgekürzten Wochentagen, Datum und 24-Stunden-Zeit ersetzen lange Anbieterformulierungen; beim Hover bleibt der unveränderte Originaltext lesbar.
 
 **Version 1.0.43 (52):** Kapazität, Analyse und Settings passen ihre Höhe an den Inhalt an. Nur wenn der Platz auf dem aktiven Bildschirm nicht reicht, wird gescrollt. Die native Kopfzeile erhält ein optionales Analyse-Icon. Echte, lokal gebündelte Vektorlogos stehen neben den lesbaren Kontonamen und werden nativ in der Bildschirmauflösung gezeichnet. Der Toolbar-Fokus verwendet den ganzen Button-Rahmen nur bei Tastaturbedienung, nicht beim Öffnen oder nach Mausklicks. Projekte klappen direkt zu ihren Threads auf; Tokenzahl und Anteil stehen zusammen, die Analysebalken bleiben neutral. Die Settings sind in abgestimmten Zeilen angeordnet. Reset-Erinnerungen zeigen Berechtigungsprobleme an und öffnen das richtige ChatGPT-Konto. Beim Kontowechsel zeigt die Menüleiste sofort die zuletzt erfasste Kapazität des gewählten Kontos, ohne manuellen Refresh. Mit **Show alongside in menu bar** erscheint ein weiteres Konto in einer eigenen Spalte daneben. **Hide from menu bar** blendet es nur aus, ohne es zu trennen. Bis zu vier Konten je Anbieter sind möglich; Namen und Spaltenreihenfolge stehen im Tooltip. **Move to first menu bar column** ändert die Reihenfolge.
 
