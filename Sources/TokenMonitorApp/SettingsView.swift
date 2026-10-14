@@ -218,7 +218,7 @@ struct SettingsView: View {
     }
 
     private var statusMenuSettingsCard: some View {
-        settingsCard("Status menu") {
+        settingsCard("Status menu", spacing: 6) {
             settingsToggle(
                 "Use colored status bars",
                 description: "Remaining capacity in color.",
@@ -231,15 +231,24 @@ struct SettingsView: View {
                 isOn: statusMenuPercentagesBinding
             )
 
-            VStack(alignment: .leading, spacing: 5) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Limit display")
-                        .font(.subheadline.weight(.semibold))
-                    Text("Session, total, or both.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                Text("Bar layout")
+                    .font(.subheadline.weight(.semibold))
+                Spacer(minLength: 0)
+                Picker("Bar layout", selection: statusMenuAccountArrangementBinding) {
+                    ForEach(MenuBarAccountArrangement.allCases) { arrangement in
+                        Text(arrangement.title).tag(arrangement)
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .labelsHidden()
+                .pickerStyle(.menu)
+                .fixedSize()
+            }
+            .help("Compact groups all accounts. By provider puts each provider in its own column, with up to three accounts below each other and additional accounts shown as +N.")
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Limit display")
+                    .font(.subheadline.weight(.semibold))
 
                 Picker("Limit display", selection: statusMenuLimitDisplayBinding) {
                     ForEach(StatusMenuLimitDisplay.allCases) { display in
@@ -250,6 +259,7 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .frame(maxWidth: .infinity)
             }
+            .help("Session, total, or both.")
         }
     }
 
@@ -414,6 +424,13 @@ struct SettingsView: View {
         Binding(
             get: { model.statusMenuLimitDisplay },
             set: { model.setStatusMenuLimitDisplay($0) }
+        )
+    }
+
+    private var statusMenuAccountArrangementBinding: Binding<MenuBarAccountArrangement> {
+        Binding(
+            get: { model.statusMenuAccountArrangement },
+            set: { model.setStatusMenuAccountArrangement($0) }
         )
     }
 

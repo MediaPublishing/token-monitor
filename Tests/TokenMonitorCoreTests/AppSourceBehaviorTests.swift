@@ -122,7 +122,8 @@ struct AppSourceBehaviorTests {
         #expect(delegate.contains("menuBarAccountSubscription = model.$menuBarAccountSelection\n            .receive(on: RunLoop.main)"))
         #expect(delegate.contains("model.$openCodeGoEnabled\n        )\n        .receive(on: RunLoop.main)"))
         #expect(delegate.contains("model.statusMenuAccountLayout"))
-        #expect(delegate.contains("accounts.prefix(layout.visibleCount)"))
+        #expect(delegate.contains("accounts.enumerated()"))
+        #expect(delegate.contains("guard let position = layout.position(at: index) else { continue }"))
         #expect(delegate.contains("offset + 1"))
         let start = try #require(model.range(of: "func setMenuBarAccount("))
         let end = try #require(model.range(of: "func openUsagePageInDefaultBrowser", range: start.upperBound..<model.endIndex))
@@ -133,6 +134,15 @@ struct AppSourceBehaviorTests {
         #expect(model.contains("legacyAccountIDs:"))
         #expect(settings.contains("Add to menu bar"))
         #expect(settings.contains("Hide from menu bar"))
+        #expect(delegate.contains("menuBarArrangementSubscription = model.$statusMenuAccountArrangement\n            .receive(on: RunLoop.main)"))
+        #expect(settings.contains("Picker(\"Bar layout\", selection: statusMenuAccountArrangementBinding)"))
+        let layoutStart = try #require(model.range(of: "func setStatusMenuAccountArrangement("))
+        let layoutEnd = try #require(model.range(of: "func setShowUsageDetails", range: layoutStart.upperBound..<model.endIndex))
+        let layoutSetter = model[layoutStart.lowerBound..<layoutEnd.lowerBound]
+        #expect(layoutSetter.contains("UserDefaults.standard.set(arrangement.rawValue"))
+        #expect(!layoutSetter.contains("refresh("))
+        #expect(!layoutSetter.contains("openLogin("))
+        #expect(!layoutSetter.contains("storeMenuBarSelection"))
     }
 
     @Test func refreshIndicatorStaysInsideTheFixedSizeButton() throws {

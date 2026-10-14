@@ -38,6 +38,7 @@ final class AppModel: ObservableObject {
         static let statusMenuUsesColor = "statusMenuUsesColor"
         static let statusMenuShowsPercentages = "statusMenuShowsPercentages"
         static let statusMenuLimitDisplay = "statusMenuLimitDisplay"
+        static let statusMenuAccountArrangement = "statusMenuAccountArrangement"
         static let showUsageDetails = "showUsageDetails"
         static let openCodeGoEnabled = "openCodeGoEnabled"
         static let menuBarAccountIDs = "menuBarAccountIDs"
@@ -56,6 +57,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var statusMenuUsesColor: Bool
     @Published private(set) var statusMenuShowsPercentages: Bool
     @Published private(set) var statusMenuLimitDisplay: StatusMenuLimitDisplay
+    @Published private(set) var statusMenuAccountArrangement: MenuBarAccountArrangement
     @Published private(set) var showUsageDetails: Bool
     @Published private(set) var openCodeGoEnabled: Bool
 
@@ -90,6 +92,7 @@ final class AppModel: ObservableObject {
             Keys.statusMenuUsesColor: true,
             Keys.statusMenuShowsPercentages: false,
             Keys.statusMenuLimitDisplay: StatusMenuLimitDisplay.total.rawValue,
+            Keys.statusMenuAccountArrangement: MenuBarAccountArrangement.compact.rawValue,
             Keys.showUsageDetails: false,
             Keys.openCodeGoEnabled: false
         ])
@@ -101,6 +104,9 @@ final class AppModel: ObservableObject {
         statusMenuLimitDisplay = StatusMenuLimitDisplay(
             rawValue: UserDefaults.standard.string(forKey: Keys.statusMenuLimitDisplay) ?? ""
         ) ?? .total
+        statusMenuAccountArrangement = MenuBarAccountArrangement(
+            persistedValue: UserDefaults.standard.string(forKey: Keys.statusMenuAccountArrangement)
+        )
         showUsageDetails = UserDefaults.standard.bool(forKey: Keys.showUsageDetails)
         openCodeGoEnabled = UserDefaults.standard.bool(forKey: Keys.openCodeGoEnabled)
         menuBarAccountSelection = MenuBarAccountSelection(
@@ -431,7 +437,7 @@ final class AppModel: ObservableObject {
     }
 
     var statusMenuAccountLayout: MenuBarAccountLayout {
-        MenuBarAccountLayout(accountCount: statusMenuAccounts.count)
+        MenuBarAccountLayout(accountServices: statusMenuAccounts.map(\.service), arrangement: statusMenuAccountArrangement)
     }
 
     func menuBarPositionDescription(for accountID: UUID) -> String {
@@ -531,6 +537,12 @@ final class AppModel: ObservableObject {
 
         statusMenuLimitDisplay = display
         UserDefaults.standard.set(display.rawValue, forKey: Keys.statusMenuLimitDisplay)
+    }
+
+    func setStatusMenuAccountArrangement(_ arrangement: MenuBarAccountArrangement) {
+        guard statusMenuAccountArrangement != arrangement else { return }
+        statusMenuAccountArrangement = arrangement
+        UserDefaults.standard.set(arrangement.rawValue, forKey: Keys.statusMenuAccountArrangement)
     }
 
     func setShowUsageDetails(_ enabled: Bool) {

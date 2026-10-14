@@ -53,7 +53,9 @@ private struct LayoutFixtureAccounts: AccountPersisting {
             ("analysis-closed-light", 2, .analytics, false, false, 900, false),
             ("analysis-open-light", 2, .analytics, false, false, 900, true),
             ("settings-light", 3, .settings, false, false, 760, false),
+            ("settings-by-provider-light", 3, .settings, false, false, 760, false),
             ("settings-dark-bounded", 6, .settings, false, true, 620, false),
+            ("settings-by-provider-dark-bounded", 6, .settings, false, true, 620, false),
             ("capacity-dark-bounded", 6, .dashboard, false, true, 480, false)
         ]
         for (name, count, screen, details, dark, maximum, expand) in scenarios {
@@ -64,6 +66,7 @@ private struct LayoutFixtureAccounts: AccountPersisting {
             if expand, let first = analytics.groups.first { analytics.setExpanded(first.id, true) }
             let model = AppModel(snapshotStore: LayoutFixtureSnapshots(snapshots: snapshots),
                                  accountStore: LayoutFixtureAccounts(count: count, snapshots: snapshots), analytics: analytics)
+            model.setStatusMenuAccountArrangement(name.contains("by-provider") ? .byProvider : .compact)
             model.popoverMaximumHeight = maximum
             switch screen {
             case .dashboard: model.showDashboardInPopover()
@@ -85,7 +88,6 @@ private struct LayoutFixtureAccounts: AccountPersisting {
             let overflowing = scrolls.contains {
                 ($0.documentView?.bounds.height ?? 0) > $0.contentView.bounds.height + 1
             }
-            if name == "settings-light" { precondition(!overflowing) }
             guard let bitmap = hosting.view.bitmapImageRepForCachingDisplay(in: hosting.view.bounds) else {
                 throw NSError(domain: "NativeLayoutProof", code: 1)
             }
@@ -94,6 +96,9 @@ private struct LayoutFixtureAccounts: AccountPersisting {
                 throw NSError(domain: "NativeLayoutProof", code: 2)
             }
             try png.write(to: output.appendingPathComponent(name + ".png"))
+            if name == "settings-light" || name == "settings-by-provider-light" {
+                precondition(!overflowing, "\(name): Settings unexpectedly scrolls at height \(height)")
+            }
             if name == "settings-light" || name == "settings-dark-bounded" {
                 try writeLogoScaleProofs(in: hosting.view, name: name, output: output)
             }

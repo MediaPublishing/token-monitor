@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     private var popoverScreenSubscription: AnyCancellable?
     private var statusMenuSettingsSubscription: AnyCancellable?
     private var menuBarAccountSubscription: AnyCancellable?
+    private var menuBarArrangementSubscription: AnyCancellable?
     private var updateSubscription: AnyCancellable?
     private var analyticsSubscription: AnyCancellable?
     private var dashboardHostingController: NSHostingController<AnyView>?
@@ -141,6 +142,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
                 self?.updateStatusItem()
             }
 
+        menuBarArrangementSubscription = model.$statusMenuAccountArrangement
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.updateStatusItem() }
+
         popoverScreenSubscription = Publishers.CombineLatest(
             model.$popoverScreen,
             model.$showUsageDetails
@@ -188,7 +193,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let showsBothLimits = model.statusMenuLimitDisplay == .both
         let columnWidth: CGFloat = model.statusMenuShowsPercentages
             ? (showsBothLimits ? 74 : 56)
-            : (layout.columnCount > 1 ? 14 : 24)
+            : (model.statusMenuAccountArrangement == .compact && layout.columnCount > 1 ? 14 : 24)
         let columnGap: CGFloat = 4
         let gridWidth = columnWidth * CGFloat(max(1, layout.columnCount))
             + columnGap * CGFloat(max(0, layout.columnCount - 1))
@@ -220,7 +225,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             context.cgContext.scaleBy(x: CGFloat(scale), y: CGFloat(scale))
             context.cgContext.clear(NSRect(origin: .zero, size: size))
 
-            for (index, account) in accounts.prefix(layout.visibleCount).enumerated() {
+            for (index, account) in accounts.enumerated() {
                 guard let position = layout.position(at: index) else { continue }
                 let offset = CGFloat(position.column) * (columnWidth + columnGap)
                 drawStatusAccount(account, row: position.row, rowCount: layout.rowCount,
