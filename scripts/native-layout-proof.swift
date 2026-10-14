@@ -46,19 +46,21 @@ private struct LayoutFixtureAccounts: AccountPersisting {
         NSApp.activate(ignoringOtherApps: true)
         var records: [[String: Any]] = []
         let snapshots = fixtures()
-        let scenarios: [(String, Int, PopoverScreen, Bool, Bool, CGFloat, Bool)] = [
-            ("capacity-two-light", 2, .dashboard, false, false, 900, false),
-            ("capacity-three-light", 3, .dashboard, false, false, 900, false),
-            ("capacity-details-light", 3, .dashboard, true, false, 900, false),
-            ("analysis-closed-light", 2, .analytics, false, false, 900, false),
-            ("analysis-open-light", 2, .analytics, false, false, 900, true),
-            ("settings-light", 3, .settings, false, false, 760, false),
-            ("settings-by-provider-light", 3, .settings, false, false, 760, false),
-            ("settings-dark-bounded", 6, .settings, false, true, 620, false),
-            ("settings-by-provider-dark-bounded", 6, .settings, false, true, 620, false),
-            ("capacity-dark-bounded", 6, .dashboard, false, true, 480, false)
+        let scenarios: [(String, Int, PopoverScreen, Bool, Bool, CGFloat, Bool, MenuBarAccountArrangement)] = [
+            ("capacity-two-light", 2, .dashboard, false, false, 900, false, .compact),
+            ("capacity-three-light", 3, .dashboard, false, false, 900, false, .compact),
+            ("capacity-details-light", 3, .dashboard, true, false, 900, false, .compact),
+            ("analysis-closed-light", 2, .analytics, false, false, 900, false, .compact),
+            ("analysis-open-light", 2, .analytics, false, false, 900, true, .compact),
+            ("settings-light", 3, .settings, false, false, 760, false, .compact),
+            ("settings-by-provider-light", 3, .settings, false, false, 760, false, .byProvider),
+            ("settings-by-account-light", 3, .settings, false, false, 760, false, .byAccount),
+            ("settings-dark-bounded", 6, .settings, false, true, 620, false, .compact),
+            ("settings-by-provider-dark-bounded", 6, .settings, false, true, 620, false, .byProvider),
+            ("settings-by-account-dark-bounded", 6, .settings, false, true, 620, false, .byAccount),
+            ("capacity-dark-bounded", 6, .dashboard, false, true, 480, false, .compact)
         ]
-        for (name, count, screen, details, dark, maximum, expand) in scenarios {
+        for (name, count, screen, details, dark, maximum, expand, arrangement) in scenarios {
             UserDefaults.standard.set(count >= 3, forKey: "openCodeGoEnabled")
             UserDefaults.standard.set(details, forKey: "showUsageDetails")
             UserDefaults.standard.set(false, forKey: "bankedResetRemindersEnabled")
@@ -66,7 +68,7 @@ private struct LayoutFixtureAccounts: AccountPersisting {
             if expand, let first = analytics.groups.first { analytics.setExpanded(first.id, true) }
             let model = AppModel(snapshotStore: LayoutFixtureSnapshots(snapshots: snapshots),
                                  accountStore: LayoutFixtureAccounts(count: count, snapshots: snapshots), analytics: analytics)
-            model.setStatusMenuAccountArrangement(name.contains("by-provider") ? .byProvider : .compact)
+            model.setStatusMenuAccountArrangement(arrangement)
             model.popoverMaximumHeight = maximum
             switch screen {
             case .dashboard: model.showDashboardInPopover()

@@ -244,7 +244,7 @@ struct SettingsView: View {
                 .pickerStyle(.menu)
                 .fixedSize()
             }
-            .help("Compact groups all accounts. By provider puts each provider in its own column, with up to three accounts below each other and additional accounts shown as +N.")
+            .help("Compact groups all accounts. By provider groups accounts in one column per provider. By account puts each selected account in its own column; with Both, Session is above Total. Up to six accounts are visible; more appear as +N. By account uses more menu-bar width; choose Compact if macOS hides the icon.")
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("Limit display")
@@ -259,7 +259,7 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .frame(maxWidth: .infinity)
             }
-            .help("Session, total, or both.")
+            .help("Session, total, or both for every selected account. Both uses a combined bar in Compact and By provider; By account shows Session above Total.")
         }
     }
 

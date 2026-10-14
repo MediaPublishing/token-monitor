@@ -58,6 +58,23 @@ struct MenuBarAccountLayoutTests {
         #expect(layout.position(at: 2) == .init(column: 1, row: 1))
     }
 
+    @Test(arguments: 0...12)
+    func accountColumnsKeepEverySelectedAccountInItsOwnColumn(count: Int) {
+        let services = (0..<count).map { $0 == 0 ? ServiceKind.chatGPT : .claude }
+        let arrangement = MenuBarAccountArrangement(persistedValue: "byAccount")
+        let layout = MenuBarAccountLayout(accountServices: services, arrangement: arrangement)
+        let visible = min(count, 6)
+        #expect(layout.visibleCount == visible)
+        #expect(layout.overflowCount == max(0, count - visible))
+        #expect(layout.columnCount == visible)
+        #expect(layout.rowCount == (visible == 0 ? 0 : 1))
+        for index in 0..<visible {
+            #expect(layout.position(at: index) == .init(column: index, row: 0))
+        }
+        #expect(layout.position(at: -1) == nil)
+        #expect(layout.position(at: visible) == nil)
+    }
+
     @Test func providerOverflowDoesNotHideTheNextProvider() {
         let services = Array(repeating: ServiceKind.chatGPT, count: 5)
             + Array(repeating: ServiceKind.claude, count: 5) + [.openCodeGo]
@@ -77,6 +94,7 @@ struct MenuBarAccountLayoutTests {
         #expect(MenuBarAccountArrangement(persistedValue: "") == .compact)
         #expect(MenuBarAccountArrangement(persistedValue: "unknown") == .compact)
         #expect(MenuBarAccountArrangement(persistedValue: "byProvider") == .byProvider)
+        #expect(MenuBarAccountArrangement(persistedValue: "byAccount") == .byAccount)
         #expect(MenuBarAccountLayout(accountServices: [], arrangement: .byProvider) == MenuBarAccountLayout(accountCount: 0))
     }
 }

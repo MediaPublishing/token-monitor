@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.45/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.46/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.45` (build 54).
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.46` (build 55).
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -22,11 +22,11 @@
 
 Native app views with synthetic example data, not private account usage. / Native App-Ansichten mit synthetischen Beispieldaten, keine privaten Kontodaten.
 
-Choose **Settings > Status menu > Bar layout**: **Compact** keeps the stacked grid as the default; **By provider** gives each provider its own column, with its accounts below each other. Switching is immediate and saved across restarts. Up to six accounts are visible, with at most three rows per provider; additional selections appear as +N. Enable OpenCode Go in Settings to include its capacity.
+Choose **Settings > Status menu > Bar layout**: **Compact** keeps the stacked grid as the default; **By provider** groups accounts in a column per provider. **By account** puts each selected account in its own column. With **Limit display > Both**, By account shows two separate bars per account: Session above Total. Compact and By provider keep one combined track per account. Enable **Menu bar percentages** to show both values. Switching is immediate and saved across restarts. Up to six accounts are visible, with at most three rows per provider in By provider; more appear as +N. Enable OpenCode Go in Settings to include its capacity.
 
-Wähle **Settings > Status menu > Bar layout**: **Compact** behält das gestapelte Raster als Standard; **By provider** gibt jedem Anbieter eine eigene Spalte, mit dessen Konten untereinander. Die Umschaltung wirkt sofort und bleibt nach Neustarts erhalten. Bis zu sechs Konten sind sichtbar, mit höchstens drei Zeilen pro Anbieter; weitere erscheinen als +N. OpenCode Go lässt sich optional zuschalten.
+Wähle **Settings > Status menu > Bar layout**: **Compact** behält das gestapelte Raster als Standard; **By provider** gruppiert die Konten in einer Spalte je Anbieter. **By account** gibt jedem ausgewählten Konto eine eigene Spalte. Mit **Limit display > Both** zeigt By account zwei getrennte Balken je Konto: Session oben, Total unten. Compact und By provider behalten einen gemeinsamen Balken je Konto. **Menu bar percentages** blendet beide Werte ein. Die Umschaltung wirkt sofort und bleibt nach Neustarts erhalten. Bis zu sechs Konten sind sichtbar, in By provider höchstens drei Zeilen pro Anbieter; weitere erscheinen als +N. OpenCode Go lässt sich optional zuschalten.
 
-![Native compact and provider-column layouts with example accounts](assets/screenshots/app/menu-bar-layout-options.png)
+![Native Compact, By provider and By account layouts with example accounts](assets/screenshots/app/menu-bar-layout-options.png)
 
 ### Claude Usage
 ![Token Monitor Claude usage screenshot](assets/screenshots/app/claude.png)
@@ -91,7 +91,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.45/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.46/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -227,7 +227,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.45/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.46/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet

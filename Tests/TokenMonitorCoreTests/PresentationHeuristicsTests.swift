@@ -77,6 +77,24 @@ struct PresentationHeuristicsTests {
         #expect(snapshot.statusMenuSessionScore == 0.94)
     }
 
+    @Test(arguments: [(1.0, 0.07), (0.66, 0.47)])
+    func claudeMenuBarUsesEachAccountsSessionAndAllModels(session: Double, total: Double) {
+        let snapshot = ServiceSnapshot(
+            service: .claude,
+            capturedAt: .now,
+            pageTitle: "Claude",
+            url: ServiceKind.claude.usageURL.absoluteString,
+            metrics: [
+                UsageMetric(key: "current-session", title: "Session", valueText: "\(Int(session * 100))% remaining", subtitle: nil, progress: session, style: .progress),
+                UsageMetric(key: "weekly-all-models", title: "All models", valueText: "\(Int(total * 100))% remaining", subtitle: nil, progress: total, style: .progress),
+                UsageMetric(key: "weekly-sonnet", title: "Fable", valueText: "100% remaining", subtitle: nil, progress: 1, style: .progress)
+            ]
+        )
+
+        #expect(snapshot.statusMenuSessionScore == session)
+        #expect(snapshot.statusMenuTotalScore == total)
+    }
+
     @Test func statusMenuSeparatesWeeklyAndFiveHourScoresForChatGPT() {
         let snapshot = ServiceSnapshot(
             service: .chatGPT,
@@ -111,6 +129,26 @@ struct PresentationHeuristicsTests {
         #expect(snapshot.capacityScore == 0.84)
         #expect(snapshot.statusMenuTotalScore == 0.94)
         #expect(snapshot.statusMenuSessionScore == 0.84)
+    }
+
+    @Test(arguments: [ServiceKind.chatGPT, .claude, .openCodeGo])
+    func observedMenuLimitsDoNotBorrowValuesFromAnotherScope(service: ServiceKind) {
+        let keys: (session: String, total: String)
+        switch service {
+        case .chatGPT: keys = ("five-hour-limit", "weekly-limit")
+        case .claude: keys = ("current-session", "weekly-all-models")
+        case .openCodeGo: keys = ("rolling-usage", "weekly-usage")
+        }
+        let totalOnly = ServiceSnapshot(service: service, capturedAt: .now, pageTitle: "Synthetic", url: service.usageURL.absoluteString,
+            metrics: [UsageMetric(key: keys.total, title: "Total", valueText: "47% remaining", subtitle: nil, progress: 0.47, style: .progress)])
+        let sessionOnly = ServiceSnapshot(service: service, capturedAt: .now, pageTitle: "Synthetic", url: service.usageURL.absoluteString,
+            metrics: [UsageMetric(key: keys.session, title: "Session", valueText: "66% remaining", subtitle: nil, progress: 0.66, style: .progress)])
+        #expect(totalOnly.observedStatusMenuSessionScore == nil)
+        #expect(totalOnly.observedStatusMenuTotalScore == 0.47)
+        #expect(sessionOnly.observedStatusMenuSessionScore == 0.66)
+        #expect(sessionOnly.observedStatusMenuTotalScore == nil)
+        #expect(totalOnly.statusMenuSessionScore == 0.47)
+        #expect(sessionOnly.statusMenuTotalScore == 0.66)
     }
 
     @Test func displaySubtitleUsesCompactTwentyFourHourResetTimes() {
