@@ -77,6 +77,24 @@ struct PresentationHeuristicsTests {
         #expect(snapshot.statusMenuSessionScore == 0.94)
     }
 
+    @Test(arguments: [(1.0, 0.07), (0.66, 0.47)])
+    func claudeMenuBarUsesEachAccountsSessionAndAllModels(session: Double, total: Double) {
+        let snapshot = ServiceSnapshot(
+            service: .claude,
+            capturedAt: .now,
+            pageTitle: "Claude",
+            url: ServiceKind.claude.usageURL.absoluteString,
+            metrics: [
+                UsageMetric(key: "current-session", title: "Session", valueText: "\(Int(session * 100))% remaining", subtitle: nil, progress: session, style: .progress),
+                UsageMetric(key: "weekly-all-models", title: "All models", valueText: "\(Int(total * 100))% remaining", subtitle: nil, progress: total, style: .progress),
+                UsageMetric(key: "weekly-sonnet", title: "Fable", valueText: "100% remaining", subtitle: nil, progress: 1, style: .progress)
+            ]
+        )
+
+        #expect(snapshot.statusMenuSessionScore == session)
+        #expect(snapshot.statusMenuTotalScore == total)
+    }
+
     @Test func statusMenuSeparatesWeeklyAndFiveHourScoresForChatGPT() {
         let snapshot = ServiceSnapshot(
             service: .chatGPT,
