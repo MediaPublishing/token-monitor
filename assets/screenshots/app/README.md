@@ -1,6 +1,6 @@
 # App screenshots
 
-Version: 1.0.45 (54). These are native SwiftUI/AppKit views captured with synthetic example data, not private account screenshots. Dashboard sections use the production `ServiceSectionView` with successful fixture refresh states; the Settings example shows restored, stale fixture accounts. Analysis totals come from generated local Codex/Claude Code fixtures. All provider logos use the app's genuine bundled vector assets.
+Version: 1.0.46 (55). These are native SwiftUI/AppKit views captured with synthetic example data, not private account screenshots. Dashboard sections use the production `ServiceSectionView` with successful fixture refresh states; the Settings example shows restored, stale fixture accounts. Analysis totals come from generated local Codex/Claude Code fixtures. All provider logos use the app's genuine bundled vector assets.
 
 Regenerate with the isolated QA app:
 
@@ -13,4 +13,4 @@ The named `dashboard`, `claude`, `chatgpt`, `analysis` and `settings` PNGs are c
 
 `menu-bar-accounts.png` comes from `bash scripts/check-menu-bar-rendering.sh`, using the production `AppDelegate` with isolated synthetic cached accounts. The native-size and 2x detail views show 2/3/4/6 accounts; the verification also covers overflow through nine selected accounts and both 1x/2x bitmap representations. Orange/red reflect the fixture's cached/stale state, not any real account. No generated mockup is used as a production screenshot.
 
-`menu-bar-layout-options.png` compares the default Compact layout with By provider for the same three synthetic accounts from two providers. Both examples use the production renderer in Both mode, with one combined track per account. The verifier covers both arrangements, persistent preferences, reserving each provider under overflow and switching without a refresh.
+`menu-bar-layout-options.png` compares Compact (default), By provider and By account for the same three synthetic accounts from two providers. All use the production renderer in Both mode. Compact and By provider keep one combined track per account; By account shows Session above Total in a separate column per account. The verifier covers all three arrangements, persistent preferences, reserving each provider under By-provider overflow and switching without a refresh.

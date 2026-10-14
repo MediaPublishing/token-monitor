@@ -131,6 +131,26 @@ struct PresentationHeuristicsTests {
         #expect(snapshot.statusMenuSessionScore == 0.84)
     }
 
+    @Test(arguments: [ServiceKind.chatGPT, .claude, .openCodeGo])
+    func observedMenuLimitsDoNotBorrowValuesFromAnotherScope(service: ServiceKind) {
+        let keys: (session: String, total: String)
+        switch service {
+        case .chatGPT: keys = ("five-hour-limit", "weekly-limit")
+        case .claude: keys = ("current-session", "weekly-all-models")
+        case .openCodeGo: keys = ("rolling-usage", "weekly-usage")
+        }
+        let totalOnly = ServiceSnapshot(service: service, capturedAt: .now, pageTitle: "Synthetic", url: service.usageURL.absoluteString,
+            metrics: [UsageMetric(key: keys.total, title: "Total", valueText: "47% remaining", subtitle: nil, progress: 0.47, style: .progress)])
+        let sessionOnly = ServiceSnapshot(service: service, capturedAt: .now, pageTitle: "Synthetic", url: service.usageURL.absoluteString,
+            metrics: [UsageMetric(key: keys.session, title: "Session", valueText: "66% remaining", subtitle: nil, progress: 0.66, style: .progress)])
+        #expect(totalOnly.observedStatusMenuSessionScore == nil)
+        #expect(totalOnly.observedStatusMenuTotalScore == 0.47)
+        #expect(sessionOnly.observedStatusMenuSessionScore == 0.66)
+        #expect(sessionOnly.observedStatusMenuTotalScore == nil)
+        #expect(totalOnly.statusMenuSessionScore == 0.47)
+        #expect(sessionOnly.statusMenuTotalScore == 0.66)
+    }
+
     @Test func displaySubtitleUsesCompactTwentyFourHourResetTimes() {
         let shortReset = UsageMetric(
             key: "five-hour-limit",

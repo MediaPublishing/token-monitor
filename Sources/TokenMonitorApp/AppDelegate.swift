@@ -190,7 +190,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
     func makeCapacityStatusImage(for appearance: NSAppearance?) -> NSImage? {
         let accounts = model.statusMenuAccounts
         let layout = model.statusMenuAccountLayout
-        let showsBothLimits = model.statusMenuLimitDisplay == .both
+        let separatesLimits = model.statusMenuAccountArrangement == .byAccount && model.statusMenuLimitDisplay == .both
+        let showsBothLimits = model.statusMenuLimitDisplay == .both && !separatesLimits
+        let rowCount = separatesLimits ? 2 : layout.rowCount
         let columnWidth: CGFloat = model.statusMenuShowsPercentages
             ? (showsBothLimits ? 74 : 56)
             : (model.statusMenuAccountArrangement == .compact && layout.columnCount > 1 ? 14 : 24)
@@ -205,13 +207,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let overflowWidth = layout.overflowCount > 0
             ? ceil((overflowLabel as NSString).size(withAttributes: overflowAttributes).width) + 4
             : 0
-        let height: CGFloat = layout.rowCount > 2
+        let height: CGFloat = rowCount > 2
             ? (model.statusMenuShowsPercentages ? 21 : 18)
             : 16
         let size = NSSize(width: gridWidth + overflowWidth, height: height)
         let image = NSImage(size: size)
         let foregroundColor = statusBarForegroundColor(for: appearance)
         let trackColor = statusBarTrackColor(for: appearance)
+        let displays: [StatusMenuLimitDisplay] = separatesLimits ? [.session, .total] : [model.statusMenuLimitDisplay]
         // Supply both backing scales so tiny bars remain sharp on Retina displays.
         for scale in [1, 2] {
             guard let bitmap = NSBitmapImageRep(
@@ -228,10 +231,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             for (index, account) in accounts.enumerated() {
                 guard let position = layout.position(at: index) else { continue }
                 let offset = CGFloat(position.column) * (columnWidth + columnGap)
-                drawStatusAccount(account, row: position.row, rowCount: layout.rowCount,
-                                  width: columnWidth, height: height, offset: offset,
-                                  showsBothLimits: showsBothLimits,
-                                  foregroundColor: foregroundColor, trackColor: trackColor)
+                for (limitIndex, display) in displays.enumerated() {
+                    drawStatusAccount(account, row: separatesLimits ? limitIndex : position.row, rowCount: rowCount,
+                                      width: columnWidth, height: height, offset: offset, display: display,
+                                      foregroundColor: foregroundColor, trackColor: trackColor)
+                }
             }
             if layout.overflowCount > 0 {
                 let labelHeight = (overflowLabel as NSString).size(withAttributes: overflowAttributes).height
@@ -249,7 +253,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     private func drawStatusAccount(_ account: ServiceStatus, row: Int, rowCount: Int,
                                    width: CGFloat, height: CGFloat, offset: CGFloat,
-                                   showsBothLimits: Bool, foregroundColor: NSColor, trackColor: NSColor) {
+                                   display: StatusMenuLimitDisplay, foregroundColor: NSColor, trackColor: NSColor) {
         let rowHeight = height / CGFloat(max(rowCount, 1))
         let barHeight: CGFloat = rowCount > 2 ? 4 : 5
         let statusValueFontSize: CGFloat = rowCount > 2 ? 6 : 7
@@ -257,7 +261,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let barY = rowY + (rowHeight - barHeight) / 2
         let status = account.connectionStatus
         let scores = model.statusMenuScores(for: account.accountID)
-        let selectedScore = model.statusMenuLimitDisplay == .session ? scores.session : scores.total
+        let selectedScore = display == .session ? scores.session : scores.total
+        let showsBothLimits = display == .both
 
         if model.statusMenuShowsPercentages {
             if showsBothLimits {
@@ -486,11 +491,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             case .total: capacity = "Total \(percentage(scores.total))"
             case .both: capacity = "Session \(percentage(scores.session)) / Total \(percentage(scores.total))"
             }
-            let location = layout.position(at: index).map { "\($0.column + 1).\($0.row + 1)" } ?? "+"
+            let location = layout.position(at: index).map {
+                model.statusMenuAccountArrangement == .byAccount
+                    ? "Column \($0.column + 1)" : "\($0.column + 1).\($0.row + 1)"
+            } ?? "+"
             return "\(location) \(name): \(capacity), \(model.stateDescription(for: status))"
         }
         let limitDescription = model.statusMenuLimitDisplay == .both
-            ? "Menu bar: Session / Total"
+            ? "Menu bar: Session / Total" + (model.statusMenuAccountArrangement == .byAccount ? " (top / bottom per account)" : "")
             : "Menu bar: \(model.statusMenuLimitDisplay.title)"
         let overflow = layout.overflowCount > 0
             ? ["+\(layout.overflowCount) additional accounts. Open the menu to see all accounts."] : []

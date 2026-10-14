@@ -66,25 +66,20 @@ private struct ProofSnapshots: SnapshotPersisting {
             let bitmaps = image.representations.compactMap { $0 as? NSBitmapImageRep }
             precondition(bitmaps.map(\.pixelsWide).sorted() == [Int(image.size.width), Int(image.size.width) * 2])
             let layout = model.statusMenuAccountLayout
+            let separatesLimits = model.statusMenuAccountArrangement == .byAccount && model.statusMenuLimitDisplay == .both
             let columnWidth: CGFloat = model.statusMenuShowsPercentages
-                ? (model.statusMenuLimitDisplay == .both ? 74 : 56)
+                ? (model.statusMenuLimitDisplay == .both && !separatesLimits ? 74 : 56)
                 : (model.statusMenuAccountArrangement == .compact && layout.columnCount > 1 ? 14 : 24)
             let gridWidth = columnWidth * CGFloat(layout.columnCount) + CGFloat(layout.columnCount - 1) * 4
-            let barStart: CGFloat = model.statusMenuShowsPercentages ? (model.statusMenuLimitDisplay == .both ? 43 : 29) : 1
+            let barStart: CGFloat = model.statusMenuShowsPercentages ? (model.statusMenuLimitDisplay == .both && !separatesLimits ? 43 : 29) : 1
             for bitmap in bitmaps {
                 let scale = CGFloat(bitmap.pixelsWide) / image.size.width
                 for column in 0..<layout.columnCount {
                     let start = Int((CGFloat(column) * (columnWidth + 4) + barStart + 1) * scale)
                     let end = Int((CGFloat(column) * (columnWidth + 4) + columnWidth - 2) * scale)
-                    var bands = 0
-                    var wasFilled = false
-                    for y in 0..<bitmap.pixelsHigh {
-                        let filled = (start..<end).contains { x in (bitmap.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.05 }
-                        if filled && !wasFilled { bands += 1 }
-                        wasFilled = filled
-                    }
+                    let bands = barBandCount(in: bitmap, start: start, end: end)
                     let expected = model.statusMenuAccounts.indices.compactMap { layout.position(at: $0) }
-                        .filter { $0.column == column }.count
+                        .filter { $0.column == column }.count * (separatesLimits ? 2 : 1)
                     precondition(bands == expected, "\(name): column \(column) has \(bands) bars, expected \(expected)")
                 }
                 if layout.overflowCount == 0 {
@@ -104,6 +99,7 @@ private struct ProofSnapshots: SnapshotPersisting {
                             "arrangement": model.statusMenuAccountArrangement.rawValue,
                             "visible": layout.visibleCount, "overflow": layout.overflowCount,
                             "columns": layout.columnCount, "rows": layout.rowCount,
+                            "separateLimitRows": separatesLimits,
                             "width": image.size.width, "height": image.size.height, "scales": [1, 2]])
             return image
         }
@@ -168,7 +164,31 @@ private struct ProofSnapshots: SnapshotPersisting {
         precondition(totalImage.tiffRepresentation != bothImage.tiffRepresentation)
         precondition(model.statusMenuScores(for: primary.id).total == 0.07)
         precondition(model.statusMenuScores(for: second.id).session == 0.66)
-        try writeLimitComparison(total: totalImage, both: bothImage, output: output)
+        model.setStatusMenuAccountArrangement(.byAccount)
+        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        precondition(updatedImage?.size.width == 176)
+        precondition(model.menuBarAccountSelection == selectionBeforeLimitChange && !model.isRefreshing)
+        let accountImage = try render("patrick-by-account-both", dark: true)
+        let restoredAccountLayout = AppModel(snapshotStore: ProofSnapshots(), accountStore: proofAccounts,
+                                            analytics: ProjectAnalyticsModel(defaults: analyticsDefaults, home: output))
+        precondition(restoredAccountLayout.statusMenuAccountArrangement == .byAccount)
+        precondition(restoredAccountLayout.statusMenuAccountLayout.columnCount == 3)
+        precondition(model.menuBarPositionDescription(for: primary.id) == "Menu bar: column 2, Session above Total")
+        for bitmap in accountImage.representations.compactMap({ $0 as? NSBitmapImageRep }) {
+            let scale = CGFloat(bitmap.pixelsWide) / accountImage.size.width
+            func isFilled(column: Int, fraction: CGFloat, row: Int) -> Bool {
+                let x = Int((CGFloat(column) * 60 + 29 + 26 * fraction) * scale)
+                let y = Int((row == 0 ? 4 : 12) * scale)
+                return (bitmap.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.8
+            }
+            precondition(isFilled(column: 1, fraction: 0.8, row: 0))
+            precondition(!isFilled(column: 2, fraction: 0.8, row: 0))
+            precondition(!isFilled(column: 1, fraction: 0.25, row: 1))
+            precondition(isFilled(column: 2, fraction: 0.25, row: 1))
+            precondition(isFilled(column: 2, fraction: 0.5, row: 0))
+            precondition(!isFilled(column: 2, fraction: 0.5, row: 1))
+        }
+        try writeLimitComparison(total: totalImage, both: bothImage, byAccount: accountImage, output: output)
         model.setMenuBarAccount(second.id, for: .claude)
 
         for count in 3...9 {
@@ -184,7 +204,7 @@ private struct ProofSnapshots: SnapshotPersisting {
                     for colored in [true, false] {
                         model.setStatusMenuUsesColor(colored)
                         for dark in [false, true] {
-                            let prefix = arrangement == .compact ? "" : "by-provider-"
+                            let prefix = arrangement == .compact ? "" : (arrangement == .byProvider ? "by-provider-" : "by-account-")
                             let image = try render("\(prefix)\(count)-\(display.rawValue)-\(percentages ? "percent" : "bars")-\(colored ? "color" : "mono")-\(dark ? "dark" : "light")", dark: dark)
                             if arrangement == .compact && display == .total && !percentages && colored && !dark && [3, 4, 6].contains(count) {
                                 examples[count] = image
@@ -218,6 +238,38 @@ private struct ProofSnapshots: SnapshotPersisting {
         precondition(threeProviderImage.size.width == 32 && threeProviderImage.size.height == 16)
         let threeProviderBitmap = NSBitmapImageRep(data: threeProviderImage.tiffRepresentation!)!
         try threeProviderBitmap.representation(using: .png, properties: [:])!.write(to: output.appendingPathComponent("three-providers.png"))
+        threeProviders.setStatusMenuAccountArrangement(.byAccount)
+        let unavailableImage = AppDelegate(model: threeProviders).makeCapacityStatusImage(for: NSAppearance(named: .aqua))!
+        precondition(unavailableImage.size == NSSize(width: 108, height: 16))
+        for bitmap in unavailableImage.representations.compactMap({ $0 as? NSBitmapImageRep }) {
+            let scale = Int(CGFloat(bitmap.pixelsWide) / unavailableImage.size.width)
+            for column in 0..<4 {
+                precondition(barBandCount(in: bitmap, start: (column * 28 + 3) * scale,
+                                          end: (column * 28 + 22) * scale) == 2,
+                             "By account must keep both rows visible even with no authenticated snapshot")
+            }
+            try bitmap.representation(using: .png, properties: [:])!
+                .write(to: output.appendingPathComponent("by-account-unavailable-provider-\(scale)x.png"))
+        }
+        records.append(["name": "by-account-unavailable-provider", "accounts": 4, "arrangement": "byAccount",
+                        "visible": 4, "overflow": 0, "columns": 4, "rows": 1, "separateLimitRows": true,
+                        "width": 108, "height": 16, "scales": [1, 2]])
+        var partialChatGPT = chatGPT
+        partialChatGPT.snapshot = ServiceSnapshot(service: .chatGPT, capturedAt: .now, pageTitle: "Synthetic partial limits",
+            url: ServiceKind.chatGPT.usageURL.absoluteString, metrics: chatGPT.snapshot!.metrics.filter { $0.key == "weekly-limit" })
+        let partialModel = AppModel(snapshotStore: ProofSnapshots(), accountStore: ProofAccounts(accounts: [partialChatGPT, primary, second]),
+                                    analytics: ProjectAnalyticsModel(defaults: analyticsDefaults, home: output))
+        precondition(partialModel.statusMenuScores(for: chatGPT.id).session == nil)
+        precondition(partialModel.statusMenuScores(for: chatGPT.id).total == 0.99)
+        let partialImage = AppDelegate(model: partialModel).makeCapacityStatusImage(for: NSAppearance(named: .aqua))!
+        for bitmap in partialImage.representations.compactMap({ $0 as? NSBitmapImageRep }) {
+            let scale = Int(CGFloat(bitmap.pixelsWide) / partialImage.size.width)
+            precondition((bitmap.colorAt(x: 12 * scale, y: 4 * scale)?.alphaComponent ?? 0) < 0.8)
+            precondition((bitmap.colorAt(x: 12 * scale, y: 12 * scale)?.alphaComponent ?? 0) > 0.8)
+            precondition(barBandCount(in: bitmap, start: 3 * scale, end: 22 * scale) == 2)
+        }
+        partialModel.setStatusMenuAccountArrangement(.compact)
+        precondition(partialModel.statusMenuScores(for: chatGPT.id).session == 0.99)
         for account in extras { threeProviders.showMenuBarAccountAlongside(account.id, for: .claude) }
         threeProviders.setStatusMenuAccountArrangement(.byProvider)
         let grouped = threeProviders.statusMenuAccountLayout
@@ -240,11 +292,22 @@ private struct ProofSnapshots: SnapshotPersisting {
         withExtendedLifetime(observation) { }
         withExtendedLifetime(arrangementObservation) { }
         withExtendedLifetime(limitObservation) { }
-        print("PASS: \(records.count) native renders, independent Claude account limits (100/7 and 66/47), queued account/arrangement/limit changes without refresh, persisted layout, compact fallback for invalid preferences, exact bar-band counts in both layouts, all limits/percentages/colors/appearances, bounded +N overflow, nine selected accounts preserved, reorder/hide, unavailable provider")
+        print("PASS: \(records.count) native renders, independent Claude account limits (100/7 and 66/47), queued account/arrangement/limit changes without refresh, persisted layout, compact fallback for invalid preferences, exact bar-band counts in all three layouts, account-column limit endpoints at 1x/2x, all limits/percentages/colors/appearances, bounded +N overflow, nine selected accounts preserved, reorder/hide, unavailable provider, missing Session stays unknown in By account")
     }
 
-    private static func writeLimitComparison(total: NSImage, both: NSImage, output: URL) throws {
-        let view = NSView(frame: NSRect(x: 0, y: 0, width: 560, height: 292))
+    private static func barBandCount(in bitmap: NSBitmapImageRep, start: Int, end: Int) -> Int {
+        var bands = 0
+        var wasFilled = false
+        for y in 0..<bitmap.pixelsHigh {
+            let filled = (start..<end).contains { x in (bitmap.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.05 }
+            if filled && !wasFilled { bands += 1 }
+            wasFilled = filled
+        }
+        return bands
+    }
+
+    private static func writeLimitComparison(total: NSImage, both: NSImage, byAccount: NSImage, output: URL) throws {
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 650, height: 372))
         view.appearance = NSAppearance(named: .darkAqua)
         view.wantsLayer = true
         view.layer?.backgroundColor = NSColor(calibratedWhite: 0.16, alpha: 1).cgColor
@@ -252,26 +315,26 @@ private struct ProofSnapshots: SnapshotPersisting {
             let field = NSTextField(labelWithString: text)
             field.font = .systemFont(ofSize: size, weight: bold ? .semibold : .regular)
             field.textColor = .white
-            field.frame = NSRect(x: x, y: y, width: 520, height: 22)
+            field.frame = NSRect(x: x, y: y, width: 610, height: 22)
             view.addSubview(field)
         }
-        label("Session und Gesamtlimit je Konto", x: 20, y: 248, size: 18, bold: true)
-        label("Original-Renderer · Beispielwerte · 2x vergrößert · ohne Farben", x: 20, y: 224, size: 11)
-        for (index, entry) in [("Total", total), ("Both: Session / Total", both)].enumerated() {
-            let y = CGFloat(168 - index * 72)
+        label("Session und Gesamtlimit je Konto", x: 20, y: 328, size: 18, bold: true)
+        label("Original-Renderer · Beispielwerte · 2x vergrößert · ohne Farben", x: 20, y: 304, size: 11)
+        for (index, entry) in [("By provider + Total", total), ("By provider + Both", both), ("By account + Both", byAccount)].enumerated() {
+            let y = CGFloat(248 - index * 72)
             label(entry.0, x: 20, y: y, bold: true)
             let imageView = NSImageView(image: entry.1)
             imageView.imageScaling = .scaleProportionallyUpOrDown
-            imageView.frame = NSRect(x: 216, y: y - 8, width: entry.1.size.width * 2, height: entry.1.size.height * 2)
+            imageView.frame = NSRect(x: 256, y: y - 8, width: entry.1.size.width * 2, height: entry.1.size.height * 2)
             view.addSubview(imageView)
         }
-        label("Links: ChatGPT · rechts oben: Claude · rechts unten: Claude Pat", x: 20, y: 52, size: 11)
-        label("Both: Claude 100/7 % · Claude Pat 66/47 %", x: 20, y: 30, size: 11)
+        label("By account: ChatGPT | Claude (100 / 7 %) | Claude Pat (66 / 47 %)", x: 20, y: 52, size: 11)
+        label("Je Konto: Session oben, Gesamtlimit unten", x: 20, y: 30, size: 11)
         let window = NSWindow(contentRect: view.bounds, styleMask: .borderless, backing: .buffered, defer: false)
         window.appearance = NSAppearance(named: .darkAqua)
         window.contentView = view
         view.layoutSubtreeIfNeeded()
-        let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1120, pixelsHigh: 584,
+        let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1300, pixelsHigh: 744,
                                      bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
                                      colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
         bitmap.size = view.bounds.size
@@ -329,7 +392,7 @@ private struct ProofSnapshots: SnapshotPersisting {
     }
 
     private static func writeArrangementExamples(model: AppModel, renderer: AppDelegate, output: URL) throws {
-        let view = NSView(frame: NSRect(x: 0, y: 0, width: 488, height: 180))
+        let view = NSView(frame: NSRect(x: 0, y: 0, width: 732, height: 180))
         view.appearance = NSAppearance(named: .aqua)
         view.wantsLayer = true
         view.effectiveAppearance.performAsCurrentDrawingAppearance {
@@ -361,7 +424,7 @@ private struct ProofSnapshots: SnapshotPersisting {
         window.appearance = NSAppearance(named: .aqua)
         window.contentView = view
         view.layoutSubtreeIfNeeded()
-        let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 976, pixelsHigh: 360,
+        let bitmap = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: 1464, pixelsHigh: 360,
                                      bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
                                      colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
         bitmap.size = view.bounds.size

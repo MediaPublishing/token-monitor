@@ -1,6 +1,7 @@
 public enum MenuBarAccountArrangement: String, CaseIterable, Identifiable, Sendable {
     case compact
     case byProvider
+    case byAccount
 
     public var id: String { rawValue }
 
@@ -8,6 +9,7 @@ public enum MenuBarAccountArrangement: String, CaseIterable, Identifiable, Senda
         switch self {
         case .compact: "Compact"
         case .byProvider: "By provider"
+        case .byAccount: "By account"
         }
     }
 
@@ -39,6 +41,15 @@ public struct MenuBarAccountLayout: Equatable, Sendable {
     }
 
     public init(accountServices: [ServiceKind], arrangement: MenuBarAccountArrangement = .compact) {
+        if arrangement == .byAccount {
+            let visible = min(accountServices.count, Self.maximumVisibleAccounts)
+            let positions = Dictionary(uniqueKeysWithValues: (0..<visible).map {
+                ($0, Position(column: $0, row: 0))
+            })
+            self.init(accountCount: accountServices.count, columnCount: visible,
+                      rowCount: visible == 0 ? 0 : 1, positions: positions)
+            return
+        }
         guard arrangement == .byProvider else {
             self.init(accountCount: accountServices.count)
             return

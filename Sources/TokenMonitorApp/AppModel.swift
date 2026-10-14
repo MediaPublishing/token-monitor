@@ -447,6 +447,9 @@ final class AppModel: ObservableObject {
         guard let position = statusMenuAccountLayout.position(at: index) else {
             return "Additional selected account. Open the menu to see all accounts."
         }
+        if statusMenuAccountArrangement == .byAccount && statusMenuLimitDisplay == .both {
+            return "Menu bar: column \(position.column + 1), Session above Total"
+        }
         return "Menu bar: column \(position.column + 1), row \(position.row + 1)"
     }
 
@@ -698,6 +701,9 @@ final class AppModel: ObservableObject {
     func statusMenuScores(for accountID: UUID) -> (session: Double?, total: Double?) {
         guard let snapshot = dashboardState.account(accountID)?.snapshot else {
             return (nil, nil)
+        }
+        if statusMenuAccountArrangement == .byAccount {
+            return (snapshot.observedStatusMenuSessionScore, snapshot.observedStatusMenuTotalScore)
         }
         return (snapshot.statusMenuSessionScore, snapshot.statusMenuTotalScore)
     }

@@ -258,24 +258,32 @@ public struct ServiceSnapshot: Codable, Equatable, Sendable {
     }
 
     public var statusMenuTotalScore: Double? {
-        switch service {
-        case .chatGPT:
-            return remainingScore(for: "weekly-limit") ?? remainingScore(for: "spark-weekly-limit") ?? capacityScore
-        case .claude:
-            return remainingScore(for: "weekly-all-models") ?? capacityScore
-        case .openCodeGo:
-            return remainingScore(for: "weekly-usage") ?? capacityScore
-        }
+        observedStatusMenuTotalScore ?? capacityScore
     }
 
     public var statusMenuSessionScore: Double? {
+        observedStatusMenuSessionScore ?? capacityScore
+    }
+
+    public var observedStatusMenuTotalScore: Double? {
         switch service {
         case .chatGPT:
-            return remainingScore(for: "five-hour-limit") ?? remainingScore(for: "spark-five-hour-limit") ?? capacityScore
+            return remainingScore(for: "weekly-limit") ?? remainingScore(for: "spark-weekly-limit")
         case .claude:
-            return remainingScore(for: "current-session") ?? capacityScore
+            return remainingScore(for: "weekly-all-models")
         case .openCodeGo:
-            return remainingScore(for: "rolling-usage") ?? capacityScore
+            return remainingScore(for: "weekly-usage")
+        }
+    }
+
+    public var observedStatusMenuSessionScore: Double? {
+        switch service {
+        case .chatGPT:
+            return remainingScore(for: "five-hour-limit") ?? remainingScore(for: "spark-five-hour-limit")
+        case .claude:
+            return remainingScore(for: "current-session")
+        case .openCodeGo:
+            return remainingScore(for: "rolling-usage")
         }
     }
 
