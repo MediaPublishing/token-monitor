@@ -285,6 +285,39 @@ private struct ProofSnapshots: SnapshotPersisting {
                 (bitmap.colorAt(x: 66 * scale, y: $0)?.alphaComponent ?? 0) > 0.05
             }, "OpenCode must remain visible even when earlier providers overflow")
         }
+        defaults.set([ServiceKind.chatGPT.rawValue: [],
+                      ServiceKind.claude.rawValue: [primary.id.uuidString, second.id.uuidString]], forKey: "menuBarSelectionIDs")
+        defaults.set(false, forKey: "openCodeGoEnabled")
+        let claudeOnly = AppModel(snapshotStore: ProofSnapshots(), accountStore: proofAccounts,
+                                  analytics: ProjectAnalyticsModel(defaults: analyticsDefaults, home: output))
+        claudeOnly.setStatusMenuAccountArrangement(.byAccount)
+        claudeOnly.setStatusMenuLimitDisplay(.both)
+        claudeOnly.setStatusMenuShowsPercentages(true)
+        precondition(claudeOnly.statusMenuAccounts.map(\.accountID) == [primary.id, second.id])
+        let claudeRenderer = AppDelegate(model: claudeOnly)
+        let claudeImage = claudeRenderer.makeCapacityStatusImage(for: NSAppearance(named: .darkAqua))!
+        precondition(claudeImage.size == NSSize(width: 116, height: 16))
+        for bitmap in claudeImage.representations.compactMap({ $0 as? NSBitmapImageRep }) {
+            let scale = Int(CGFloat(bitmap.pixelsWide) / claudeImage.size.width)
+            for column in 0..<2 {
+                precondition(barBandCount(in: bitmap, start: (column * 60 + 31) * scale,
+                                          end: (column * 60 + 54) * scale) == 2)
+            }
+            try bitmap.representation(using: .png, properties: [:])!
+                .write(to: output.appendingPathComponent("claude-only-two-accounts-\(scale)x.png"))
+        }
+        claudeOnly.hideMenuBarAccount(primary.id, for: .claude)
+        claudeOnly.hideMenuBarAccount(second.id, for: .claude)
+        precondition(claudeOnly.statusMenuAccounts.isEmpty)
+        let emptyIcon = claudeRenderer.makeCapacityStatusImage(for: NSAppearance(named: .darkAqua))!
+        precondition(emptyIcon.size == NSSize(width: 16, height: 16) && emptyIcon.isTemplate)
+        precondition(emptyIcon.tiffRepresentation?.isEmpty == false)
+        let hiddenRestored = AppModel(snapshotStore: ProofSnapshots(), accountStore: proofAccounts,
+                                     analytics: ProjectAnalyticsModel(defaults: analyticsDefaults, home: output))
+        precondition(hiddenRestored.statusMenuAccounts.isEmpty)
+        precondition(hiddenRestored.dashboardState.services.contains { $0.accountID == chatGPT.id })
+        records.append(["name": "claude-only-two-accounts", "accounts": 2, "columns": 2,
+                        "separateLimitRows": true, "width": 116, "height": 16, "scales": [1, 2]])
         try writeAccountGridExamples(examples, output: output)
         try writeArrangementExamples(model: model, renderer: renderer, output: output)
         try JSONSerialization.data(withJSONObject: records, options: [.prettyPrinted, .sortedKeys])
@@ -292,7 +325,7 @@ private struct ProofSnapshots: SnapshotPersisting {
         withExtendedLifetime(observation) { }
         withExtendedLifetime(arrangementObservation) { }
         withExtendedLifetime(limitObservation) { }
-        print("PASS: \(records.count) native renders, independent Claude account limits (100/7 and 66/47), queued account/arrangement/limit changes without refresh, persisted layout, compact fallback for invalid preferences, exact bar-band counts in all three layouts, account-column limit endpoints at 1x/2x, all limits/percentages/colors/appearances, bounded +N overflow, nine selected accounts preserved, reorder/hide, unavailable provider, missing Session stays unknown in By account")
+        print("PASS: \(records.count) native renders, independent Claude account limits (100/7 and 66/47), queued account/arrangement/limit changes without refresh, persisted layout, compact fallback for invalid preferences, exact bar-band counts in all three layouts, account-column limit endpoints at 1x/2x, all limits/percentages/colors/appearances, bounded +N overflow, nine selected accounts preserved, reorder/hide, unavailable provider, missing Session stays unknown in By account, exactly two Claude-only columns, all accounts hidden with visible fallback icon and connected dashboard preserved")
     }
 
     private static func barBandCount(in bitmap: NSBitmapImageRep, start: Int, end: Int) -> Int {

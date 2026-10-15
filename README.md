@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.46/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.47/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.46` (build 55).
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.47` (build 56).
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -91,7 +91,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.46/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.47/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -124,7 +124,7 @@ Token Monitor tries to register itself as a login item when **Launch at login** 
 
 #### Updates
 
-Automatic update checks are off by default from version `1.0.22` through public version `1.0.42`. Version `1.0.43` enables automatic checks by default, while preserving an existing opt-out. From version `1.0.41`, enabling **Automatically check for updates** checks immediately, then hourly while the app is running. An **Update** indicator in the menu bar and a **Review Update** button in the dashboard make available updates visible without hidden background windows. Review and confirm installation in Sparkle; enabling checks does not enable silent installation. **Check for Updates...** remains available in Settings. The debug report includes update timing, preferences, results, and error codes. Existing sign-ins are preserved.
+Automatic update checks are off by default from version `1.0.22` through public version `1.0.42`. Version `1.0.43` enables automatic checks by default, while preserving an existing opt-out. Enabling **Automatically check for updates** checks immediately, then hourly while the app is running. **Review Update** remembers one click while Sparkle finishes a background check or download and opens the installer when ready. In version `1.0.47`, the separate **Install on quit** setting controls automatic download and installation when you quit; it never forces a restart, and macOS may still require approval. Existing Sparkle preferences are preserved. **Check for Updates...** remains available in Settings. The debug report includes update timing, preferences, results, and error codes. Existing sign-ins are preserved.
 
 #### Optional OpenCode Go
 
@@ -135,6 +135,8 @@ Version 1.0.36 reuses the connected workspace instead of checking the public Go 
 Version 1.0.38 reads Claude's updated **This week** and **Fable this week** usage labels while keeping their percentages and reset times associated with the correct limit. Version 1.0.39 also supports ChatGPT's unified Usage dashboard, including **% left**, relative reset times, and an inline credit balance.
 
 #### Multiple accounts
+
+**Version 1.0.47 (56):** Click each account's small menu-bar icon in Settings to show or hide it without disconnecting, including the last account of a provider. To show only two Claude accounts, hide ChatGPT, show both Claude accounts, choose **By account** and **Both**. Each Claude column contains Session and Total, never a separate Fable bar. Hidden accounts stay connected in the dashboard. If all accounts are hidden, the app remains accessible through its chart icon. **By provider** groups accounts of the same provider together; it is not the side-by-side account view.
 
 In **Settings > Providers**, click **+** next to Claude, ChatGPT, or OpenCode Go to add another account. Give it a name with **More > Rename**. Each additional account keeps its own persistent sign-in and appears separately in the dashboard. The original account and its existing sign-in stay in place. Choose **Show in menu bar** on the account whose capacity the provider's menu-bar indicator should show. Disconnecting or removing an additional account clears only that account's login data. The original provider accounts remain available for compatibility with previous versions.
 
@@ -227,7 +229,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.46/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.47/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -260,7 +262,7 @@ Token Monitor versucht, sich als Login Item zu registrieren, wenn **Launch at lo
 
 #### Updates
 
-Automatische Update-Prüfungen sind ab Version `1.0.22` standardmäßig aus, bis einschließlich der öffentlichen Version `1.0.42`. Version `1.0.43` aktiviert automatische Prüfungen standardmäßig, respektiert aber eine bereits gespeicherte Abschaltung. Ab Version `1.0.41` prüft **Automatically check for updates** beim Einschalten sofort und danach stündlich, solange die App läuft. Ein **Update**-Hinweis in der Menüleiste und **Review Update** im Dashboard machen verfügbare Updates sichtbar, statt ein Fenster im Hintergrund zu verstecken. Die Installation wird in Sparkle bestätigt; der Schalter aktiviert keine stille Installation. **Check for Updates...** bleibt in den Settings verfügbar. Der Debug-Bericht enthält Prüfzeiten, Update-Einstellungen, Ergebnisse und Fehlercodes. Bestehende Anmeldungen bleiben erhalten.
+Automatische Update-Prüfungen sind ab Version `1.0.22` standardmäßig aus, bis einschließlich der öffentlichen Version `1.0.42`. Seit `1.0.43` sind sie standardmäßig aktiv; eine gespeicherte Abschaltung bleibt erhalten. **Automatically check for updates** prüft beim Einschalten sofort und danach stündlich, solange die App läuft. **Review Update** merkt einen Klick während der Hintergrundprüfung oder des Downloads vor und öffnet den Installer, sobald er bereit ist. Ab `1.0.47` steuert **Install on quit** separat den automatischen Download und die Installation beim Beenden. Es gibt keinen erzwungenen Neustart; macOS kann weiterhin eine Bestätigung verlangen. Bestehende Sparkle-Einstellungen bleiben erhalten. **Check for Updates...** bleibt verfügbar. Der Debug-Bericht enthält Prüfzeiten, Einstellungen, Ergebnisse und Fehlercodes. Bestehende Anmeldungen bleiben erhalten.
 
 #### Optionales OpenCode Go
 

@@ -15,7 +15,7 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top, spacing: 8) {
                     Text("Settings").font(.headline.weight(.semibold))
 
@@ -31,7 +31,7 @@ struct SettingsView: View {
                 }
 
                 providerSettingsCard.id("settings-providers")
-                Grid(horizontalSpacing: 10, verticalSpacing: 10) {
+                Grid(horizontalSpacing: 10, verticalSpacing: 8) {
                     GridRow(alignment: .top) {
                         appSettingsCard
                         statusMenuSettingsCard
@@ -69,7 +69,7 @@ struct SettingsView: View {
 
     private func settingsCard<Content: View>(
         _ title: String,
-        spacing: CGFloat = 8,
+        spacing: CGFloat = 6,
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: spacing) {
@@ -77,7 +77,7 @@ struct SettingsView: View {
                 .font(.headline)
             content()
         }
-        .padding(10)
+        .padding(8)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -98,10 +98,12 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline.weight(.semibold))
-                Text(description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if !description.isEmpty {
+                    Text(description)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -155,11 +157,18 @@ struct SettingsView: View {
                             .frame(width: 88, alignment: .trailing)
                         let selectedAccounts = model.menuBarAccounts(for: service)
                         let selected = selectedAccounts.contains(where: { $0.id == status.accountID })
-                        Image(systemName: "menubar.rectangle")
-                            .foregroundStyle(.secondary)
-                            .opacity(selected ? 1 : 0)
+                        Button {
+                            if selected { model.hideMenuBarAccount(status.accountID, for: service) }
+                            else { model.showMenuBarAccountAlongside(status.accountID, for: service) }
+                        } label: {
+                            Image(systemName: "menubar.rectangle")
+                                .foregroundStyle(selected ? Color.primary : Color.secondary)
+                                .opacity(selected ? 1 : 0.35)
+                        }
+                            .buttonStyle(.plain)
                             .frame(width: 18)
-                            .help(model.menuBarPositionDescription(for: status.accountID))
+                            .accessibilityLabel("\(selected ? "Hide" : "Show") \(status.accountName) \(selected ? "from" : "in") menu bar")
+                            .help(model.menuBarPositionDescription(for: status.accountID) + ". Click to show or hide; the account stays connected.")
                         Menu {
                             Button("Connect / Reconnect") { model.openLogin(accountID: status.accountID) }
                             Button("Rename...") {
@@ -176,7 +185,7 @@ struct SettingsView: View {
                                     model.showMenuBarAccountAlongside(status.accountID, for: service)
                                 }
                                 .help("One bar per selected account. Up to six visible; additional accounts appear as +N.")
-                            } else if selectedAccounts.count > 1 {
+                            } else {
                                 Button("Hide from menu bar") { model.hideMenuBarAccount(status.accountID, for: service) }
                             }
                             Divider()
@@ -221,15 +230,17 @@ struct SettingsView: View {
         settingsCard("Status menu", spacing: 6) {
             settingsToggle(
                 "Use colored status bars",
-                description: "Remaining capacity in color.",
+                description: "",
                 isOn: statusMenuColorBinding
             )
+            .help("Turn off for monochrome menu-bar bars.")
 
             settingsToggle(
                 "Menu bar percentages",
-                description: "Limits next to the bars.",
+                description: "",
                 isOn: statusMenuPercentagesBinding
             )
+            .help("Show limit percentages next to the menu-bar bars.")
 
             HStack(spacing: 8) {
                 Text("Bar layout")
@@ -245,6 +256,10 @@ struct SettingsView: View {
                 .fixedSize()
             }
             .help("Compact groups all accounts. By provider groups accounts in one column per provider. By account puts each selected account in its own column; with Both, Session is above Total. Up to six accounts are visible; more appear as +N. By account uses more menu-bar width; choose Compact if macOS hides the icon.")
+            Text(model.statusMenuAccountArrangement.summary)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text("Limit display")
@@ -286,18 +301,27 @@ struct SettingsView: View {
             versionLabel
         }
         #else
-        settingsCard("Updates") {
+        settingsCard("Updates", spacing: 6) {
             settingsToggle(
                 "Automatically check for updates",
-                description: "Check hourly. Review before installing.",
+                description: "Check hourly.",
                 isOn: automaticUpdateChecksBinding
             )
+
+            settingsToggle(
+                "Install on quit",
+                description: "No forced restart.",
+                isOn: Binding(get: { updates.automaticDownloadsEnabled },
+                              set: { updates.automaticallyDownloadsUpdates = $0 })
+            )
+            .help("Download signed updates automatically and install when Token Monitor quits. macOS may still require authorization. Existing preferences are preserved.")
 
             Button("Check for Updates...") {
                 model.checkForUpdates()
             }
             .buttonStyle(.bordered)
             .controlSize(compact ? .mini : .small)
+            .disabled(updates.isPreparingUpdate)
             Text(updates.statusText)
                 .font(.caption2)
                 .foregroundStyle(.secondary)

@@ -48,7 +48,7 @@ struct MenuBarAccountSelectionTests {
         #expect(selection.accounts(for: .claude, available: available).map(\.id) == [second.id, primary.id])
     }
 
-    @Test func hidingPromotesTheRemainingAccountButCannotHideTheLastOne() {
+    @Test func hidingPromotesTheRemainingAccountAndCanHideTheProvider() {
         var selection = MenuBarAccountSelection()
         let available = [primary, second]
         selection.showAlongside(second.id, for: .claude, available: available)
@@ -56,7 +56,35 @@ struct MenuBarAccountSelectionTests {
         #expect(hidden)
         #expect(selection.accounts(for: .claude, available: available).map(\.id) == [second.id])
         let lastHidden = selection.hide(second.id, for: .claude, available: available)
-        #expect(!lastHidden)
+        #expect(lastHidden)
+        #expect(selection.accounts(for: .claude, available: available).isEmpty)
+        selection.reconcile(available: available)
+        let restored = MenuBarAccountSelection(accountIDs: selection.accountIDs)
+        #expect(restored.accounts(for: .claude, available: available).isEmpty)
+        let shown = selection.showAlongside(second.id, for: .claude, available: available)
+        #expect(shown)
+        #expect(selection.accounts(for: .claude, available: available).map(\.id) == [second.id])
+    }
+
+    @Test func explicitHiddenProviderDoesNotUseLegacyOrPrimaryFallback() {
+        var selection = MenuBarAccountSelection(accountIDs: [ServiceKind.chatGPT.rawValue: []],
+            legacyAccountIDs: [ServiceKind.chatGPT.rawValue: chatGPT.id.uuidString])
+        let available = [primary, second, chatGPT]
+        selection.showAlongside(second.id, for: .claude, available: available)
+        selection.reconcile(available: available)
+        #expect(selection.accounts(for: .chatGPT, available: available).isEmpty)
+        #expect(selection.accounts(for: .claude, available: available).map(\.id) == [primary.id, second.id])
+        let hiddenAgain = selection.hide(chatGPT.id, for: .chatGPT, available: available)
+        let shownAgain = selection.select(chatGPT.id, for: .chatGPT, available: available)
+        #expect(!hiddenAgain)
+        #expect(shownAgain)
+        #expect(selection.accounts(for: .chatGPT, available: available).map(\.id) == [chatGPT.id])
+    }
+
+    @Test func reconcileDoesNotHideProvidersThatHaveNotBeenAddedYet() {
+        var selection = MenuBarAccountSelection()
+        selection.reconcile(available: [primary])
+        #expect(selection.accounts(for: .chatGPT, available: [primary, chatGPT]).map(\.id) == [chatGPT.id])
     }
 
     @Test func malformedDuplicateDeletedAndWrongProviderIDsAreIgnored() {
