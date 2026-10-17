@@ -9,6 +9,7 @@ public struct MenuBarAccountSelection: Equatable, Sendable {
 
     public func accounts(for service: ServiceKind, available: [MonitoredAccount]) -> [MonitoredAccount] {
         let candidates = available.filter { $0.service == service }
+        if accountIDs[service.rawValue]?.isEmpty == true { return [] }
         var seen = Set<UUID>()
         let selected = (accountIDs[service.rawValue] ?? []).compactMap { raw -> MonitoredAccount? in
             guard let id = UUID(uuidString: raw), seen.insert(id).inserted else { return nil }
@@ -46,14 +47,17 @@ public struct MenuBarAccountSelection: Equatable, Sendable {
     @discardableResult
     public mutating func hide(_ id: UUID, for service: ServiceKind, available: [MonitoredAccount]) -> Bool {
         let ids = accounts(for: service, available: available).map(\.id)
-        guard ids.count > 1, ids.contains(id) else { return false }
+        guard ids.contains(id) else { return false }
         accountIDs[service.rawValue] = ids.filter { $0 != id }.map(\.uuidString)
         return true
     }
 
     public mutating func reconcile(available: [MonitoredAccount]) {
         for service in ServiceKind.allCases {
-            accountIDs[service.rawValue] = accounts(for: service, available: available).map { $0.id.uuidString }
+            if accountIDs[service.rawValue]?.isEmpty == true { continue }
+            let ids = accounts(for: service, available: available).map { $0.id.uuidString }
+            if ids.isEmpty { accountIDs.removeValue(forKey: service.rawValue) }
+            else { accountIDs[service.rawValue] = ids }
         }
     }
 }

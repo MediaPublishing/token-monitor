@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Combine
 
@@ -15,6 +16,12 @@ final class AppUpdateController: NSObject, ObservableObject {
         get { false }
         set { _ = newValue }
     }
+    var automaticallyDownloadsUpdates: Bool {
+        get { false }
+        set { _ = newValue }
+    }
+    var automaticDownloadsEnabled: Bool { false }
+    var isPreparingUpdate: Bool { false }
 
     func checkForUpdates() {
         // Updates are delivered by the Mac App Store for MAS builds.
@@ -38,10 +45,13 @@ final class AppUpdateController: NSObject, ObservableObject, SPUUpdaterDelegate,
     @Published private(set) var availableVersion: String?
     @Published private(set) var statusText = "Not checked this session"
     @Published private(set) var nextCheckDate: Date?
+    @Published private(set) var automaticDownloadsEnabled = false
+    @Published private(set) var isPreparingUpdate = false
 
     private static let lastResultKey = "lastAppUpdateResult"
     private var updaterController: SPUStandardUpdaterController!
     private var started = false
+    private var subscriptions = Set<AnyCancellable>()
 
     private override init() {
         super.init()
@@ -50,6 +60,20 @@ final class AppUpdateController: NSObject, ObservableObject, SPUUpdaterDelegate,
             updaterDelegate: self,
             userDriverDelegate: self
         )
+        automaticDownloadsEnabled = updaterController.updater.automaticallyDownloadsUpdates
+        updaterController.updater.publisher(for: \.canCheckForUpdates)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] ready in
+                if ready { self?.presentRequestedUpdateIfReady() }
+            }
+            .store(in: &subscriptions)
+        updaterController.updater.publisher(for: \.automaticallyDownloadsUpdates)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.automaticDownloadsEnabled = self.updaterController.updater.automaticallyDownloadsUpdates
+            }
+            .store(in: &subscriptions)
     }
 
     func start() {
@@ -78,8 +102,29 @@ final class AppUpdateController: NSObject, ObservableObject, SPUUpdaterDelegate,
 
     func checkForUpdates() {
         start()
+        guard started, !isPreparingUpdate else { return }
+        isPreparingUpdate = true
+        if !updaterController.updater.canCheckForUpdates {
+            statusText = "Preparing update. Waiting for the background download..."
+        }
+        // A background download cannot be focused yet. KVO resumes this same request when ready.
+        DispatchQueue.main.async { [weak self] in self?.presentRequestedUpdateIfReady() }
+    }
+
+    private func presentRequestedUpdateIfReady() {
+        guard isPreparingUpdate, updaterController.updater.canCheckForUpdates else { return }
         AppDelegate.shared?.closePopover()
+        NSApp.activate(ignoringOtherApps: true)
+        isPreparingUpdate = false
         updaterController.checkForUpdates(nil)
+    }
+
+    var automaticallyDownloadsUpdates: Bool {
+        get { updaterController.updater.automaticallyDownloadsUpdates }
+        set {
+            updaterController.updater.automaticallyDownloadsUpdates = newValue
+            automaticDownloadsEnabled = newValue
+        }
     }
 
     var diagnosticsText: String {
@@ -98,6 +143,8 @@ final class AppUpdateController: NSObject, ObservableObject, SPUUpdaterDelegate,
             "Last check: \(dateText(updater.lastUpdateCheckDate))",
             "Next scheduled check: \(dateText(nextCheckDate))",
             "Session in progress: \(updater.sessionInProgress)",
+            "Can show update: \(updater.canCheckForUpdates)",
+            "Review requested: \(isPreparingUpdate)",
             "Available version: \(availableVersion ?? "none")",
             "Current result: \(statusText)",
             "Last recorded result: \(UserDefaults.standard.string(forKey: Self.lastResultKey) ?? "none")"
@@ -166,6 +213,7 @@ final class AppUpdateController: NSObject, ObservableObject, SPUUpdaterDelegate,
     }
 
     private func recordError(_ error: NSError) {
+        isPreparingUpdate = false
         // Codes identify transport, signing and installation failures without recording URLs or credentials.
         var codes: [String] = []
         var current: NSError? = error

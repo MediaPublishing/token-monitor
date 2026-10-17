@@ -12,12 +12,14 @@ struct PopoverHeaderView: View {
             headerControls
             if let version = updates.availableVersion {
                 HStack(spacing: 8) {
-                    Label("Update \(version) available", systemImage: "arrow.down.circle")
+                    Label(updates.isPreparingUpdate ? "Preparing update..." : "Update \(version) available", systemImage: "arrow.down.circle")
                         .font(.caption.weight(.semibold))
                     Spacer(minLength: 0)
                     Button("Review Update") { updates.checkForUpdates() }
                         .buttonStyle(.bordered)
                         .controlSize(.small)
+                        .disabled(updates.isPreparingUpdate)
+                        .help("Open the installer. If a background download is running, it opens when ready.")
                 }
                 .padding(.horizontal, 8)
             }

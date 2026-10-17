@@ -13,6 +13,14 @@ public enum MenuBarAccountArrangement: String, CaseIterable, Identifiable, Senda
         }
     }
 
+    public var summary: String {
+        switch self {
+        case .compact: "Stack accounts to save menu-bar space."
+        case .byProvider: "One column per provider; its accounts stack together."
+        case .byAccount: "One column per account; Both puts Session above Total."
+        }
+    }
+
     public init(persistedValue: String?) {
         self = Self(rawValue: persistedValue ?? "") ?? .compact
     }

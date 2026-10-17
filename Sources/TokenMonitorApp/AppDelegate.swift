@@ -189,6 +189,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
 
     func makeCapacityStatusImage(for appearance: NSAppearance?) -> NSImage? {
         let accounts = model.statusMenuAccounts
+        guard !accounts.isEmpty else {
+            let icon = NSImage(systemSymbolName: "chart.bar.xaxis", accessibilityDescription: "Token Monitor")
+            icon?.size = NSSize(width: 16, height: 16)
+            icon?.isTemplate = true
+            return icon
+        }
         let layout = model.statusMenuAccountLayout
         let separatesLimits = model.statusMenuAccountArrangement == .byAccount && model.statusMenuLimitDisplay == .both
         let showsBothLimits = model.statusMenuLimitDisplay == .both && !separatesLimits
