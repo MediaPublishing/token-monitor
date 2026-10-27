@@ -3,7 +3,7 @@ import Foundation
 import TokenMonitorCore
 import WebKit
 
-enum SessionControllerError: LocalizedError {
+enum SessionControllerError: LocalizedError, Equatable {
     case controllerMissing(String)
     case refreshAlreadyInProgress
     case refreshTimedOut
@@ -33,12 +33,15 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private let dataStore: WKWebsiteDataStore
     private let isolatedAccount: Bool
     private let diagnosticsStore: DiagnosticsStore
+    private let refreshTimeout: Duration
+    private let backgroundWebViewFactory: (@MainActor (WKWebViewConfiguration) -> WKWebView)?
     private lazy var browserController: ServiceLoginWindowController = makeBrowserController()
     private lazy var backgroundWebView: WKWebView = makeBackgroundWebView()
 
     private var pendingContinuation: CheckedContinuation<ServiceSnapshot, Error>?
     private var currentLoadToken = UUID()
     private var extractionScheduled = false
+    private var extractionTask: Task<Void, Never>?
     private var useAuthenticatedLoginPageForNextRefresh = false
     private var refreshTimeoutTask: Task<Void, Never>?
     private var openCodeGoWorkspaceURL: URL?
@@ -50,10 +53,14 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     init(service: ServiceKind, diagnosticsStore: DiagnosticsStore, lastSnapshot: ServiceSnapshot? = nil,
-         dataStore: WKWebsiteDataStore = .default(), isolatedAccount: Bool = false) {
+         dataStore: WKWebsiteDataStore = .default(), isolatedAccount: Bool = false,
+         refreshTimeout: Duration = .seconds(75),
+         backgroundWebViewFactory: (@MainActor (WKWebViewConfiguration) -> WKWebView)? = nil) {
         self.service = service
         self.diagnosticsStore = diagnosticsStore
         self.isolatedAccount = isolatedAccount
+        self.refreshTimeout = refreshTimeout
+        self.backgroundWebViewFactory = backgroundWebViewFactory
         switch service {
         case .claude:
             parser = ClaudeUsageParser()
@@ -157,16 +164,16 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         }
     }
 
-    private func handlePageFinishedLoading() {
-        guard !extractionScheduled else {
+    private func beginExtractionIfNeeded() {
+        guard pendingContinuation != nil, !extractionScheduled else {
             return
         }
 
         extractionScheduled = true
         let loadToken = currentLoadToken
 
-        Task { @MainActor in
-            await extractSnapshot(loadToken: loadToken)
+        extractionTask = Task { @MainActor [weak self] in
+            await self?.extractSnapshot(loadToken: loadToken)
         }
     }
 
@@ -179,7 +186,24 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             return
         }
 
-        handlePageFinishedLoading()
+        beginExtractionIfNeeded()
+    }
+
+    func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        guard webView === backgroundWebView else { return }
+        // Usage can be ready while an unrelated image keeps didFinish from arriving.
+        beginExtractionIfNeeded()
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        guard webView === backgroundWebView else { return }
+        let error = NSError(domain: WKError.errorDomain, code: WKError.webContentProcessTerminated.rawValue,
+                            userInfo: [NSLocalizedDescriptionKey: "The usage page browser process stopped"])
+        writeDebugRecord(from: ServicePageExtract(service: service, pageTitle: webView.title ?? "",
+            url: webView.url?.absoluteString ?? refreshURL.absoluteString, bodyText: "", segments: []),
+            outcome: .transportFailure, message: error.localizedDescription)
+        if pendingContinuation != nil { finishRefresh(with: .failure(error)) }
+        else { replaceBackgroundWebView() }
     }
 
     func webView(
@@ -208,7 +232,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             )
             decisionHandler(.cancel)
             if navigationAction.targetFrame?.isMainFrame != false {
-                handlePageFinishedLoading()
+                beginExtractionIfNeeded()
             }
             return
         }
@@ -232,7 +256,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                 reason: "Blocked non-web response during automatic refresh"
             )
             decisionHandler(.cancel)
-            handlePageFinishedLoading()
+            beginExtractionIfNeeded()
             return
         }
 
@@ -273,14 +297,17 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         var latestExtract: ServicePageExtract?
 
         for (index, delay) in delays.enumerated() {
-            try? await Task.sleep(nanoseconds: delay)
+            do { try await Task.sleep(nanoseconds: delay) }
+            catch { return }
 
-            guard loadToken == currentLoadToken else {
+            guard loadToken == currentLoadToken, pendingContinuation != nil else {
                 return
             }
 
             do {
                 let extract = try await evaluateCurrentPage()
+                try Task.checkCancellation()
+                guard loadToken == currentLoadToken, pendingContinuation != nil else { return }
 
                 // Migrated workspaces redirect to Console login even when a
                 // Console session exists. Let its Go entry resolve that session.
@@ -328,12 +355,14 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                 writeDebugRecord(from: extract, outcome: .success, message: nil)
                 finishRefresh(with: .success(snapshot))
                 return
+            } catch is CancellationError {
+                return
             } catch let parseError as UsageParseError {
                 switch parseError {
                 case .authRequired:
                     // Account redirects and client-side hydration can briefly
                     // show login text before the existing session is resolved.
-                    if service == .openCodeGo, index < delays.count - 1 { continue }
+                    if index < delays.count - 1, service == .openCodeGo || backgroundWebView.isLoading { continue }
                     if let latestExtract {
                         writeDebugRecord(from: latestExtract, outcome: .authRequired, message: String(describing: parseError))
                     }
@@ -348,6 +377,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                     }
                 }
             } catch {
+                guard !Task.isCancelled, loadToken == currentLoadToken, pendingContinuation != nil else { return }
                 if index == delays.count - 1 {
                     if let latestExtract {
                         writeDebugRecord(from: latestExtract, outcome: .transportFailure, message: error.localizedDescription)
@@ -443,7 +473,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
             return
         }
         if nsError.domain == WKError.errorDomain, nsError.code == 102 {
-            handlePageFinishedLoading()
+            beginExtractionIfNeeded()
             return
         }
 
@@ -451,15 +481,23 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     private func finishRefresh(with result: Result<ServiceSnapshot, Error>) {
+        guard let continuation = pendingContinuation else { return }
+        pendingContinuation = nil
+        currentLoadToken = UUID()
         extractionScheduled = false
+        extractionTask?.cancel()
+        extractionTask = nil
         refreshTimeoutTask?.cancel()
         refreshTimeoutTask = nil
 
-        guard let continuation = pendingContinuation else {
-            return
+        if case let .failure(error) = result {
+            let failure = error as NSError
+            if error as? SessionControllerError == .refreshTimedOut ||
+                (failure.domain == NSURLErrorDomain && failure.code == NSURLErrorTimedOut) ||
+                (failure.domain == WKError.errorDomain && failure.code == WKError.webContentProcessTerminated.rawValue) {
+                replaceBackgroundWebView()
+            }
         }
-
-        pendingContinuation = nil
 
         switch result {
         case let .success(snapshot):
@@ -479,7 +517,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private func scheduleRefreshTimeout(loadToken: UUID) {
         refreshTimeoutTask?.cancel()
         refreshTimeoutTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(nanoseconds: 75_000_000_000)
+            guard let timeout = self?.refreshTimeout else { return }
+            try? await Task.sleep(for: timeout)
 
             guard !Task.isCancelled,
                   let self,
@@ -488,7 +527,6 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                 return
             }
 
-            self.backgroundWebView.stopLoading()
             self.writeDebugRecord(
                 from: ServicePageExtract(
                     service: self.service,
@@ -498,7 +536,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                     segments: []
                 ),
                 outcome: .transportFailure,
-                message: SessionControllerError.refreshTimedOut.localizedDescription
+                message: "\(SessionControllerError.refreshTimedOut.localizedDescription). Stage: \(self.extractionScheduled ? "reading page" : "loading document")"
             )
             self.finishRefresh(with: .failure(SessionControllerError.refreshTimedOut))
         }
@@ -542,13 +580,21 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         ServiceLoginWindowController(service: service, dataStore: dataStore)
     }
 
+    private func replaceBackgroundWebView() {
+        backgroundWebView.navigationDelegate = nil
+        backgroundWebView.uiDelegate = nil
+        backgroundWebView.stopLoading()
+        backgroundWebView = makeBackgroundWebView()
+    }
+
     private func makeBackgroundWebView() -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = dataStore
         configuration.defaultWebpagePreferences.preferredContentMode = .desktop
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
 
-        let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 1440, height: 2200), configuration: configuration)
+        let webView = backgroundWebViewFactory?(configuration)
+            ?? WKWebView(frame: NSRect(x: 0, y: 0, width: 1440, height: 2200), configuration: configuration)
         webView.navigationDelegate = self
         webView.uiDelegate = self
         return webView
@@ -627,20 +673,35 @@ private extension WKHTTPCookieStore {
 @MainActor
 private extension WKWebView {
     func tm_evaluateJavaScript(_ script: String) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
-            evaluateJavaScript(script) { value, error in
-                if let error {
-                    continuation.resume(throwing: error)
+        let result = PageJavaScriptResult()
+        return try await withTaskCancellationHandler {
+            try Task.checkCancellation()
+            return try await withCheckedThrowingContinuation { continuation in
+                result.continuation = continuation
+                if Task.isCancelled {
+                    result.finish(.failure(CancellationError()))
                     return
                 }
-
-                if let value = value as? String {
-                    continuation.resume(returning: value)
-                } else {
-                    continuation.resume(throwing: SessionControllerError.invalidPayload)
+                evaluateJavaScript(script) { value, error in
+                    if let error { result.finish(.failure(error)) }
+                    else if let value = value as? String { result.finish(.success(value)) }
+                    else { result.finish(.failure(SessionControllerError.invalidPayload)) }
                 }
             }
+        } onCancel: {
+            Task { @MainActor in result.finish(.failure(CancellationError())) }
         }
+    }
+}
+
+@MainActor
+private final class PageJavaScriptResult {
+    var continuation: CheckedContinuation<String, Error>?
+
+    func finish(_ result: Result<String, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        continuation.resume(with: result)
     }
 }
 

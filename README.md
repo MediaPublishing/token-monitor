@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.47/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.48/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.47` (build 56).
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.48` (build 57).
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -91,7 +91,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.47/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.48/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -125,6 +125,8 @@ Token Monitor tries to register itself as a login item when **Launch at login** 
 #### Updates
 
 Automatic update checks are off by default from version `1.0.22` through public version `1.0.42`. Version `1.0.43` enables automatic checks by default, while preserving an existing opt-out. Enabling **Automatically check for updates** checks immediately, then hourly while the app is running. **Review Update** remembers one click while Sparkle finishes a background check or download and opens the installer when ready. In version `1.0.47`, the separate **Install on quit** setting controls automatic download and installation when you quit; it never forces a restart, and macOS may still require approval. Existing Sparkle preferences are preserved. **Check for Updates...** remains available in Settings. The debug report includes update timing, preferences, results, and error codes. Existing sign-ins are preserved.
+
+**Version 1.0.48 (57):** A timeout or stopped WebKit content process recreates only the failed background usage reader, keeping the same account storage and sign-in. The next refresh can recover without restarting the app. Usage is read when the document is available, even if an unrelated resource never finishes. Canceled reads cannot complete a later refresh with pre-reset values. Existing numbers remain marked Stale until fresh provider data is read; quotas are never reset based on the clock.
 
 #### Optional OpenCode Go
 
@@ -229,7 +231,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.47/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.48/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -263,6 +265,8 @@ Token Monitor versucht, sich als Login Item zu registrieren, wenn **Launch at lo
 #### Updates
 
 Automatische Update-Prüfungen sind ab Version `1.0.22` standardmäßig aus, bis einschließlich der öffentlichen Version `1.0.42`. Seit `1.0.43` sind sie standardmäßig aktiv; eine gespeicherte Abschaltung bleibt erhalten. **Automatically check for updates** prüft beim Einschalten sofort und danach stündlich, solange die App läuft. **Review Update** merkt einen Klick während der Hintergrundprüfung oder des Downloads vor und öffnet den Installer, sobald er bereit ist. Ab `1.0.47` steuert **Install on quit** separat den automatischen Download und die Installation beim Beenden. Es gibt keinen erzwungenen Neustart; macOS kann weiterhin eine Bestätigung verlangen. Bestehende Sparkle-Einstellungen bleiben erhalten. **Check for Updates...** bleibt verfügbar. Der Debug-Bericht enthält Prüfzeiten, Einstellungen, Ergebnisse und Fehlercodes. Bestehende Anmeldungen bleiben erhalten.
+
+**Version 1.0.48 (57):** Nach einem Timeout oder beendeten WebKit-Prozess erstellt die App nur die betroffene Hintergrund-Leseansicht neu. Kontospeicher und Anmeldung bleiben erhalten. Der nächste Refresh kann ohne App-Neustart wieder Daten lesen, auch wenn ein unwichtiges Bildelement weiter hängt. Abgebrochene Lesevorgänge können keine alten Werte in einen späteren Refresh übernehmen. Bis zu echten neuen Provider-Werten bleiben alte Zahlen als Stale gekennzeichnet; allein die Uhrzeit setzt kein Limit zurück.
 
 #### Optionales OpenCode Go
 
