@@ -40,6 +40,12 @@ Debug mode is off by default.
 
 When debug mode is enabled, Token Monitor can prepare report drafts for GitHub Issues or email. Drafts are opened for your review first. Do not share raw debug dumps publicly if they contain private account data, chat titles, budgets, balances, email addresses, or access tokens.
 
+Starting with 1.0.49, debug mode also enables a local performance recorder. It stores up to 300 own-process CPU/memory/thread/main-thread-delay measurements and 200 activity timings, using temporary reader aliases instead of account identifiers or names. Sustained own-process CPU over 80% at three consecutive samples can trigger a three-second native call-graph profile, at most once per ten minutes. Manual capture is available through **Save Performance Report**. The last automatic high-CPU call graph is retained separately so manual export cannot replace the evidence of a past spike.
+
+The performance recorder does not collect page or chat contents, URLs, cookies, credentials, process environments or memory dumps. Native profile headers and binary-image lists are discarded, and user paths/email addresses in the call graph are redacted. Only the own app process is sampled; WebKit XPC usage is not attributed to an account. Sandboxed builds retain measurements without launching the external sampler. No elevated privileges are requested. A failed sampler reports its failure instead of changing system permissions.
+
+Performance data remains locally under `Debug/Performance/`, with private directory/file permissions and a 512 KB archive cap. Up to two call graphs of 48,000 characters are retained across restart; temporary unredacted sampler output is cleared after processing. **Save Performance Report** writes the fixed local `Debug/performance-report.txt` for review and voluntary sharing. Nothing is uploaded automatically. Turning debug mode off stops the recorder and any active sampling; existing saved reports remain until you remove them.
+
 ## Public Issues
 
 GitHub Issues are public. Parser/layout issues should use the structured issue form and include only sanitized details needed to reproduce the problem.

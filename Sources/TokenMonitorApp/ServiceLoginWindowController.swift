@@ -8,6 +8,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     private let service: ServiceKind
     private let dataStore: WKWebsiteDataStore
     private let webView: WKWebView
+    private let performance: PerformanceRecorder?
+    private let diagnosticReader: UUID
     private let statusBanner = NSView()
     private let statusLabel = NSTextField(wrappingLabelWithString: "")
     private let readUsageButton = NSButton(title: "Read usage", target: nil, action: nil)
@@ -23,10 +25,13 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     var onAuthenticated: (@MainActor () -> Void)?
     var onAuthenticationDismissed: (@MainActor () -> Void)?
 
-    init(service: ServiceKind, dataStore: WKWebsiteDataStore, onAuthenticated: (@MainActor () -> Void)? = nil) {
+    init(service: ServiceKind, dataStore: WKWebsiteDataStore, onAuthenticated: (@MainActor () -> Void)? = nil,
+         performance: PerformanceRecorder? = nil, diagnosticReader: UUID = UUID()) {
         self.service = service
         self.dataStore = dataStore
         self.onAuthenticated = onAuthenticated
+        self.performance = performance
+        self.diagnosticReader = diagnosticReader
 
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = dataStore
@@ -506,7 +511,9 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     func evaluateJavaScript(_ script: String) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
+        let activity = performance?.begin(.loginProbe, provider: service, reader: diagnosticReader)
+        defer { if let activity { performance?.end(activity) } }
+        return try await withCheckedThrowingContinuation { continuation in
             webView.evaluateJavaScript(script) { value, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -523,6 +530,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     private func evaluateAsyncJavaScript(_ script: String) async throws -> String {
+        let activity = performance?.begin(.loginProbe, provider: service, reader: diagnosticReader)
+        defer { if let activity { performance?.end(activity) } }
         let value = try await webView.callAsyncJavaScript(script, arguments: [:], in: nil, contentWorld: .page)
         guard let payload = value as? String else { throw SessionControllerError.invalidPayload }
         return payload

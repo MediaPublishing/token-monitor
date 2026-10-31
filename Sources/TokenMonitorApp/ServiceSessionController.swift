@@ -46,6 +46,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private var refreshTimeoutTask: Task<Void, Never>?
     private var openCodeGoWorkspaceURL: URL?
     private var didTryOpenCodeConsole = false
+    private let diagnosticReader = UUID()
 
     private var refreshURL: URL {
         service == .openCodeGo
@@ -79,6 +80,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         guard pendingContinuation == nil else {
             throw SessionControllerError.refreshAlreadyInProgress
         }
+        let activity = diagnosticsStore.performance.begin(.providerRefresh, provider: service, reader: diagnosticReader)
+        defer { diagnosticsStore.performance.end(activity) }
 
         if useAuthenticatedLoginPageForNextRefresh {
             let snapshot = try await snapshotFromAuthenticatedLoginPage()
@@ -347,7 +350,9 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                     }
                     continue
                 }
-                let snapshot = try parser.parse(extract: extract, now: Date())
+                let snapshot = try diagnosticsStore.performance.measure(.usageParsing, provider: service, reader: diagnosticReader) {
+                    try parser.parse(extract: extract, now: Date())
+                }
                 if service == .chatGPT, snapshot.bankedResets == nil,
                    BankedResetParser.isLoading(extract), index < delays.count - 1 {
                     continue
@@ -401,6 +406,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     private func evaluateCurrentPage() async throws -> ServicePageExtract {
+        let activity = diagnosticsStore.performance.begin(.pageExtraction, provider: service, reader: diagnosticReader)
+        defer { diagnosticsStore.performance.end(activity) }
         let payload = try await backgroundWebView.tm_evaluateJavaScript(extractionScript(for: service))
 
         return try decodePageExtract(payload)
@@ -577,7 +584,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     private func makeBrowserController() -> ServiceLoginWindowController {
-        ServiceLoginWindowController(service: service, dataStore: dataStore)
+        ServiceLoginWindowController(service: service, dataStore: dataStore,
+                                     performance: diagnosticsStore.performance, diagnosticReader: diagnosticReader)
     }
 
     private func replaceBackgroundWebView() {

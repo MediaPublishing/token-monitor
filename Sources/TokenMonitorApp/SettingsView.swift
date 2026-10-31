@@ -349,13 +349,15 @@ struct SettingsView: View {
         settingsCard("Debugging") {
             settingsToggle(
                 "Enable debug mode",
-                description: "Redacted logs, local only.",
+                description: "Local CPU traces and logs.",
                 isOn: debugModeBinding
             )
 
-            Text("Review reports before sending.")
+            Text(model.performanceReportStatus)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .frame(height: 24, alignment: .topLeading)
 
             HStack(spacing: 4) {
                 Button("GitHub Issue Draft") {
@@ -371,8 +373,15 @@ struct SettingsView: View {
                 .controlSize(compact ? .mini : .small)
             }
 
-            Button("Open Folder") {
-                model.openDiagnosticsFolder()
+            HStack(spacing: 4) {
+                Button("Save Performance Report") {
+                    model.savePerformanceReport()
+                }
+                .disabled(!model.debugModeEnabled || model.savingPerformanceReport)
+
+                Button("Open Folder") {
+                    model.openDiagnosticsFolder()
+                }
             }
             .buttonStyle(.bordered)
             .controlSize(compact ? .mini : .small)

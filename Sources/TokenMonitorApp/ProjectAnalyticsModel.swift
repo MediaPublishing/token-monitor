@@ -27,6 +27,7 @@ final class ProjectAnalyticsModel: ObservableObject {
     private var requestID = UUID()
     private var assignmentsReadable = true
     private var assignmentError: String?
+    var performance: PerformanceRecorder?
 
     init(defaults: UserDefaults = .standard, home: URL = FileManager.default.homeDirectoryForCurrentUser,
          assignmentURL: URL? = nil) {
@@ -111,7 +112,10 @@ final class ProjectAnalyticsModel: ObservableObject {
         let since = AnalyticsPeriod.month.start(at: now)
         let scanner = scanner
         let home = home
+        let performance = performance
         refreshTask = Task { [weak self] in
+            let activity = performance?.begin(.analysisScan)
+            defer { if let activity { performance?.end(activity) } }
             do {
                 let result = try await scanner.scan(home: home, providers: providers, since: since, now: now)
                 guard let self, !Task.isCancelled, self.enabled, self.requestID == id else { return }
@@ -195,6 +199,8 @@ final class ProjectAnalyticsModel: ObservableObject {
 
     private func rebuildGroups() {
         guard enabled, let snapshot else { groups = []; return }
+        let activity = performance?.begin(.analysisGrouping)
+        defer { if let activity { performance?.end(activity) } }
         if grouping == .topics && !hasMeaningfulTopics { grouping = .projects; return }
         groups = snapshot.groups(grouping: grouping, since: period.start(at: Date()), until: Date(), assignments: assignments)
         expandedGroupIDs.formIntersection(groups.map(\.id))

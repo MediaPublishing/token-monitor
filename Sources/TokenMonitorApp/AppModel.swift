@@ -54,6 +54,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var launchAtLoginEnabled: Bool
     @Published private(set) var automaticallyChecksForUpdates: Bool
     @Published private(set) var debugModeEnabled: Bool
+    @Published private(set) var savingPerformanceReport = false
+    @Published private(set) var performanceReportStatus = "Local only. Review before sharing."
     @Published private(set) var statusMenuUsesColor: Bool
     @Published private(set) var statusMenuShowsPercentages: Bool
     @Published private(set) var statusMenuLimitDisplay: StatusMenuLimitDisplay
@@ -130,6 +132,7 @@ final class AppModel: ObservableObject {
         diagnosticsStore = DiagnosticsStore(baseDirectory: snapshotDirectoryURL, isEnabled: initialDebugModeEnabled)
         diagnosticsDirectoryURL = snapshotDirectoryURL.appendingPathComponent("Debug", isDirectory: true)
         sessionCoordinator = SessionCoordinator(diagnosticsStore: diagnosticsStore, accounts: restoredAccounts)
+        analytics.performance = diagnosticsStore.performance
         if canPersistAccounts {
             do {
                 try accountStore.saveAccounts(restoredAccounts)
@@ -594,6 +597,27 @@ final class AppModel: ObservableObject {
         NSWorkspace.shared.open(diagnosticsDirectoryURL)
     }
 
+    func savePerformanceReport() {
+        guard debugModeEnabled, !savingPerformanceReport else { return }
+        savingPerformanceReport = true
+        performanceReportStatus = "Recording 3 seconds. Local only."
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.diagnosticsStore.performance.captureNow()
+            self.savingPerformanceReport = false
+            guard self.debugModeEnabled else {
+                self.performanceReportStatus = "Debug off. Recording stopped."
+                return
+            }
+            if let url = self.diagnosticsStore.writePerformanceReport() {
+                self.performanceReportStatus = "Saved locally. Review before sharing."
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            } else {
+                self.performanceReportStatus = "Could not save the local report."
+            }
+        }
+    }
+
     func openGitHubDebugReportDraft() {
         let report = makeDebugReport()
         _ = diagnosticsStore.writeReport(report)
@@ -798,6 +822,9 @@ final class AppModel: ObservableObject {
         lines.append("")
         lines.append("## Reset reminders")
         lines.append(resetReminders.diagnosticsText)
+        lines.append("")
+        lines.append("## Performance diagnostics")
+        lines.append(diagnosticsStore.performance.summaryText)
         lines.append("")
         lines.append("## Latest redacted debug records")
 
