@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.48/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.49/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.48` (build 57).
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.49` (build 58).
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -91,7 +91,7 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.48/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.49/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
@@ -189,6 +189,8 @@ Create only the local DMG installer:
 
 ### Privacy
 
+From **1.0.49**, enable **Settings > Debugging > Enable debug mode** before reproducing a CPU spike. The app records CPU, resident memory, thread count, main-thread response delay and activity timings. Three consecutive samples at 80% app CPU or more trigger a three-second native stack profile, at most once per ten minutes. **Save Performance Report** reveals a local `performance-report.txt` for review and private sharing. Manual export preserves the previous high-CPU profile, including across restart. Disabling debug mode stops recording; nothing is uploaded automatically. The own app process is sampled, not individual WebKit XPC processes. The bounded recorder uses temporary reader aliases and does not collect page/chat contents, URLs, account names or credentials. See [Privacy](docs/privacy.md) for limits and data handling.
+
 Token Monitor stores only the latest successful usage snapshots locally at `~/Library/Application Support/TokenMonitor/snapshots.json`. Each provider uses its own persistent WebKit session, so Claude and ChatGPT login state stay isolated from each other and from your normal browser cookies.
 
 Debug mode is off by default. When enabled in Settings, Token Monitor stores redacted refresh diagnostics locally in `~/Library/Application Support/TokenMonitor/Debug/`. Reports open only as drafts for GitHub Issues or email, so you can review them before submitting. GitHub Issues are public.
@@ -231,7 +233,7 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.48/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.49/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
@@ -324,6 +326,8 @@ Nur den lokalen DMG-Installer erstellen:
 ```
 
 ### Datenschutz
+
+Ab **1.0.49** vor dem nächsten CPU-Ausschlag **Settings > Debugging > Enable debug mode** aktivieren. Die App erfasst CPU, belegten Arbeitsspeicher, Threads, Hauptthread-Antwortzeit und Laufzeiten der Arbeitsschritte. Drei Messpunkte ab 80 % App-CPU lösen ein dreisekündiges Stackprofil aus, höchstens einmal pro zehn Minuten. **Save Performance Report** zeigt die lokale Datei `performance-report.txt` im Finder. Bitte prüfen und privat weitergeben. Das letzte Hochlastprofil bleibt beim manuellen Export und nach einem App-Neustart erhalten. Debug aus stoppt die Messung, es gibt keinen automatischen Upload. Profiliert wird der eigene App-Prozess, keine einzelnen WebKit-Prozesse. Der begrenzte Recorder verwendet laufzeitlokale Reader-Nummern und erfasst keine Seiten-/Chat-Inhalte, URLs, Kontonamen oder Zugangsdaten. Details: [Datenschutz](docs/privacy.md).
 
 Token Monitor speichert nur die letzten erfolgreichen Usage-Snapshots lokal unter `~/Library/Application Support/TokenMonitor/snapshots.json`. Jeder Provider nutzt eine eigene persistente WebKit-Session, damit Claude- und ChatGPT-Login getrennt bleiben und keine normalen Browser-Cookies verwendet werden.
 

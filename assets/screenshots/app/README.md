@@ -1,6 +1,6 @@
 # App screenshots
 
-Version: 1.0.48 (57). These are native SwiftUI/AppKit views captured with synthetic example data, not private account screenshots. Dashboard sections use the production `ServiceSectionView` with successful fixture refresh states; the Settings example shows restored, stale fixture accounts. Analysis totals come from generated local Codex/Claude Code fixtures. All provider logos use the app's genuine bundled vector assets.
+Version: 1.0.49 (58). These are native SwiftUI/AppKit views captured with synthetic example data, not private account screenshots. Dashboard sections use the production `ServiceSectionView` with successful fixture refresh states; the Settings example shows restored, stale fixture accounts. Analysis totals come from generated local Codex/Claude Code fixtures. All provider logos use the app's genuine bundled vector assets.
 
 Regenerate with the isolated QA app:
 

@@ -60,12 +60,22 @@ final class DiagnosticsStore {
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
 
-    var isEnabled: Bool
+    let performance: PerformanceRecorder
+    var isEnabled: Bool { didSet { performance.setEnabled(isEnabled) } }
 
     init(baseDirectory: URL, isEnabled: Bool = false, fileManager: FileManager = .default) {
         self.fileManager = fileManager
         self.isEnabled = isEnabled
         directoryURL = baseDirectory.appendingPathComponent("Debug", isDirectory: true)
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "development"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
+        #if MAS_BUILD
+        let allowSampling = false
+        #else
+        let allowSampling = true
+        #endif
+        performance = PerformanceRecorder(directory: directoryURL.appendingPathComponent("Performance", isDirectory: true),
+                                          version: "\(version) (\(build))", stackSamplingAllowed: allowSampling)
         encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -73,6 +83,7 @@ final class DiagnosticsStore {
         decoder.dateDecodingStrategy = .iso8601
 
         try? fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        performance.setEnabled(isEnabled)
     }
 
     func record(_ debugRecord: RefreshDebugRecord) {
@@ -118,6 +129,18 @@ final class DiagnosticsStore {
 
     var directoryPath: String {
         directoryURL.path
+    }
+
+    func writePerformanceReport() -> URL? {
+        let url = directoryURL.appendingPathComponent("performance-report.txt")
+        do {
+            try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true,
+                                            attributes: [.posixPermissions: 0o700])
+            try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directoryURL.path)
+            try performance.reportText.write(to: url, atomically: true, encoding: .utf8)
+            try fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+            return url
+        } catch { return nil }
     }
 
     private func latestRecordURL(for service: ServiceKind) -> URL {

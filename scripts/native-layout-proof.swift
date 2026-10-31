@@ -55,6 +55,7 @@ private struct LayoutFixtureAccounts: AccountPersisting {
             ("settings-light", 3, .settings, false, false, 760, false, .compact),
             ("settings-by-provider-light", 3, .settings, false, false, 760, false, .byProvider),
             ("settings-by-account-light", 3, .settings, false, false, 760, false, .byAccount),
+            ("settings-debug-light", 3, .settings, false, false, 760, false, .compact),
             ("settings-dark-bounded", 6, .settings, false, true, 620, false, .compact),
             ("settings-by-provider-dark-bounded", 6, .settings, false, true, 620, false, .byProvider),
             ("settings-by-account-dark-bounded", 6, .settings, false, true, 620, false, .byAccount),
@@ -64,9 +65,12 @@ private struct LayoutFixtureAccounts: AccountPersisting {
             UserDefaults.standard.set(count >= 3, forKey: "openCodeGoEnabled")
             UserDefaults.standard.set(details, forKey: "showUsageDetails")
             UserDefaults.standard.set(false, forKey: "bankedResetRemindersEnabled")
+            UserDefaults.standard.set(name == "settings-debug-light", forKey: "debugModeEnabled")
             for id in analytics.expandedGroupIDs { analytics.setExpanded(id, false) }
             if expand, let first = analytics.groups.first { analytics.setExpanded(first.id, true) }
-            let model = AppModel(snapshotStore: LayoutFixtureSnapshots(snapshots: snapshots),
+            let store = FileSnapshotStore(directoryURL: output.appendingPathComponent("fixture-state/" + name))
+            try store.saveSnapshots(snapshots)
+            let model = AppModel(snapshotStore: store,
                                  accountStore: LayoutFixtureAccounts(count: count, snapshots: snapshots), analytics: analytics)
             model.setStatusMenuAccountArrangement(arrangement)
             model.popoverMaximumHeight = maximum
@@ -74,6 +78,14 @@ private struct LayoutFixtureAccounts: AccountPersisting {
             case .dashboard: model.showDashboardInPopover()
             case .analytics: model.showAnalyticsInPopover()
             case .settings: model.showSettingsInPopover()
+            }
+            if name == "settings-debug-light" {
+                model.savePerformanceReport()
+                for _ in 0..<200 where model.savingPerformanceReport { try await Task.sleep(for: .milliseconds(50)) }
+                precondition(!model.savingPerformanceReport)
+                let report = try String(contentsOf: model.diagnosticsDirectoryURL.appendingPathComponent("performance-report.txt"), encoding: .utf8)
+                precondition(report.contains("Token Monitor Performance Report") && report.contains("1.0.49 (58)"))
+                precondition(model.performanceReportStatus.contains("Saved locally"))
             }
             window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
             let hosting = NSHostingController(rootView: PopoverRootView(onSizeChange: { _, size in
@@ -115,6 +127,7 @@ private struct LayoutFixtureAccounts: AccountPersisting {
             precondition(colors.count > 12)
             records.append(["name": name, "height": Double(height), "maximum": Double(maximum), "scrollAreas": scrolls.count,
                             "overflowing": overflowing, "colors": colors.count])
+            model.setDebugModeEnabled(false)
         }
         let height: (String) -> Double = { name in records.first { $0["name"] as? String == name }!["height"] as! Double }
         precondition(height("capacity-two-light") < height("capacity-three-light"))
