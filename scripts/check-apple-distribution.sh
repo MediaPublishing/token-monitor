@@ -2,8 +2,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_DIR="$ROOT_DIR/dist/TokenMonitor.app"
-DMG_PATH="$ROOT_DIR/dist/TokenMonitor-macOS.dmg"
+DIST_DIR="${TOKEN_MONITOR_DIST_DIR:-$ROOT_DIR/dist}"
+APP_DIR="$DIST_DIR/TokenMonitor.app"
+DMG_PATH="$DIST_DIR/TokenMonitor-macOS.dmg"
 NOTARY_PROFILE="${TOKEN_MONITOR_NOTARY_PROFILE:-}"
 REQUIRE_READY="${TOKEN_MONITOR_REQUIRE_DISTRIBUTION_READY:-0}"
 warning_count=0
@@ -126,7 +127,7 @@ fi
 if [[ -n "$NOTARY_PROFILE" ]]; then
   print_command_result \
     "notarytool keychain profile '$NOTARY_PROFILE' can be used" \
-    xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" --limit 1
+    xcrun notarytool history --keychain-profile "$NOTARY_PROFILE"
 else
   warn "TOKEN_MONITOR_NOTARY_PROFILE is not set; notarization readiness was not checked"
 fi
@@ -143,6 +144,7 @@ if [[ -d "$APP_DIR" ]]; then
 
   print_command_result "App code signature verifies" codesign --verify --deep --strict "$APP_DIR"
   check_developer_id_authority "App bundle" "$APP_DIR"
+  print_command_result "App team, nested signatures and stapled ticket" python3 "$ROOT_DIR/scripts/apple-distribution.py" verify "$APP_DIR" --notarized
 
   signature_details="$(codesign -dv --verbose=4 "$APP_DIR" 2>&1 || true)"
   signature_type="$(printf '%s\n' "$signature_details" | awk -F= '/Signature=/ {print $2; exit}')"

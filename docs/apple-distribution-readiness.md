@@ -1,5 +1,9 @@
 # Apple Distribution Readiness
 
+**Update 2026-11-02:** Developer ID certificate installed for team F7ZC4PZ39V, local signing verified, and the local notary profile validated. Version 1.0.51 is in Apple's notarization queue; publication remains gated on acceptance and artifact verification. See [local release procedure](apple-local-release.md). No Apple private key or notary credential was exported to GitHub.
+
+**Update 2026-10-22:** Membership and team confirmed; local Developer ID preparation updated. See [current preparation and remaining gates](apple-developer-release-2026-10-22.md). The historical audit below is retained; it is not the current signing-readiness claim.
+
 Last reviewed: 2026-05-13
 
 ## Objective

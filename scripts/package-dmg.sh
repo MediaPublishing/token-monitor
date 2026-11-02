@@ -2,29 +2,18 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_DIR="$ROOT_DIR/dist/TokenMonitor.app"
-DMG_PATH="$ROOT_DIR/dist/TokenMonitor-macOS.dmg"
-DMG_ROOT="$ROOT_DIR/dist/dmg-root"
+DIST_DIR="${TOKEN_MONITOR_DIST_DIR:-$ROOT_DIR/dist}"
+APP_DIR="$DIST_DIR/TokenMonitor.app"
+DMG_PATH="$DIST_DIR/TokenMonitor-macOS.dmg"
+DMG_ROOT="$DIST_DIR/dmg-root"
 VOLUME_NAME="Token Monitor"
 CODESIGN_IDENTITY="${TOKEN_MONITOR_CODESIGN_IDENTITY:--}"
 
 cd "$ROOT_DIR"
 
-if [[ "${TOKEN_MONITOR_NOTARIZE:-}" == "1" && "$CODESIGN_IDENTITY" == "-" ]]; then
-  cat >&2 <<'EOF'
-Notarization requires a signed Developer ID build.
-Set TOKEN_MONITOR_CODESIGN_IDENTITY to a Developer ID Application identity before
-setting TOKEN_MONITOR_NOTARIZE=1.
-EOF
-  exit 1
-fi
-
-if [[ "${TOKEN_MONITOR_NOTARIZE:-}" == "1" && "$CODESIGN_IDENTITY" != Developer\ ID\ Application:* ]]; then
-  cat >&2 <<EOF
-Notarization requires a Developer ID Application identity.
-Current TOKEN_MONITOR_CODESIGN_IDENTITY: $CODESIGN_IDENTITY
-EOF
-  exit 1
+if [[ "${TOKEN_MONITOR_NOTARIZE:-0}" == "1" ]]; then
+  [[ -n "${TOKEN_MONITOR_NOTARY_PROFILE:-}" ]] || { printf 'Missing TOKEN_MONITOR_NOTARY_PROFILE\n' >&2; exit 1; }
+  python3 "$ROOT_DIR/scripts/apple-distribution.py" identity "$CODESIGN_IDENTITY"
 fi
 
 if [[ "${TOKEN_MONITOR_SKIP_BUILD:-}" != "1" ]]; then
@@ -34,6 +23,11 @@ fi
 if [[ ! -d "$APP_DIR" ]]; then
   printf 'Missing app bundle: %s\n' "$APP_DIR" >&2
   exit 1
+fi
+
+if [[ "${TOKEN_MONITOR_NOTARIZE:-0}" == "1" ]]; then
+  python3 "$ROOT_DIR/scripts/apple-distribution.py" notarize "$APP_DIR" \
+    --profile "$TOKEN_MONITOR_NOTARY_PROFILE" --receipt "$DIST_DIR/notarization-app.json"
 fi
 
 rm -rf "$DMG_ROOT" "$DMG_PATH"
@@ -54,21 +48,9 @@ if [[ "$CODESIGN_IDENTITY" != "-" ]]; then
   codesign --verify --strict "$DMG_PATH"
 fi
 
-if [[ "${TOKEN_MONITOR_NOTARIZE:-}" == "1" ]]; then
-  if [[ -z "${TOKEN_MONITOR_NOTARY_PROFILE:-}" ]]; then
-    cat >&2 <<'EOF'
-Missing notarization profile.
-Set TOKEN_MONITOR_NOTARY_PROFILE to a notarytool keychain profile name, for example:
-xcrun notarytool store-credentials token-monitor-notary
-EOF
-    exit 1
-  fi
-
-  xcrun notarytool submit "$DMG_PATH" \
-    --keychain-profile "$TOKEN_MONITOR_NOTARY_PROFILE" \
-    --wait
-  xcrun stapler staple "$DMG_PATH"
-  xcrun stapler validate "$DMG_PATH"
+if [[ "${TOKEN_MONITOR_NOTARIZE:-0}" == "1" ]]; then
+  python3 "$ROOT_DIR/scripts/apple-distribution.py" notarize "$DMG_PATH" \
+    --profile "$TOKEN_MONITOR_NOTARY_PROFILE" --receipt "$DIST_DIR/notarization-dmg.json"
 fi
 
 rm -rf "$DMG_ROOT"

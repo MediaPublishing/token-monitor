@@ -19,6 +19,11 @@ on:
         required: false
         default: false
         type: boolean
+      publish_prebuilt_signed:
+        description: Verify and publish existing locally signed release assets without rebuilding
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -34,6 +39,7 @@ concurrency:
 
 jobs:
   build-release:
+    if: ${{ !inputs.publish_prebuilt_signed && !contains(github.event.release.body, '<!-- token-monitor:prebuilt-notarized -->') }}
     runs-on: macos-15
     env:
       RELEASE_TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
@@ -53,7 +59,12 @@ jobs:
           git checkout origin/main -- \
             landing/index.html \
             scripts/check-github-release-channel.sh \
-            scripts/package-release.sh
+            scripts/package-release.sh \
+            scripts/package-dmg.sh \
+            scripts/build-app.sh \
+            scripts/check-apple-distribution.sh \
+            scripts/apple-distribution.py \
+            packaging/apple-developer-team-id.txt
 
       - name: Check release version consistency
         run: ./scripts/check-release-version-consistency.sh --tag "$RELEASE_TAG" --require-tag
@@ -207,3 +218,35 @@ jobs:
 
       - name: Deploy Pages
         uses: actions/deploy-pages@v5
+
+  publish-prebuilt-signed:
+    if: ${{ inputs.publish_prebuilt_signed || contains(github.event.release.body, '<!-- token-monitor:prebuilt-notarized -->') }}
+    runs-on: macos-15
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.RELEASE_TAG }}
+      - name: Download prebuilt assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ./scripts/check-release-version-consistency.sh --tag "$RELEASE_TAG" --require-tag
+          mkdir -p dist/prebuilt-signed
+          gh release download "$RELEASE_TAG" --dir dist/prebuilt-signed \
+            --pattern 'TokenMonitor-macOS.dmg' --pattern 'TokenMonitor-macOS.zip' \
+            --pattern 'TokenMonitor-*-macOS.zip' --pattern 'appcast.xml'
+      - name: Verify signed and notarized assets
+        run: python3 scripts/verify-signed-release.py dist/prebuilt-signed
+      - name: Prepare Pages artifact
+        run: |
+          ./scripts/build-pages-site.sh
+          mkdir -p dist/pages-site/updates
+          cp dist/prebuilt-signed/appcast.xml dist/pages-site/appcast.xml
+          cp dist/prebuilt-signed/TokenMonitor-*-macOS.zip dist/pages-site/updates/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/pages-site
+      - uses: actions/deploy-pages@v5
