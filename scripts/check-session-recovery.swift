@@ -7,6 +7,7 @@ import WebKit
     var fixtureURL: URL
     var loadCount = 0
     var holdJavaScript = false
+    var extractedWhileLoading = false
     var completions: [@MainActor @Sendable (Any?, Error?) -> Void] = []
 
     init(configuration: WKWebViewConfiguration, url: URL) {
@@ -23,6 +24,7 @@ import WebKit
 
     override func evaluateJavaScript(_ javaScriptString: String,
         completionHandler: (@MainActor @Sendable (Any?, Error?) -> Void)? = nil) {
+        extractedWhileLoading = extractedWhileLoading || isLoading
         if holdJavaScript, let completionHandler { completions.append(completionHandler) }
         else { super.evaluateJavaScript(javaScriptString, completionHandler: completionHandler) }
     }
@@ -108,7 +110,7 @@ import WebKit
         do {
             let reset = try await controller.refresh()
             check(reset.metrics.first { $0.key == "weekly-all-models" }?.progress == 1, "new weekly quota is read despite a stalled image")
-            check(fixtures.views.last!.isLoading, "snapshot is read before the stalled subresource finishes")
+            check(fixtures.views.last!.extractedWhileLoading, "snapshot is read before the stalled subresource finishes")
         } catch { check(false, "new weekly quota is read despite a stalled image: \(error)") }
         check(await store.httpCookieStore.allCookies().contains { $0.name == "synthetic-session" }, "recovery never clears the account cookie")
 
@@ -150,7 +152,7 @@ import WebKit
             check(fresh.metric(for: "weekly-all-models")?.progress == 1, "a late pre-reset callback cannot complete the post-reset refresh")
         } else { lateController.cancelRefresh(); _ = try? await newRequest.value }
 
-        fixtures.views.last!.fixtureURL = URL(string: "/login", relativeTo: root)!
+        fixtures.views.last!.fixtureURL = URL(string: "/login?background-work=1", relativeTo: root)!
         let countBeforeLogin = fixtures.views.count
         do { _ = try await controller.refresh(); check(false, "a genuine login page is not reported as fresh usage") }
         catch let error as UsageParseError {
@@ -168,6 +170,86 @@ import WebKit
         _ = try? await networkTimeout.value
         check(fixtures.views.count == countBeforeLogin + 1, "a URL-loading timeout also replaces the failed reader")
         check(fixtures.views.last!.configuration.websiteDataStore === store, "URL-loading recovery retains the same account store")
+
+        fixtures.path = "/usage?used=0&background-work=1"
+        fixtures.views.last!.fixtureURL = URL(string: fixtures.path, relativeTo: root)!
+        _ = try await controller.refresh()
+        func pulseCount() async throws -> Int {
+            let (data, _) = try await URLSession.shared.data(from: URL(string: "/work-count", relativeTo: root)!)
+            return Int(String(decoding: data, as: UTF8.self)) ?? -1
+        }
+        try await Task.sleep(for: .milliseconds(500))
+        let pulsesBeforeIdle = try await pulseCount()
+        try await Task.sleep(for: .seconds(2))
+        let pulsesAfterIdle = try await pulseCount()
+        print("IDLE WORK: pulses before=\(pulsesBeforeIdle), after=\(pulsesAfterIdle), delta=\(pulsesAfterIdle - pulsesBeforeIdle)")
+        check(pulsesAfterIdle == pulsesBeforeIdle, "completed background reads stop the page worker between refreshes")
+        check(await store.httpCookieStore.allCookies().contains { $0.name == "synthetic-session" }, "idling the document retains sign-in cookies")
+        fixtures.views.last!.fixtureURL = URL(string: "/usage?used=100", relativeTo: root)!
+        let afterIdle = try await controller.refresh()
+        check(afterIdle.metric(for: "weekly-all-models")?.progress == 0, "the next refresh reads new values after document idling")
+
+        let canceledView = fixtures.views.last!
+        canceledView.fixtureURL = URL(string: "/usage?background-work=1", relativeTo: root)!
+        canceledView.holdJavaScript = true
+        let canceledRead = Task { try await controller.refresh() }
+        for _ in 0..<75 {
+            if !canceledView.completions.isEmpty { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        controller.cancelRefresh()
+        _ = try? await canceledRead.value
+        try await Task.sleep(for: .milliseconds(500))
+        let canceledWork = try await pulseCount()
+        try await Task.sleep(for: .seconds(2))
+        check(try await pulseCount() == canceledWork, "canceling a read stops its page worker")
+        for completion in canceledView.completions { completion(nil, CancellationError()) }
+        canceledView.completions.removeAll()
+        canceledView.holdJavaScript = false
+
+        canceledView.fixtureURL = URL(string: "/login?background-work=1", relativeTo: root)!
+        _ = try? await controller.refresh()
+        try await Task.sleep(for: .milliseconds(500))
+        let failedWork = try await pulseCount()
+        try await Task.sleep(for: .seconds(2))
+        check(try await pulseCount() == failedWork, "a failed authentication read stops its page worker")
+
+        let redirect = ServiceSessionController(service: .claude, diagnosticsStore: diagnostics, dataStore: store,
+            refreshTimeout: .seconds(5), backgroundWebViewFactory: { configuration in
+                FixtureWebView(configuration: configuration, url: URL(string: "/redirect-usage", relativeTo: self.root)!)
+            })
+        let redirected = try await redirect.refresh()
+        check(redirected.metric(for: "weekly-all-models")?.progress == 1, "client-side navigation still reaches fresh usage")
+
+        let loginView = FixtureWebView(configuration: {
+            let configuration = WKWebViewConfiguration()
+            configuration.websiteDataStore = store
+            return configuration
+        }(), url: URL(string: "/usage?used=0&background-work=1", relativeTo: root)!)
+        let login = ServiceLoginWindowController(service: .claude, dataStore: store,
+            webViewFactory: { _ in loginView })
+        login.showWindowAndActivate()
+        try await Task.sleep(for: .seconds(1))
+        let loginWork = try await pulseCount()
+        check(loginWork > pulsesAfterIdle, "the login fixture performs real background work")
+        _ = login.windowShouldClose(login.window!)
+        try await Task.sleep(for: .milliseconds(500))
+        let closedWork = try await pulseCount()
+        try await Task.sleep(for: .seconds(2))
+        check(try await pulseCount() == closedWork, "closing the login window stops its page worker")
+
+        login.showWindowAndActivate()
+        try await Task.sleep(for: .seconds(1))
+        login.beginAuthenticationRead()
+        _ = login.windowShouldClose(login.window!)
+        let retainedText = try await login.evaluateJavaScript("document.body.innerText")
+        check(retainedText.contains("Plan usage limits"), "closing during authentication handoff preserves the document until read")
+        login.finishAuthenticationRead()
+        try await Task.sleep(for: .milliseconds(500))
+        let completedLoginWork = try await pulseCount()
+        try await Task.sleep(for: .seconds(2))
+        check(try await pulseCount() == completedLoginWork, "finishing authentication handoff unloads the hidden document")
+        check(await store.httpCookieStore.allCookies().contains { $0.name == "synthetic-session" }, "closing and reopening login retains the same session cookie")
     }
 }
 
