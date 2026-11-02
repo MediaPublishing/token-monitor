@@ -14,6 +14,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     private let statusLabel = NSTextField(wrappingLabelWithString: "")
     private let readUsageButton = NSButton(title: "Read usage", target: nil, action: nil)
     private var didNotifyAuthenticated = false
+    private var authenticationReadInProgress = false
     private var chatGPTLoginNavigation = ChatGPTLoginNavigation()
     private var currentNavigationToken = UUID()
     private var forcesGoogleAccountSelection = false
@@ -26,7 +27,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     var onAuthenticationDismissed: (@MainActor () -> Void)?
 
     init(service: ServiceKind, dataStore: WKWebsiteDataStore, onAuthenticated: (@MainActor () -> Void)? = nil,
-         performance: PerformanceRecorder? = nil, diagnosticReader: UUID = UUID()) {
+         performance: PerformanceRecorder? = nil, diagnosticReader: UUID = UUID(),
+         webViewFactory: (@MainActor (WKWebViewConfiguration) -> WKWebView)? = nil) {
         self.service = service
         self.dataStore = dataStore
         self.onAuthenticated = onAuthenticated
@@ -38,7 +40,8 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         configuration.defaultWebpagePreferences.preferredContentMode = .desktop
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
 
-        webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 1180, height: 840), configuration: configuration)
+        webView = webViewFactory?(configuration)
+            ?? WKWebView(frame: NSRect(x: 0, y: 0, width: 1180, height: 840), configuration: configuration)
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
 
@@ -106,6 +109,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         onDismissed: @escaping @MainActor () -> Void
     ) {
         didNotifyAuthenticated = false
+        authenticationReadInProgress = false
         chatGPTLoginNavigation = ChatGPTLoginNavigation()
         forcesGoogleAccountSelection = false
         didRewriteGoogleAuthorizationRequest = false
@@ -122,6 +126,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
 
     func prepareForSessionReset() {
         invalidateReadinessChecks()
+        authenticationReadInProgress = false
         didNotifyAuthenticated = false
         chatGPTLoginNavigation = ChatGPTLoginNavigation()
         forcesGoogleAccountSelection = true
@@ -222,6 +227,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         didNotifyAuthenticated = true
         forcesGoogleAccountSelection = false
         let callback = onAuthenticated
+        if callback != nil, service == .chatGPT || service == .openCodeGo { beginAuthenticationRead() }
         onAuthenticated = nil
         onAuthenticationDismissed = nil
         callback?()
@@ -541,10 +547,26 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
         invalidateReadinessChecks()
         forcesGoogleAccountSelection = false
         sender.orderOut(nil)
+        unloadHiddenPageIfPossible()
         let dismissCallback = onAuthenticationDismissed
         onAuthenticationDismissed = nil
         dismissCallback?()
         return false
+    }
+
+    func finishAuthenticationRead() {
+        authenticationReadInProgress = false
+        unloadHiddenPageIfPossible()
+    }
+
+    func beginAuthenticationRead() {
+        authenticationReadInProgress = true
+    }
+
+    private func unloadHiddenPageIfPossible() {
+        guard window?.isVisible != true, !authenticationReadInProgress else { return }
+        webView.stopLoading()
+        webView.loadHTMLString("", baseURL: nil)
     }
 }
 

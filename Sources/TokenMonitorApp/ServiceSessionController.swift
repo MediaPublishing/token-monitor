@@ -39,6 +39,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private lazy var backgroundWebView: WKWebView = makeBackgroundWebView()
 
     private var pendingContinuation: CheckedContinuation<ServiceSnapshot, Error>?
+    private var activeNavigation: WKNavigation?
+    private var idleNavigation: WKNavigation?
     private var currentLoadToken = UUID()
     private var extractionScheduled = false
     private var extractionTask: Task<Void, Never>?
@@ -84,8 +86,11 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         defer { diagnosticsStore.performance.end(activity) }
 
         if useAuthenticatedLoginPageForNextRefresh {
+            defer {
+                useAuthenticatedLoginPageForNextRefresh = false
+                browserController.finishAuthenticationRead()
+            }
             let snapshot = try await snapshotFromAuthenticatedLoginPage()
-            useAuthenticatedLoginPageForNextRefresh = false
             rememberWorkspace(from: snapshot)
             return snapshot
         }
@@ -102,7 +107,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                 cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
                 timeoutInterval: 60
             )
-            backgroundWebView.load(request)
+            activeNavigation = backgroundWebView.load(request)
         }
     }
 
@@ -184,8 +189,14 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         handleNavigationError(error)
     }
 
+    func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        guard webView === backgroundWebView, pendingContinuation != nil,
+              navigation !== idleNavigation else { return }
+        activeNavigation = navigation
+    }
+
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        guard webView === backgroundWebView else {
+        guard webView === backgroundWebView, navigation === activeNavigation, activeNavigation != nil else {
             return
         }
 
@@ -193,7 +204,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
-        guard webView === backgroundWebView else { return }
+        guard webView === backgroundWebView, navigation === activeNavigation, activeNavigation != nil else { return }
         // Usage can be ready while an unrelated image keeps didFinish from arriving.
         beginExtractionIfNeeded()
     }
@@ -280,7 +291,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        guard webView === backgroundWebView else {
+        guard webView === backgroundWebView, pendingContinuation != nil,
+              navigation == nil || navigation === activeNavigation else {
             return
         }
 
@@ -288,7 +300,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        guard webView === backgroundWebView else {
+        guard webView === backgroundWebView, pendingContinuation != nil,
+              navigation == nil || navigation === activeNavigation else {
             return
         }
 
@@ -319,7 +332,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                    extract.openCodeGoWorkspaceURL == nil {
                     didTryOpenCodeConsole = true
                     extractionScheduled = false
-                    backgroundWebView.load(URLRequest(url: OpenCodeGoNavigation.consoleUsageURL,
+                    activeNavigation = backgroundWebView.load(URLRequest(url: OpenCodeGoNavigation.consoleUsageURL,
                         cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 60))
                     return
                 }
@@ -328,7 +341,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                    let workspaceURL = extract.openCodeGoWorkspaceURL,
                    OpenCodeGoNavigation.workspaceURL(from: extract.url) == nil {
                     extractionScheduled = false
-                    backgroundWebView.load(
+                    activeNavigation = backgroundWebView.load(
                         URLRequest(
                             url: workspaceURL,
                             cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
@@ -490,6 +503,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private func finishRefresh(with result: Result<ServiceSnapshot, Error>) {
         guard let continuation = pendingContinuation else { return }
         pendingContinuation = nil
+        activeNavigation = nil
         currentLoadToken = UUID()
         extractionScheduled = false
         extractionTask?.cancel()
@@ -497,13 +511,21 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         refreshTimeoutTask?.cancel()
         refreshTimeoutTask = nil
 
+        var needsReplacement = false
         if case let .failure(error) = result {
             let failure = error as NSError
             if error as? SessionControllerError == .refreshTimedOut ||
                 (failure.domain == NSURLErrorDomain && failure.code == NSURLErrorTimedOut) ||
                 (failure.domain == WKError.errorDomain && failure.code == WKError.webContentProcessTerminated.rawValue) {
-                replaceBackgroundWebView()
+                needsReplacement = true
             }
+        }
+        if needsReplacement {
+            replaceBackgroundWebView()
+        } else {
+            // stopLoading alone does not stop scripts and workers in the loaded document.
+            backgroundWebView.stopLoading()
+            idleNavigation = backgroundWebView.loadHTMLString("", baseURL: nil)
         }
 
         switch result {
@@ -592,7 +614,9 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         backgroundWebView.navigationDelegate = nil
         backgroundWebView.uiDelegate = nil
         backgroundWebView.stopLoading()
+        backgroundWebView.loadHTMLString("", baseURL: nil)
         backgroundWebView = makeBackgroundWebView()
+        idleNavigation = nil
     }
 
     private func makeBackgroundWebView() -> WKWebView {

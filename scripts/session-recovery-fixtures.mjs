@@ -1,7 +1,17 @@
 import http from 'node:http';
 
+let workPulses = 0;
 const server = http.createServer((request, response) => {
   const url = new URL(request.url, 'http://127.0.0.1');
+  if (url.pathname === '/work-pulse') {
+    workPulses += 1;
+    response.end('ok');
+    return;
+  }
+  if (url.pathname === '/work-count') {
+    response.end(String(workPulses));
+    return;
+  }
   if (url.pathname === '/hang') {
     const timer = setTimeout(() => response.destroy(), 30_000);
     response.on('close', () => clearTimeout(timer));
@@ -9,15 +19,27 @@ const server = http.createServer((request, response) => {
   }
   const used = url.searchParams.get('used') === '100' ? '100' : '0';
   const image = url.searchParams.has('blocked-image') ? '<img src="/hang" alt="">' : '';
+  const work = url.searchParams.has('background-work') ? `<script>
+    const source = \`setInterval(() => {
+      const until = performance.now() + 15;
+      while (performance.now() < until) {}
+      fetch('http://${request.headers.host}/work-pulse').catch(() => {});
+    }, 100);\`;
+    new Worker(URL.createObjectURL(new Blob([source], {type: 'text/javascript'})));
+    </script>` : '';
   response.setHeader('Content-Type', 'text/html; charset=utf-8');
+  if (url.pathname === '/redirect-usage') {
+    response.end('<!doctype html><script>location.replace("/usage?used=0")</script>');
+    return;
+  }
   if (url.pathname === '/login') {
-    response.end('<!doctype html><title>Synthetic login</title><h1>Log in to Claude</h1><p>Continue with email</p>');
+    response.end('<!doctype html><title>Synthetic login</title><h1>Log in to Claude</h1><p>Continue with email</p>' + work);
     return;
   }
   response.end(`<!doctype html><title>Synthetic Claude usage</title><main>
     <h1>Plan usage limits</h1><h2>Current session</h2><p>Resets at 12:00 PM</p><p>0% used</p>
     <h2>All models</h2><p>Resets Friday at 5:00 AM</p><p>${used}% used</p>
-    ${image}</main>`);
+    ${image}</main>${work}`);
 });
 
 server.listen(0, '127.0.0.1', () => console.log(server.address().port));
