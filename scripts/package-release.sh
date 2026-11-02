@@ -2,11 +2,12 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_DIR="$ROOT_DIR/dist/TokenMonitor.app"
-ZIP_PATH="$ROOT_DIR/dist/TokenMonitor-macOS.zip"
-DMG_PATH="$ROOT_DIR/dist/TokenMonitor-macOS.dmg"
-UPDATES_DIR="$ROOT_DIR/dist/updates"
-APPCAST_PATH="$ROOT_DIR/dist/appcast.xml"
+DIST_DIR="${TOKEN_MONITOR_DIST_DIR:-$ROOT_DIR/dist}"
+APP_DIR="$DIST_DIR/TokenMonitor.app"
+ZIP_PATH="$DIST_DIR/TokenMonitor-macOS.zip"
+DMG_PATH="$DIST_DIR/TokenMonitor-macOS.dmg"
+UPDATES_DIR="$DIST_DIR/updates"
+APPCAST_PATH="$DIST_DIR/appcast.xml"
 SPARKLE_BIN_DIR="$ROOT_DIR/.build/artifacts/sparkle/Sparkle/bin"
 DOWNLOAD_URL_PREFIX="${TOKEN_MONITOR_DOWNLOAD_URL_PREFIX:-https://mediapublishing.github.io/token-monitor/updates/}"
 RELEASE_NOTES_PATH="${TOKEN_MONITOR_RELEASE_NOTES_PATH:-}"
@@ -45,7 +46,19 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Fail before build, archives or key use when strict release inputs are absent.
+if [[ "$REQUIRE_DISTRIBUTION_READY" == "1" && "${TOKEN_MONITOR_NOTARIZE:-0}" != "1" ]]; then
+  printf 'Distribution-ready packaging requires TOKEN_MONITOR_NOTARIZE=1 and explicit upload approval.\n' >&2
+  exit 1
+fi
+if [[ "${TOKEN_MONITOR_NOTARIZE:-0}" == "1" ]]; then
+  [[ -n "${TOKEN_MONITOR_NOTARY_PROFILE:-}" ]] || { printf 'Missing TOKEN_MONITOR_NOTARY_PROFILE\n' >&2; exit 1; }
+  python3 "$ROOT_DIR/scripts/apple-distribution.py" identity "${TOKEN_MONITOR_CODESIGN_IDENTITY:--}"
+fi
 "$ROOT_DIR/scripts/build-app.sh"
+# Notarize/staple the app before creating either ZIP so Sparkle installs the
+# same ticketed app as the DMG. No archive is signed before its final contents.
+TOKEN_MONITOR_SKIP_BUILD=1 "$ROOT_DIR/scripts/package-dmg.sh"
 
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist")"
 BUILD_NUMBER="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$APP_DIR/Contents/Info.plist")"
@@ -54,7 +67,6 @@ VERSIONED_RELEASE_NOTES_PATH="${VERSIONED_ZIP_PATH%.zip}.md"
 
 rm -f "$ZIP_PATH"
 ditto -c -k --sequesterRsrc --keepParent "$APP_DIR" "$ZIP_PATH"
-TOKEN_MONITOR_SKIP_BUILD=1 "$ROOT_DIR/scripts/package-dmg.sh"
 
 mkdir -p "$UPDATES_DIR"
 cp "$ZIP_PATH" "$VERSIONED_ZIP_PATH"
@@ -111,6 +123,7 @@ if [[ "$REQUIRE_DISTRIBUTION_READY" == "1" ]]; then
     fi
 
     codesign --verify --deep --strict "$extracted_app"
+    python3 "$ROOT_DIR/scripts/apple-distribution.py" verify "$extracted_app" --notarized
 
     local extracted_version
     local extracted_build

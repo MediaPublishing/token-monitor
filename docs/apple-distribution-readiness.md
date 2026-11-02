@@ -1,5 +1,9 @@
 # Apple Distribution Readiness
 
+**Update 2026-11-02:** Version 1.0.51 (60) has been signed with Developer ID for team F7ZC4PZ39V. Apple accepted the app (submission `26d87021-cd75-4b46-ac5c-8df8c823eb18`) and DMG (`1b813312-c93f-4c4a-8f57-6ef6994304e9`); their notarization tickets are stapled. See [local release procedure](apple-local-release.md). No Apple private key or notary credential was exported to GitHub. The historical readiness audit below is not the current release status.
+
+**Update 2026-10-22:** Membership and team confirmed; local Developer ID preparation updated. See [current preparation and remaining gates](apple-developer-release-2026-10-22.md). The historical audit below is retained; it is not the current signing-readiness claim.
+
 Last reviewed: 2026-05-13
 
 ## Objective

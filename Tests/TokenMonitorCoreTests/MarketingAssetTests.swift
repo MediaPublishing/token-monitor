@@ -119,12 +119,20 @@ struct MarketingAssetTests {
         #expect(!landingHTML.contains("Would a PKG avoid"))
         #expect(!landingHTML.contains("How do updates work?"))
         let dmgScript = try String(contentsOf: dmgScriptURL, encoding: .utf8)
-        #expect(dmgScript.contains("Notarization requires a signed Developer ID build."))
-        #expect(dmgScript.contains("Notarization requires a Developer ID Application identity."))
-        #expect(dmgScript.contains("Developer\\ ID\\ Application:*"))
+        // Exercise the shared signing gate, including wrong team, missing runtime,
+        // and a rejected Apple submission. The runner mocks all credential/upload calls.
+        let signingChecks = Process()
+        signingChecks.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        signingChecks.arguments = ["python3", rootURL.appendingPathComponent("scripts/check-apple-distribution.py").path]
+        var signingEnvironment = ProcessInfo.processInfo.environment
+        signingEnvironment["PYTHONDONTWRITEBYTECODE"] = "1"
+        signingChecks.environment = signingEnvironment
+        try signingChecks.run()
+        signingChecks.waitUntilExit()
+        #expect(signingChecks.terminationStatus == 0)
+        #expect(dmgScript.contains("scripts/apple-distribution.py"))
         #expect(dmgScript.contains("TOKEN_MONITOR_CODESIGN_IDENTITY"))
         #expect(dmgScript.contains("codesign --verify --strict \"$DMG_PATH\""))
-        #expect(dmgScript.contains("xcrun stapler validate \"$DMG_PATH\""))
         #expect(releaseWorkflow.contains("workflow_dispatch"))
         #expect(releaseWorkflow.contains("require_developer_id"))
         #expect(releaseWorkflow.contains("allow_unsigned_preview"))
@@ -162,6 +170,11 @@ struct MarketingAssetTests {
         #expect(releaseWorkflow.contains("Check GitHub release channel"))
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_PUBLIC_RELEASE_TAG: ${{ env.RELEASE_TAG }}"))
         #expect(releaseWorkflow.contains("TOKEN_MONITOR_ALLOW_STABLE_RELEASES=1 ./scripts/check-github-release-channel.sh"))
+        #expect(releaseWorkflow.contains("publish_prebuilt_signed"))
+        #expect(releaseWorkflow.contains("token-monitor:prebuilt-notarized"))
+        #expect(releaseWorkflow.contains("python3 scripts/verify-signed-release.py dist/prebuilt-signed"))
+        #expect(releaseWorkflow.contains("--pattern 'appcast.xml'"))
+        #expect(releaseWorkflow.contains("--pattern 'TokenMonitor-*-macOS.zip'"))
         #expect(ciWorkflow.contains("Check release scripts"))
         #expect(ciWorkflow.contains("bash -n scripts/*.sh"))
         #expect(ciWorkflow.contains("./scripts/check-apple-access-handoff.sh --help"))

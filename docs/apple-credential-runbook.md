@@ -1,5 +1,7 @@
 # Apple Credential Runbook
 
+**Current local release path (2026-11-02):** Use [Local Developer ID Releases](apple-local-release.md). The Developer ID key and `token-monitor-notary` profile stay in the release Mac's keychain. A certificate/private-key export or GitHub credential setup is not part of that authorization. The CI-export procedure below is an alternative requiring separate approval, not a prerequisite for a locally signed release.
+
 Last reviewed: 2026-05-13
 
 This runbook explains how to prepare Token Monitor for Developer ID signing and notarization without putting Apple credentials into chat, source files, or release artifacts.
