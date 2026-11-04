@@ -147,8 +147,8 @@ struct PresentationHeuristicsTests {
         #expect(totalOnly.observedStatusMenuTotalScore == 0.47)
         #expect(sessionOnly.observedStatusMenuSessionScore == 0.66)
         #expect(sessionOnly.observedStatusMenuTotalScore == nil)
-        #expect(totalOnly.statusMenuSessionScore == 0.47)
-        #expect(sessionOnly.statusMenuTotalScore == 0.66)
+        #expect(totalOnly.statusMenuSessionScore == nil)
+        #expect(sessionOnly.statusMenuTotalScore == nil)
     }
 
     @Test func displaySubtitleUsesCompactTwentyFourHourResetTimes() {

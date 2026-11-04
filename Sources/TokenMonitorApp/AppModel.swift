@@ -436,6 +436,13 @@ final class AppModel: ObservableObject {
     var statusMenuAccounts: [ServiceStatus] {
         statusMenuServices.flatMap { service in
             menuBarAccounts(for: service).compactMap { dashboardState.account($0.id) }
+        }.filter { status in
+            guard let snapshot = status.snapshot else { return true }
+            switch statusMenuLimitDisplay {
+            case .session: return snapshot.observedStatusMenuSessionScore != nil
+            case .total: return snapshot.observedStatusMenuTotalScore != nil
+            case .both: return snapshot.observedStatusMenuSessionScore != nil || snapshot.observedStatusMenuTotalScore != nil
+            }
         }
     }
 
@@ -451,6 +458,9 @@ final class AppModel: ObservableObject {
             return "Additional selected account. Open the menu to see all accounts."
         }
         if statusMenuAccountArrangement == .byAccount && statusMenuLimitDisplay == .both {
+            let scores = statusMenuScores(for: accountID)
+            if scores.session == nil { return "Menu bar: column \(position.column + 1), Total only" }
+            if scores.total == nil { return "Menu bar: column \(position.column + 1), Session only" }
             return "Menu bar: column \(position.column + 1), Session above Total"
         }
         return "Menu bar: column \(position.column + 1), row \(position.row + 1)"
@@ -725,9 +735,6 @@ final class AppModel: ObservableObject {
     func statusMenuScores(for accountID: UUID) -> (session: Double?, total: Double?) {
         guard let snapshot = dashboardState.account(accountID)?.snapshot else {
             return (nil, nil)
-        }
-        if statusMenuAccountArrangement == .byAccount {
-            return (snapshot.observedStatusMenuSessionScore, snapshot.observedStatusMenuTotalScore)
         }
         return (snapshot.statusMenuSessionScore, snapshot.statusMenuTotalScore)
     }

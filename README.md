@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.51/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.52/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.51` (build 60).
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.52` (build 61).
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -91,12 +91,12 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.51/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.52/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
 
-Version 1.0.51 is Developer ID signed and notarized by Apple. Open it normally after moving it to Applications. The following instructions apply only to older, unsigned preview builds, not the current download.
+Version 1.0.52 is Developer ID signed and notarized by Apple. Open it normally after moving it to Applications. The following instructions apply only to older, unsigned preview builds, not the current download.
 
 1. Click **Done**, not **Move to Trash**.
 2. Open **System Settings > Privacy & Security**.
@@ -127,6 +127,8 @@ Token Monitor tries to register itself as a login item when **Launch at login** 
 Automatic update checks are off by default from version `1.0.22` through public version `1.0.42`. Version `1.0.43` enables automatic checks by default, while preserving an existing opt-out. Enabling **Automatically check for updates** checks immediately, then hourly while the app is running. **Review Update** remembers one click while Sparkle finishes a background check or download and opens the installer when ready. In version `1.0.47`, the separate **Install on quit** setting controls automatic download and installation when you quit; it never forces a restart, and macOS may still require approval. Existing Sparkle preferences are preserved. **Check for Updates...** remains available in Settings. The debug report includes update timing, preferences, results, and error codes. Existing sign-ins are preserved.
 
 **Version 1.0.48 (57):** A timeout or stopped WebKit content process recreates only the failed background usage reader, keeping the same account storage and sign-in. The next refresh can recover without restarting the app. Usage is read when the document is available, even if an unrelated resource never finishes. Canceled reads cannot complete a later refresh with pre-reset values. Existing numbers remain marked Stale until fresh provider data is read; quotas are never reset based on the clock.
+
+**Version 1.0.52 (61):** Show only observed limits. Claude accounts with no reported session quota, including verified Ultra accounts, show their weekly quota without a synthetic Session bar. All menu-bar layouts retain missing scopes as missing; Session-only mode hides accounts with no reported session quota without changing account selection. Accounts with both observed quotas keep both.
 
 **Version 1.0.51 (60):** Developer ID signed and notarized by Apple, including the app, update helpers, and DMG. Existing account data and the Sparkle update key are preserved.
 
@@ -237,12 +239,12 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.51/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.52/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
 
-Version 1.0.51 ist mit Developer ID signiert und von Apple notarisiert. Nach dem Verschieben nach Applications normal öffnen. Die folgende Anleitung gilt ausschließlich für ältere, unsignierte Preview-Builds, nicht für den aktuellen Download.
+Version 1.0.52 ist mit Developer ID signiert und von Apple notarisiert. Nach dem Verschieben nach Applications normal öffnen. Die folgende Anleitung gilt ausschließlich für ältere, unsignierte Preview-Builds, nicht für den aktuellen Download.
 
 1. **Fertig** klicken, nicht **In den Papierkorb legen**.
 2. **Systemeinstellungen > Datenschutz & Sicherheit** öffnen.

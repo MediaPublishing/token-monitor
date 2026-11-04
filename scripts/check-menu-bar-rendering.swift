@@ -264,12 +264,48 @@ private struct ProofSnapshots: SnapshotPersisting {
         let partialImage = AppDelegate(model: partialModel).makeCapacityStatusImage(for: NSAppearance(named: .aqua))!
         for bitmap in partialImage.representations.compactMap({ $0 as? NSBitmapImageRep }) {
             let scale = Int(CGFloat(bitmap.pixelsWide) / partialImage.size.width)
-            precondition((bitmap.colorAt(x: 12 * scale, y: 4 * scale)?.alphaComponent ?? 0) < 0.8)
-            precondition((bitmap.colorAt(x: 12 * scale, y: 12 * scale)?.alphaComponent ?? 0) > 0.8)
-            precondition(barBandCount(in: bitmap, start: 3 * scale, end: 22 * scale) == 2)
+            precondition(barBandCount(in: bitmap, start: 3 * scale, end: 22 * scale) == 1)
         }
         partialModel.setStatusMenuAccountArrangement(.compact)
-        precondition(partialModel.statusMenuScores(for: chatGPT.id).session == 0.99)
+        precondition(partialModel.statusMenuScores(for: chatGPT.id).session == nil)
+
+        var ultra = second
+        ultra.snapshot = ServiceSnapshot(service: .claude, capturedAt: .now, pageTitle: "Ultra weekly only",
+            url: ServiceKind.claude.usageURL.absoluteString,
+            metrics: second.snapshot!.metrics.filter { $0.key == "weekly-all-models" })
+        defaults.set(false, forKey: "openCodeGoEnabled")
+        let ultraModel = AppModel(snapshotStore: ProofSnapshots(), accountStore: ProofAccounts(accounts: [chatGPT, primary, ultra]),
+                                  analytics: ProjectAnalyticsModel(defaults: analyticsDefaults, home: output))
+        ultraModel.hideMenuBarAccount(chatGPT.id, for: .chatGPT)
+        ultraModel.setMenuBarAccount(primary.id, for: .claude)
+        ultraModel.showMenuBarAccountAlongside(ultra.id, for: .claude)
+        let ultraRenderer = AppDelegate(model: ultraModel)
+        for arrangement in MenuBarAccountArrangement.allCases {
+            ultraModel.setStatusMenuAccountArrangement(arrangement)
+            for percentages in [false, true] {
+                ultraModel.setStatusMenuShowsPercentages(percentages)
+                ultraModel.setStatusMenuLimitDisplay(.both)
+                precondition(ultraModel.statusMenuScores(for: ultra.id).session == nil)
+                precondition(ultraModel.statusMenuScores(for: ultra.id).total == 0.47)
+                let image = ultraRenderer.makeCapacityStatusImage(for: NSAppearance(named: .darkAqua))!
+                for bitmap in image.representations.compactMap({ $0 as? NSBitmapImageRep }) {
+                    let scale = Int(CGFloat(bitmap.pixelsWide) / image.size.width)
+                    let width = percentages ? (arrangement == .byAccount ? 56 : 74) : 24
+                    let offset = arrangement == .byAccount ? width + 4 : 0
+                    let start = offset + (percentages ? (arrangement == .byAccount ? 30 : 44) : 3)
+                    let bands = barBandCount(in: bitmap, start: start * scale, end: (offset + width - 2) * scale)
+                    precondition(bands == (arrangement == .byAccount ? 1 : 2),
+                        "Ultra \(arrangement) percentages=\(percentages) scale=\(scale): \(bands) bands, \(ultraModel.statusMenuAccounts.map(\.accountName))")
+                    try bitmap.representation(using: .png, properties: [:])!.write(to: output.appendingPathComponent(
+                        "ultra-\(arrangement.rawValue)-\(percentages)-\(scale)x.png"))
+                }
+                ultraModel.setStatusMenuLimitDisplay(.session)
+                precondition(ultraModel.statusMenuAccounts.map(\.accountID) == [primary.id])
+                precondition(ultraModel.menuBarAccounts(for: .claude).contains { $0.id == ultra.id })
+                ultraModel.setStatusMenuLimitDisplay(.total)
+                precondition(ultraModel.statusMenuAccounts.count == 2)
+            }
+        }
         for account in extras { threeProviders.showMenuBarAccountAlongside(account.id, for: .claude) }
         threeProviders.setStatusMenuAccountArrangement(.byProvider)
         let grouped = threeProviders.statusMenuAccountLayout

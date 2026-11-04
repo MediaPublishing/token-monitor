@@ -258,11 +258,11 @@ public struct ServiceSnapshot: Codable, Equatable, Sendable {
     }
 
     public var statusMenuTotalScore: Double? {
-        observedStatusMenuTotalScore ?? capacityScore
+        observedStatusMenuTotalScore
     }
 
     public var statusMenuSessionScore: Double? {
-        observedStatusMenuSessionScore ?? capacityScore
+        observedStatusMenuSessionScore
     }
 
     public var observedStatusMenuTotalScore: Double? {

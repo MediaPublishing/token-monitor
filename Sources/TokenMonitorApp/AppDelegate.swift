@@ -198,7 +198,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let layout = model.statusMenuAccountLayout
         let separatesLimits = model.statusMenuAccountArrangement == .byAccount && model.statusMenuLimitDisplay == .both
         let showsBothLimits = model.statusMenuLimitDisplay == .both && !separatesLimits
-        let rowCount = separatesLimits ? 2 : layout.rowCount
+        let rowCount = separatesLimits ? accounts.map { account in
+            let scores = model.statusMenuScores(for: account.accountID)
+            return max(1, [scores.session, scores.total].compactMap { $0 }.count)
+        }.max() ?? 1 : layout.rowCount
         let columnWidth: CGFloat = model.statusMenuShowsPercentages
             ? (showsBothLimits ? 74 : 56)
             : (model.statusMenuAccountArrangement == .compact && layout.columnCount > 1 ? 14 : 24)
@@ -220,7 +223,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         let image = NSImage(size: size)
         let foregroundColor = statusBarForegroundColor(for: appearance)
         let trackColor = statusBarTrackColor(for: appearance)
-        let displays: [StatusMenuLimitDisplay] = separatesLimits ? [.session, .total] : [model.statusMenuLimitDisplay]
         // Supply both backing scales so tiny bars remain sharp on Retina displays.
         for scale in [1, 2] {
             guard let bitmap = NSBitmapImageRep(
@@ -237,8 +239,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             for (index, account) in accounts.enumerated() {
                 guard let position = layout.position(at: index) else { continue }
                 let offset = CGFloat(position.column) * (columnWidth + columnGap)
+                let scores = model.statusMenuScores(for: account.accountID)
+                let observed: [StatusMenuLimitDisplay] = [.session, .total].filter {
+                    $0 == .session ? scores.session != nil : scores.total != nil
+                }
+                let displays: [StatusMenuLimitDisplay] = separatesLimits
+                    ? (account.snapshot == nil ? [.session, .total] : observed)
+                    : [model.statusMenuLimitDisplay]
                 for (limitIndex, display) in displays.enumerated() {
-                    drawStatusAccount(account, row: separatesLimits ? limitIndex : position.row, rowCount: rowCount,
+                    drawStatusAccount(account, row: separatesLimits ? limitIndex : position.row,
+                                      rowCount: separatesLimits ? displays.count : rowCount,
                                       width: columnWidth, height: height, offset: offset, display: display,
                                       foregroundColor: foregroundColor, trackColor: trackColor)
                 }
@@ -362,7 +372,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             score.map { String(Int((max(0, min($0, 1)) * 100).rounded())) } ?? "--"
         }
 
-        let label = "\(percentage(session))/\(percentage(total))%"
+        let label = [session, total].compactMap { $0 }.map { percentage($0) }.joined(separator: "/")
+        let displayedLabel = label.isEmpty ? "--" : label + "%"
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .right
         let attributes: [NSAttributedString.Key: Any] = [
@@ -370,7 +381,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             .foregroundColor: foregroundColor,
             .paragraphStyle: paragraph
         ]
-        (label as NSString).draw(in: rect, withAttributes: attributes)
+        (displayedLabel as NSString).draw(in: rect, withAttributes: attributes)
     }
 
     private func drawCombinedBar(
@@ -381,8 +392,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
         foregroundColor: NSColor,
         trackColor: NSColor
     ) {
-        guard sessionScore != nil || totalScore != nil else {
-            drawBar(in: rect, score: nil, status: status, foregroundColor: foregroundColor, trackColor: trackColor)
+        if sessionScore == nil || totalScore == nil {
+            drawBar(in: rect, score: sessionScore ?? totalScore, status: status,
+                    foregroundColor: foregroundColor, trackColor: trackColor)
             return
         }
         let trackPath = NSBezierPath(roundedRect: rect, xRadius: 2.5, yRadius: 2.5)
@@ -495,7 +507,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSPopoverDelegate {
             switch model.statusMenuLimitDisplay {
             case .session: capacity = "Session \(percentage(scores.session))"
             case .total: capacity = "Total \(percentage(scores.total))"
-            case .both: capacity = "Session \(percentage(scores.session)) / Total \(percentage(scores.total))"
+            case .both:
+                let values = [scores.session.map { "Session \(percentage($0))" },
+                              scores.total.map { "Total \(percentage($0))" }].compactMap { $0 }
+                capacity = values.isEmpty ? "Limits unavailable" : values.joined(separator: " / ")
             }
             let location = layout.position(at: index).map {
                 model.statusMenuAccountArrangement == .byAccount
