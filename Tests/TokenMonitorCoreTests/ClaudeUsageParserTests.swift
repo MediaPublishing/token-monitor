@@ -3,6 +3,28 @@ import Testing
 @testable import TokenMonitorCore
 
 struct ClaudeUsageParserTests {
+    @Test(arguments: ["Ultra\nThis week\nResets Fri 4:00 AM\n89% used",
+                      "Ultra\nNo current session limit\nThis week\nResets Fri 4:00 AM\n89% used",
+                      "Ultra\nAktuelle Sitzung\nGilt automatisch für Sitzungen\nAlle Modelle\nWird zurückgesetzt Fr 04:00\n89% verwendet"])
+    func weeklyOnlyNeverSynthesizesSession(_ body: String) throws {
+        let extract = ServicePageExtract(service: .claude, pageTitle: "Usage",
+            url: "https://claude.ai/settings/usage", bodyText: body, segments: [])
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metric(for: "current-session") == nil)
+        #expect(snapshot.observedStatusMenuSessionScore == nil)
+        #expect(snapshot.statusMenuSessionScore == nil)
+        #expect(abs((snapshot.statusMenuTotalScore ?? 0) - 0.11) < 0.0001)
+    }
+
+    @Test func ultraWithObservedTemporarySessionKeepsBothLimits() throws {
+        let extract = ServicePageExtract(service: .claude, pageTitle: "Usage",
+            url: "https://claude.ai/settings/usage",
+            bodyText: "Ultra\nCurrent session\nResets at 10:00 PM\n12% used\nThis week\nResets Fri 4:00 AM\n89% used", segments: [])
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metric(for: "current-session")?.valueText == "88% remaining")
+        #expect(snapshot.metric(for: "weekly-all-models")?.valueText == "11% remaining")
+    }
+
     @Test func parsesCurrentClaudeUsageLayout() throws {
         let bodyText = try FixtureLoader.text(named: "claude-usage-body")
         let extract = ServicePageExtract(

@@ -22,9 +22,7 @@ public struct ClaudeUsageParser: UsageParsing {
         let monthlyLimitLabels = ["Monthly spend limit", "Monthly limit", "Monatliches Ausgabenlimit", "Monatliches Limit"]
         let balanceLabels = ["Current balance", "Balance", "Aktueller Kontostand", "Aktuelles Guthaben"]
         guard
-            let currentSessionIndex = claudeLimitIndex(in: lines, labels: ["Current session", "Aktuelle Sitzung", "Sitzung"]),
             let allModelsIndex = claudeLimitIndex(in: lines, labels: ["All models", "Alle Modelle", "This week", "Diese Woche"]),
-            let currentSessionValue = firstClaudeLimitLine(after: currentSessionIndex, in: lines, matching: isUsageUsedValue),
             let allModelsValue = firstClaudeLimitLine(after: allModelsIndex, in: lines, matching: isUsageUsedValue),
             let allModelsReset = firstClaudeLimitLine(after: allModelsIndex, in: lines, matching: isResetLine)
         else {
@@ -32,14 +30,6 @@ public struct ClaudeUsageParser: UsageParsing {
         }
 
         var metrics = [
-            UsageMetric(
-                key: "current-session",
-                title: "Current session",
-                valueText: remainingProgressText(fromUsedText: currentSessionValue),
-                subtitle: firstClaudeLimitLine(after: currentSessionIndex, in: lines, matching: { $0 != currentSessionValue }),
-                progress: remainingProgress(fromUsedText: currentSessionValue),
-                style: .progress
-            ),
             UsageMetric(
                 key: "weekly-all-models",
                 title: "All models",
@@ -49,6 +39,16 @@ public struct ClaudeUsageParser: UsageParsing {
                 style: .progress
             )
         ]
+
+        // Ultra may have no session quota. Only a real section with its own
+        // percentage is a session metric, never explanatory text or a weekly value.
+        if let index = firstIndex(in: lines, exactlyMatchingAny: ["Current session", "Aktuelle Sitzung", "Sitzung"]),
+           let value = firstClaudeLimitLine(after: index, in: lines, matching: isUsageUsedValue) {
+            metrics.insert(UsageMetric(key: "current-session", title: "Current session",
+                valueText: remainingProgressText(fromUsedText: value),
+                subtitle: firstClaudeLimitLine(after: index, in: lines, matching: { $0 != value }),
+                progress: remainingProgress(fromUsedText: value), style: .progress), at: 0)
+        }
 
         if let sonnetMetric = optionalClaudeUsageMetric(
             key: "weekly-sonnet",
