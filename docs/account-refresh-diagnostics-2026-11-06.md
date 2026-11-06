@@ -56,6 +56,7 @@ sessions as an unproven workaround.
 
 ## Delivery state
 
-This is a tested diagnostic update prepared on `fix/account-refresh-diagnostics`,
-not a released parser fix. No version bump, public release, local app replacement or
-landing-page update was performed in this diagnostic preparation task.
+The diagnostic implementation was prepared on `fix/account-refresh-diagnostics`.
+The user subsequently requested continuation into release 1.0.53 (62). Its release,
+public verification and local installation are tracked in the dated operations receipt.
+This is not a confirmed parser fix for Patrick's unknown failing page.

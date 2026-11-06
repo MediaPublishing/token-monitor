@@ -5,12 +5,12 @@
 **Token Monitor** ist ein nativer macOS-Menüleisten-Begleiter für Claude, ChatGPT/Codex und optional OpenCode Go: provider-spezifische Limits, getrennte Sessions und Hintergrund-Refresh in einer schlanken Desktop-App.
 
 <p>
-  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.52/TokenMonitor-macOS.dmg">
+  <a href="https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.53/TokenMonitor-macOS.dmg">
     <img alt="Download" src="https://img.shields.io/badge/Download-DMG-0A7CFF?style=for-the-badge&logo=apple&logoColor=white">
   </a>
 </p>
 
-> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.52` (build 61).
+> **Repository status / Repository-Status:** Public preview. Current preview release: `v1.0.53` (build 62).
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
 ![Swift 6+](https://img.shields.io/badge/Swift-6%2B-orange)
@@ -91,12 +91,12 @@ Normal users should install from the GitHub Release DMG:
 Current preview release download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.52/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.53/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: If macOS says "TokenMonitor.app" Not Opened
 
-Version 1.0.52 is Developer ID signed and notarized by Apple. Open it normally after moving it to Applications. The following instructions apply only to older, unsigned preview builds, not the current download.
+Version 1.0.53 is Developer ID signed and notarized by Apple. Open it normally after moving it to Applications. The following instructions apply only to older, unsigned preview builds, not the current download.
 
 1. Click **Done**, not **Move to Trash**.
 2. Open **System Settings > Privacy & Security**.
@@ -127,6 +127,8 @@ Token Monitor tries to register itself as a login item when **Launch at login** 
 Automatic update checks are off by default from version `1.0.22` through public version `1.0.42`. Version `1.0.43` enables automatic checks by default, while preserving an existing opt-out. Enabling **Automatically check for updates** checks immediately, then hourly while the app is running. **Review Update** remembers one click while Sparkle finishes a background check or download and opens the installer when ready. In version `1.0.47`, the separate **Install on quit** setting controls automatic download and installation when you quit; it never forces a restart, and macOS may still require approval. Existing Sparkle preferences are preserved. **Check for Updates...** remains available in Settings. The debug report includes update timing, preferences, results, and error codes. Existing sign-ins are preserved.
 
 **Version 1.0.48 (57):** A timeout or stopped WebKit content process recreates only the failed background usage reader, keeping the same account storage and sign-in. The next refresh can recover without restarting the app. Usage is read when the document is available, even if an unrelated resource never finishes. Canceled reads cannot complete a later refresh with pre-reset values. Existing numbers remain marked Stale until fresh provider data is read; quotas are never reset based on the clock.
+
+**Version 1.0.53 (62):** Account-specific refresh diagnostics. Debug reports distinguish multiple accounts and retain the last failed refresh even when another account succeeds or the app restarts. Debugging remains opt-in and local. This diagnostic update does not claim to fix every unsupported provider layout. Enable Debugging, refresh the affected accounts, and review the Debug Report / Email Draft before sharing it.
 
 **Version 1.0.52 (61):** Show only observed limits. Claude accounts with no reported session quota, including verified Ultra accounts, show their weekly quota without a synthetic Session bar. All menu-bar layouts retain missing scopes as missing; Session-only mode hides accounts with no reported session quota without changing account selection. Accounts with both observed quotas keep both.
 
@@ -199,7 +201,7 @@ From **1.0.49**, enable **Settings > Debugging > Enable debug mode** before repr
 
 Token Monitor stores only the latest successful usage snapshots locally at `~/Library/Application Support/TokenMonitor/snapshots.json`. Each provider uses its own persistent WebKit session, so Claude and ChatGPT login state stay isolated from each other and from your normal browser cookies.
 
-Debug mode is off by default. When enabled in Settings, Token Monitor stores redacted refresh diagnostics locally in `~/Library/Application Support/TokenMonitor/Debug/`. Reports open only as drafts for GitHub Issues or email, so you can review them before submitting. GitHub Issues are public.
+Debug mode is off by default. When enabled in Settings, Token Monitor stores redacted refresh diagnostics locally in `~/Library/Application Support/TokenMonitor/Debug/`. Each account retains its latest refresh and last terminal failure with timestamps, so a successful account cannot overwrite another account's error. Reports open only as drafts for GitHub Issues or email, so you can review them before submitting. GitHub Issues are public. For usage-page layout errors use this Debug Report, not only the CPU-focused Performance Report.
 
 ---
 
@@ -239,12 +241,12 @@ Normale Nutzer sollten über das GitHub-Release-DMG installieren:
 Aktueller Preview-Release-Download:
 
 ```text
-https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.52/TokenMonitor-macOS.dmg
+https://github.com/MediaPublishing/token-monitor/releases/download/v1.0.53/TokenMonitor-macOS.dmg
 ```
 
 #### Gatekeeper: Wenn macOS "TokenMonitor.app" nicht öffnet
 
-Version 1.0.52 ist mit Developer ID signiert und von Apple notarisiert. Nach dem Verschieben nach Applications normal öffnen. Die folgende Anleitung gilt ausschließlich für ältere, unsignierte Preview-Builds, nicht für den aktuellen Download.
+Version 1.0.53 ist mit Developer ID signiert und von Apple notarisiert. Nach dem Verschieben nach Applications normal öffnen. Die folgende Anleitung gilt ausschließlich für ältere, unsignierte Preview-Builds, nicht für den aktuellen Download.
 
 1. **Fertig** klicken, nicht **In den Papierkorb legen**.
 2. **Systemeinstellungen > Datenschutz & Sicherheit** öffnen.
