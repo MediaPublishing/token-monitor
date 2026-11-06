@@ -29,6 +29,7 @@ enum SessionControllerError: LocalizedError, Equatable {
 @MainActor
 final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelegate {
     private let service: ServiceKind
+    private let accountID: UUID?
     private let parser: any UsageParsing
     private let dataStore: WKWebsiteDataStore
     private let isolatedAccount: Bool
@@ -57,9 +58,11 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
 
     init(service: ServiceKind, diagnosticsStore: DiagnosticsStore, lastSnapshot: ServiceSnapshot? = nil,
          dataStore: WKWebsiteDataStore = .default(), isolatedAccount: Bool = false,
+         accountID: UUID? = nil,
          refreshTimeout: Duration = .seconds(75),
          backgroundWebViewFactory: (@MainActor (WKWebViewConfiguration) -> WKWebView)? = nil) {
         self.service = service
+        self.accountID = accountID
         self.diagnosticsStore = diagnosticsStore
         self.isolatedAccount = isolatedAccount
         self.refreshTimeout = refreshTimeout
@@ -585,7 +588,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                 url: extract.url,
                 bodyPreview: String(preview),
                 segments: Array(extract.segments.prefix(80)),
-                message: message
+                message: message,
+                accountID: accountID
             )
         )
     }
@@ -600,7 +604,8 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                 url: url?.absoluteString ?? "",
                 bodyPreview: "",
                 segments: [reason],
-                message: reason
+                message: reason,
+                accountID: accountID
             )
         )
     }
