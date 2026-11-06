@@ -16,7 +16,7 @@ final class SessionCoordinator {
         let dataStore = account.isPrimary ? WKWebsiteDataStore.default() : WKWebsiteDataStore(forIdentifier: account.id)
         return ServiceSessionController(service: account.service, diagnosticsStore: diagnosticsStore,
                                         lastSnapshot: account.snapshot, dataStore: dataStore,
-                                        isolatedAccount: !account.isPrimary)
+                                        isolatedAccount: !account.isPrimary, accountID: account.id)
     }
 
     func add(_ account: MonitoredAccount, diagnosticsStore: DiagnosticsStore) {

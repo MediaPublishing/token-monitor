@@ -1,7 +1,7 @@
 import Foundation
 import TokenMonitorCore
 
-struct RefreshDebugRecord: Codable, Sendable {
+struct RefreshDebugRecord: Codable, Equatable, Sendable {
     enum Outcome: String, Codable, Sendable {
         case success
         case parseFailure
@@ -18,6 +18,7 @@ struct RefreshDebugRecord: Codable, Sendable {
     let bodyPreview: String
     let segments: [String]
     let message: String?
+    var accountID: UUID? = nil
 
     var redacted: RefreshDebugRecord {
         RefreshDebugRecord(
@@ -28,7 +29,8 @@ struct RefreshDebugRecord: Codable, Sendable {
             url: url,
             bodyPreview: Self.redact(bodyPreview),
             segments: segments.map(Self.redact),
-            message: message.map(Self.redact)
+            message: message.map(Self.redact),
+            accountID: accountID
         )
     }
 
@@ -92,23 +94,36 @@ final class DiagnosticsStore {
         }
 
         do {
-            try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+            try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true,
+                                            attributes: [.posixPermissions: 0o700])
+            try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directoryURL.path)
             let data = try encoder.encode(debugRecord.redacted)
-            try data.write(to: latestRecordURL(for: debugRecord.service), options: .atomic)
+            var destinations = [recordURL(for: debugRecord, suffix: "latest")]
+            if debugRecord.outcome != .success && debugRecord.outcome != .navigationBlocked {
+                destinations.append(recordURL(for: debugRecord, suffix: "last-failure"))
+            }
+            for url in destinations {
+                try data.write(to: url, options: .atomic)
+                try fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+            }
         } catch {
             NSLog("Failed to write debug record: \(error.localizedDescription)")
         }
     }
 
     func latestRecords() -> [RefreshDebugRecord] {
-        ServiceKind.allCases.compactMap { service in
-            let fileURL = latestRecordURL(for: service)
-            guard fileManager.fileExists(atPath: fileURL.path),
-                  let data = try? Data(contentsOf: fileURL) else {
-                return nil
-            }
-            return try? decoder.decode(RefreshDebugRecord.self, from: data)
+        let files = (try? fileManager.contentsOfDirectory(at: directoryURL,
+            includingPropertiesForKeys: nil)) ?? []
+        var records: [RefreshDebugRecord] = []
+        for file in files where file.lastPathComponent.hasSuffix("-latest.json")
+            || file.lastPathComponent.hasSuffix("-last-failure.json") {
+            guard let data = try? Data(contentsOf: file),
+                  let record = try? decoder.decode(RefreshDebugRecord.self, from: data),
+                  file.lastPathComponent == recordURL(for: record, suffix: "latest").lastPathComponent
+                    || file.lastPathComponent == recordURL(for: record, suffix: "last-failure").lastPathComponent else { continue }
+            if !records.contains(record) { records.append(record) }
         }
+        return records.sorted { $0.timestamp < $1.timestamp }
     }
 
     func writeReport(_ report: String) -> URL? {
@@ -143,9 +158,10 @@ final class DiagnosticsStore {
         } catch { return nil }
     }
 
-    private func latestRecordURL(for service: ServiceKind) -> URL {
-        directoryURL
-            .appendingPathComponent("\(service.rawValue)-latest")
+    private func recordURL(for record: RefreshDebugRecord, suffix: String) -> URL {
+        let accountSuffix = record.accountID.map { "-\($0.uuidString)" } ?? ""
+        return directoryURL
+            .appendingPathComponent("\(record.service.rawValue)\(accountSuffix)-\(suffix)")
             .appendingPathExtension("json")
     }
 }

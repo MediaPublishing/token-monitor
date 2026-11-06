@@ -833,7 +833,8 @@ final class AppModel: ObservableObject {
         lines.append("## Performance diagnostics")
         lines.append(diagnosticsStore.performance.summaryText)
         lines.append("")
-        lines.append("## Latest redacted debug records")
+        lines.append("## Latest refreshes and retained failures (redacted)")
+        lines.append("A retained failure may predate the current status. Compare account IDs and timestamps.")
 
         let records = diagnosticsStore.latestRecords()
         if records.isEmpty {
@@ -842,6 +843,14 @@ final class AppModel: ObservableObject {
             for record in records {
                 lines.append("")
                 lines.append("### \(record.service.displayName)")
+                if let accountID = record.accountID {
+                    lines.append("- Account ID: \(accountID.uuidString)")
+                    if let account = accounts.first(where: { $0.id == accountID }) {
+                        lines.append("- Account: \(account.name)")
+                    }
+                } else {
+                    lines.append("- Account: legacy record (not attributable)")
+                }
                 lines.append("- Timestamp: \(ISO8601DateFormatter().string(from: record.timestamp))")
                 lines.append("- Outcome: \(record.outcome.rawValue)")
                 lines.append("- Page title: \(record.pageTitle)")
