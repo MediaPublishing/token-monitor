@@ -2,6 +2,20 @@ import Foundation
 import Testing
 
 struct AppSourceBehaviorTests {
+    @Test func debugExportsUseOneAllowlistedRendererWithoutAccountNamesOrProviderErrors() throws {
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        let model = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/AppModel.swift"), encoding: .utf8)
+        let report = model.components(separatedBy: "private func makeDebugReport() -> String {")[1]
+            .components(separatedBy: "private func relativeDateText")[0]
+        #expect(report.contains("RefreshDiagnosticsReport.render"))
+        for unsafe in ["account.name", "accountName", "diagnosticsText", "stateDescription", "bodyPreview", "record.url"] {
+            #expect(!report.contains(unsafe))
+        }
+        let settings = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/SettingsView.swift"), encoding: .utf8)
+        #expect(settings.contains("Button(\"Save Debug Report\")"))
+        #expect(settings.contains("model.saveDebugReport()"))
+        #expect(settings.contains("Button(\"Save Performance Report\")"))
+    }
     @Test func providerLogosKeepVectorResourcesAndNativeDisplayScale() throws {
         let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
         let source = try String(contentsOf: root.appendingPathComponent("Sources/TokenMonitorApp/ProviderLogoView.swift"), encoding: .utf8)

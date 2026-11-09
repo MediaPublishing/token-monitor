@@ -349,7 +349,7 @@ struct SettingsView: View {
         settingsCard("Debugging") {
             settingsToggle(
                 "Enable debug mode",
-                description: "Local CPU traces and logs.",
+                description: "No page or chat text.",
                 isOn: debugModeBinding
             )
 
@@ -360,16 +360,19 @@ struct SettingsView: View {
                 .frame(height: 24, alignment: .topLeading)
 
             HStack(spacing: 4) {
-                Button("GitHub Issue Draft") {
-                    model.openGitHubDebugReportDraft()
+                Button("Save Debug Report") {
+                    model.saveDebugReport()
                 }
                 .buttonStyle(.bordered)
                 .controlSize(compact ? .mini : .small)
-
-                Button("Email Draft") {
-                    model.openEmailDebugReportDraft()
+                Menu("Drafts") {
+                    Button("GitHub Issue Draft") {
+                        model.openGitHubDebugReportDraft()
+                    }
+                    Button("Email Draft") {
+                        model.openEmailDebugReportDraft()
+                    }
                 }
-                .buttonStyle(.bordered)
                 .controlSize(compact ? .mini : .small)
             }
 

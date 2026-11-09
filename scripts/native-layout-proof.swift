@@ -80,6 +80,14 @@ private struct LayoutFixtureAccounts: AccountPersisting {
             case .settings: model.showSettingsInPopover()
             }
             if name == "settings-debug-light" {
+                model.saveDebugReport()
+                let reports = try FileManager.default.contentsOfDirectory(at: model.diagnosticsDirectoryURL,
+                    includingPropertiesForKeys: nil).filter { $0.lastPathComponent.hasPrefix("report-") }
+                precondition(!reports.isEmpty)
+                let debugReport = try String(contentsOf: reports.sorted { $0.path < $1.path }.last!, encoding: .utf8)
+                precondition(debugReport.contains("# Token Monitor Debug Report"))
+                precondition(!debugReport.contains("Body preview:") && !debugReport.contains("Account ID:"))
+                precondition(model.performanceReportStatus.contains("Debug report saved locally"))
                 model.savePerformanceReport()
                 for _ in 0..<200 where model.savingPerformanceReport { try await Task.sleep(for: .milliseconds(50)) }
                 precondition(!model.savingPerformanceReport)

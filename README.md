@@ -201,7 +201,7 @@ From **1.0.49**, enable **Settings > Debugging > Enable debug mode** before repr
 
 Token Monitor stores only the latest successful usage snapshots locally at `~/Library/Application Support/TokenMonitor/snapshots.json`. Each provider uses its own persistent WebKit session, so Claude and ChatGPT login state stay isolated from each other and from your normal browser cookies.
 
-Debug mode is off by default. When enabled in Settings, Token Monitor stores redacted refresh diagnostics locally in `~/Library/Application Support/TokenMonitor/Debug/`. Each account retains its latest refresh and last terminal failure with timestamps, so a successful account cannot overwrite another account's error. Reports open only as drafts for GitHub Issues or email, so you can review them before submitting. GitHub Issues are public. For usage-page layout errors use this Debug Report, not only the CPU-focused Performance Report.
+Debug mode is off by default. **Do not share raw reports from 1.0.53 or older:** their page previews may include private chat titles or sidebar text despite token redaction. A privacy update is prepared on `fix/private-refresh-diagnostics` but not released yet: only fixed technical recognition facts are retained, exports use numbered account aliases, old records are filtered during export, and `Save Debug Report` saves locally without opening an email or public issue. Existing raw files are not silently removed. See [Privacy](docs/privacy.md) for the version-specific limits. For usage-page layout errors use the Debug Report, not only the CPU-focused Performance Report.
 
 ---
 

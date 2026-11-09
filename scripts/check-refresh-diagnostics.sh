@@ -9,5 +9,5 @@ swiftc -swift-version 6 -sdk "$SDK" -emit-library -emit-module -module-name Toke
   Sources/TokenMonitorCore/*.swift -emit-module-path "$WORK/core/TokenMonitorCore.swiftmodule" -o "$WORK/core/libTokenMonitorCore.dylib"
 swiftc -swift-version 6 -sdk "$SDK" -parse-as-library -I "$WORK/core" -L "$WORK/core" -lTokenMonitorCore \
   -Xlinker -rpath -Xlinker "$WORK/core" Sources/TokenMonitorApp/DiagnosticsStore.swift \
-  scripts/check-refresh-diagnostics.swift -o "$WORK/RefreshDiagnosticsProof"
+  Sources/TokenMonitorApp/RefreshDiagnosticsPrivacy.swift scripts/check-refresh-diagnostics.swift -o "$WORK/RefreshDiagnosticsProof"
 "$WORK/RefreshDiagnosticsProof"
