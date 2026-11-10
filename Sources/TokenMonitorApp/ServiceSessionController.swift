@@ -575,37 +575,34 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     }
 
     private func writeDebugRecord(from extract: ServicePageExtract, outcome: RefreshDebugRecord.Outcome, message: String?) {
-        let preview = extract.bodyText
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .prefix(4000)
-
+        guard diagnosticsStore.isEnabled else { return }
         diagnosticsStore.record(
             RefreshDebugRecord(
                 timestamp: Date(),
                 service: service,
                 outcome: outcome,
-                pageTitle: extract.pageTitle,
-                url: extract.url,
-                bodyPreview: String(preview),
-                segments: Array(extract.segments.prefix(80)),
-                message: message,
-                accountID: accountID
+                pageTitle: "", url: "", bodyPreview: "", segments: [], message: nil,
+                accountID: accountID,
+                pageDiagnostics: RefreshPageDiagnostics(extract: extract)
             )
         )
     }
 
     private func recordBlockedNavigation(_ url: URL?, reason: String) {
+        guard diagnosticsStore.isEnabled else { return }
         diagnosticsStore.record(
             RefreshDebugRecord(
                 timestamp: Date(),
                 service: service,
                 outcome: .navigationBlocked,
-                pageTitle: backgroundWebView.title ?? "",
-                url: url?.absoluteString ?? "",
+                pageTitle: "",
+                url: "",
                 bodyPreview: "",
-                segments: [reason],
-                message: reason,
-                accountID: accountID
+                segments: [],
+                message: nil,
+                accountID: accountID,
+                pageDiagnostics: RefreshPageDiagnostics(extract: ServicePageExtract(
+                    service: service, pageTitle: "", url: url?.absoluteString ?? "", bodyText: "", segments: []))
             )
         )
     }

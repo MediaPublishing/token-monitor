@@ -38,6 +38,27 @@ Token Monitor is not affiliated with Anthropic, OpenAI, or Apple.
 
 Debug mode is off by default.
 
+### Version 1.0.54 And Later
+
+Version 1.0.54 replaces raw page previews with fixed
+technical facts: page category and whether known limit headings, percentages, reset,
+login or challenge markers were recognized. These markers are hints, not proof of
+authentication or valid usage. New refresh records omit page text, chat titles,
+URLs, dynamic page titles and free-form error messages. Account UUIDs remain only in
+local records for retention; exported reports use numbered provider aliases instead
+of UUIDs or configured account names. Update error strings and local installation
+paths are not copied into the report.
+
+`Save Debug Report` creates a private local file separately from the CPU-focused
+`Save Performance Report`. Email/GitHub drafts use the same controlled renderer.
+Older JSON records are filtered on reading and again on export. Previously saved
+raw JSON or text reports are **not** silently deleted or rewritten; old files should
+not be shared. Disabling debugging stops new collection but does not remove old files.
+No diagnostic data is uploaded automatically. The behavior below applies only to
+version 1.0.53 and earlier.
+
+### Version 1.0.53 And Earlier
+
 When debug mode is enabled, Token Monitor can prepare report drafts for GitHub Issues or email. Drafts are opened for your review first. Do not share raw debug dumps publicly if they contain private account data, chat titles, budgets, balances, email addresses, or access tokens.
 
 Starting with 1.0.53, refresh diagnostics retain the latest refresh and last terminal

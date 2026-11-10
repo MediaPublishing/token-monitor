@@ -55,7 +55,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var automaticallyChecksForUpdates: Bool
     @Published private(set) var debugModeEnabled: Bool
     @Published private(set) var savingPerformanceReport = false
-    @Published private(set) var performanceReportStatus = "Local only. Review before sharing."
+    @Published private(set) var performanceReportStatus = "Older reports may contain private text."
     @Published private(set) var statusMenuUsesColor: Bool
     @Published private(set) var statusMenuShowsPercentages: Bool
     @Published private(set) var statusMenuLimitDisplay: StatusMenuLimitDisplay
@@ -607,6 +607,15 @@ final class AppModel: ObservableObject {
         NSWorkspace.shared.open(diagnosticsDirectoryURL)
     }
 
+    func saveDebugReport() {
+        if let url = diagnosticsStore.writeReport(makeDebugReport()) {
+            performanceReportStatus = "Debug report saved locally. No chat titles."
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        } else {
+            performanceReportStatus = "Could not save the debug report."
+        }
+    }
+
     func savePerformanceReport() {
         guard debugModeEnabled, !savingPerformanceReport else { return }
         savingPerformanceReport = true
@@ -805,75 +814,13 @@ final class AppModel: ObservableObject {
     private func makeDebugReport() -> String {
         let shortVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
         let buildVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
-        let debugModeText = debugModeEnabled ? "yes" : "no"
-
-        var lines: [String] = [
-            "# Token Monitor Debug Report",
-            "",
-            "Created: \(ISO8601DateFormatter().string(from: Date()))",
-            "App version: \(shortVersion) (\(buildVersion))",
-            "macOS: \(ProcessInfo.processInfo.operatingSystemVersionString)",
-            "Debug mode enabled: \(debugModeText)",
-            "",
-            "## Current status"
-        ]
-
-        for account in enabledAccounts {
-            guard let status = dashboardState.account(account.id) else { continue }
-            lines.append("- \(status.accountName): \(status.connectionStatus.rawValue) - \(stateDescription(for: status))")
+        let diagnosticAccounts = enabledAccounts.compactMap { account -> RefreshDiagnosticAccount? in
+            guard let status = dashboardState.account(account.id) else { return nil }
+            return RefreshDiagnosticAccount(id: account.id, service: account.service, status: status.connectionStatus)
         }
-
-        lines.append("")
-        lines.append("## App updates")
-        lines.append(updateController.diagnosticsText)
-        lines.append("")
-        lines.append("## Reset reminders")
-        lines.append(resetReminders.diagnosticsText)
-        lines.append("")
-        lines.append("## Performance diagnostics")
-        lines.append(diagnosticsStore.performance.summaryText)
-        lines.append("")
-        lines.append("## Latest refreshes and retained failures (redacted)")
-        lines.append("A retained failure may predate the current status. Compare account IDs and timestamps.")
-
-        let records = diagnosticsStore.latestRecords()
-        if records.isEmpty {
-            lines.append("No debug records found yet. Enable Debug mode, refresh a provider, then create the report again.")
-        } else {
-            for record in records {
-                lines.append("")
-                lines.append("### \(record.service.displayName)")
-                if let accountID = record.accountID {
-                    lines.append("- Account ID: \(accountID.uuidString)")
-                    if let account = accounts.first(where: { $0.id == accountID }) {
-                        lines.append("- Account: \(account.name)")
-                    }
-                } else {
-                    lines.append("- Account: legacy record (not attributable)")
-                }
-                lines.append("- Timestamp: \(ISO8601DateFormatter().string(from: record.timestamp))")
-                lines.append("- Outcome: \(record.outcome.rawValue)")
-                lines.append("- Page title: \(record.pageTitle)")
-                lines.append("- URL: \(record.url)")
-                if let message = record.message, !message.isEmpty {
-                    lines.append("- Message: \(message)")
-                }
-                lines.append("")
-                lines.append("Body preview:")
-                lines.append("```")
-                lines.append(record.bodyPreview)
-                lines.append("```")
-                lines.append("")
-                lines.append("Segments:")
-                lines.append("```")
-                lines.append(record.segments.joined(separator: "\n---\n"))
-                lines.append("```")
-            }
-        }
-
-        lines.append("")
-        lines.append("Note: This report is generated locally. Review it before submitting because usage values and page text can still be account-specific even after token/email redaction.")
-        return lines.joined(separator: "\n")
+        return RefreshDiagnosticsReport.render(version: shortVersion, build: buildVersion,
+            os: ProcessInfo.processInfo.operatingSystemVersion, enabled: debugModeEnabled,
+            accounts: diagnosticAccounts, records: diagnosticsStore.latestRecords())
     }
 
     private func relativeDateText(from date: Date) -> String {

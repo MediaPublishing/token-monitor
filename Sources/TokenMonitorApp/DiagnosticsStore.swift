@@ -19,40 +19,24 @@ struct RefreshDebugRecord: Codable, Equatable, Sendable {
     let segments: [String]
     let message: String?
     var accountID: UUID? = nil
+    var pageDiagnostics: RefreshPageDiagnostics? = nil
 
     var redacted: RefreshDebugRecord {
         RefreshDebugRecord(
             timestamp: timestamp,
             service: service,
             outcome: outcome,
-            pageTitle: pageTitle,
-            url: url,
-            bodyPreview: Self.redact(bodyPreview),
-            segments: segments.map(Self.redact),
-            message: message.map(Self.redact),
-            accountID: accountID
+            pageTitle: "",
+            url: "",
+            bodyPreview: "",
+            segments: [],
+            message: nil,
+            accountID: accountID,
+            pageDiagnostics: pageDiagnostics ?? RefreshPageDiagnostics(extract: ServicePageExtract(
+                service: service, pageTitle: "", url: url, bodyText: bodyPreview, segments: segments))
         )
     }
 
-    private static func redact(_ text: String) -> String {
-        var sanitized = text
-        let patterns = [
-            #""accessToken"\s*:\s*"[^"]+""#,
-            #""sessionToken"\s*:\s*"[^"]+""#,
-            #""email"\s*:\s*"[^"]+""#,
-            #"eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+(?:\.[A-Za-z0-9_\-]+)?"#
-        ]
-
-        for pattern in patterns {
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
-                continue
-            }
-            let range = NSRange(sanitized.startIndex..<sanitized.endIndex, in: sanitized)
-            sanitized = regex.stringByReplacingMatches(in: sanitized, options: [], range: range, withTemplate: "[redacted]")
-        }
-
-        return sanitized
-    }
 }
 
 @MainActor
@@ -121,20 +105,24 @@ final class DiagnosticsStore {
                   let record = try? decoder.decode(RefreshDebugRecord.self, from: data),
                   file.lastPathComponent == recordURL(for: record, suffix: "latest").lastPathComponent
                     || file.lastPathComponent == recordURL(for: record, suffix: "last-failure").lastPathComponent else { continue }
-            if !records.contains(record) { records.append(record) }
+            let safe = record.redacted
+            if !records.contains(safe) { records.append(safe) }
         }
         return records.sorted { $0.timestamp < $1.timestamp }
     }
 
     func writeReport(_ report: String) -> URL? {
         do {
-            try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+            try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true,
+                                            attributes: [.posixPermissions: 0o700])
+            try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directoryURL.path)
             let formatter = DateFormatter()
             formatter.dateFormat = "yyyyMMdd-HHmmss"
             let fileURL = directoryURL
-                .appendingPathComponent("report-\(formatter.string(from: Date()))")
+                .appendingPathComponent("report-\(formatter.string(from: Date()))-\(UUID().uuidString.prefix(8))")
                 .appendingPathExtension("txt")
             try report.write(to: fileURL, atomically: true, encoding: .utf8)
+            try fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: fileURL.path)
             return fileURL
         } catch {
             NSLog("Failed to write debug report: \(error.localizedDescription)")

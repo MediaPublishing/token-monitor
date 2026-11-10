@@ -7,6 +7,55 @@ struct RefreshDiagnosticsProof {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = DiagnosticsStore(baseDirectory: directory, isEnabled: true)
+        let privateRecord = RefreshDebugRecord(timestamp: Date(timeIntervalSince1970: 0), service: .claude,
+            outcome: .parseFailure, pageTitle: "PrivateClientChat", url: "https://claude.ai/settings/usage?token=SecretQuery#PrivateFragment",
+            bodyPreview: "PrivateSidebarChat\nAll models\nResets Fri 12:00\n41% used",
+            segments: ["PrivateProjectChat"], message: "SecretErrorText")
+        store.record(privateRecord)
+        let storedPrivacyData = try String(contentsOf: directory.appendingPathComponent("Debug/claude-latest.json"), encoding: .utf8)
+        guard !["PrivateClientChat", "SecretQuery", "PrivateFragment", "PrivateSidebarChat", "PrivateProjectChat", "SecretErrorText"]
+            .contains(where: storedPrivacyData.contains) else {
+            print("FAIL: refresh diagnostics store private page/sidebar/URL/error content")
+            store.isEnabled = false
+            exit(1)
+        }
+        print("PASS: new records omit private page, sidebar, URL and error content")
+        let facts = store.latestRecords().first!.pageDiagnostics!
+        precondition(facts.page == .usage)
+        precondition(facts.limits.contains { $0.limit == .weekly && $0.heading && $0.percentage && $0.reset })
+        precondition(facts.limits.contains { $0.limit == .session && !$0.heading })
+        print("PASS: bounded technical recognition facts remain useful without raw text")
+
+        let legacyDirectory = directory.appendingPathComponent("legacy")
+        let legacyStore = DiagnosticsStore(baseDirectory: legacyDirectory)
+        let legacyEncoder = JSONEncoder()
+        legacyEncoder.dateEncodingStrategy = .iso8601
+        let legacyURL = legacyDirectory.appendingPathComponent("Debug/claude-latest.json")
+        try legacyEncoder.encode(privateRecord).write(to: legacyURL)
+        let legacySafe = legacyStore.latestRecords()
+        precondition(legacySafe.count == 1 && legacySafe[0].bodyPreview.isEmpty && legacySafe[0].url.isEmpty)
+        precondition(legacySafe[0].pageDiagnostics?.page == .usage)
+        // Reading/exporting must not silently rewrite or delete original legacy files.
+        let unchangedLegacy = try String(contentsOf: legacyURL, encoding: .utf8)
+        precondition(unchangedLegacy.contains("PrivateSidebarChat"))
+
+        let exportID = UUID()
+        var rawForExport = privateRecord
+        rawForExport.accountID = exportID
+        let exported = RefreshDiagnosticsReport.render(version: "1.0.53", build: "62",
+            os: OperatingSystemVersion(majorVersion: 26, minorVersion: 6, patchVersion: 2), enabled: false,
+            accounts: [RefreshDiagnosticAccount(id: exportID, service: .claude, status: .stale)],
+            records: [rawForExport] + legacySafe)
+        for canary in ["PrivateClientChat", "SecretQuery", "PrivateFragment", "PrivateSidebarChat", "PrivateProjectChat", "SecretErrorText", exportID.uuidString, "https://"] {
+            precondition(!exported.contains(canary))
+        }
+        precondition(exported.contains("Claude account 1") && exported.contains("heading=true, percentage=true, reset=true"))
+        let reportURL = legacyStore.writeReport(exported)!
+        let reportAttributes = try FileManager.default.attributesOfItem(atPath: reportURL.path)
+        precondition((reportAttributes[.posixPermissions] as? NSNumber)?.intValue == 0o600)
+        let savedReport = try String(contentsOf: reportURL, encoding: .utf8)
+        precondition(savedReport == exported)
+        print("PASS: legacy read and final exported file omit private content and account IDs; originals untouched")
         let failure = RefreshDebugRecord(timestamp: Date(timeIntervalSince1970: 1), service: .claude,
             outcome: .parseFailure, pageTitle: "Usage", url: "https://claude.ai/settings/usage",
             bodyPreview: "Unrecognized layout", segments: [], message: "parse failure")
