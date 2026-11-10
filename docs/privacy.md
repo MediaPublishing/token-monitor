@@ -38,9 +38,9 @@ Token Monitor is not affiliated with Anthropic, OpenAI, or Apple.
 
 Debug mode is off by default.
 
-### Prepared Privacy Update (Not Yet Released)
+### Version 1.0.54 And Later
 
-The `fix/private-refresh-diagnostics` branch replaces raw page previews with fixed
+Version 1.0.54 replaces raw page previews with fixed
 technical facts: page category and whether known limit headings, percentages, reset,
 login or challenge markers were recognized. These markers are hints, not proof of
 authentication or valid usage. New refresh records omit page text, chat titles,
@@ -54,10 +54,10 @@ paths are not copied into the report.
 Older JSON records are filtered on reading and again on export. Previously saved
 raw JSON or text reports are **not** silently deleted or rewritten; old files should
 not be shared. Disabling debugging stops new collection but does not remove old files.
-No diagnostic data is uploaded automatically. This change is prepared in source;
-the released 1.0.53 behavior described below is not yet replaced.
+No diagnostic data is uploaded automatically. The behavior below applies only to
+version 1.0.53 and earlier.
 
-### Released 1.0.53 And Earlier
+### Version 1.0.53 And Earlier
 
 When debug mode is enabled, Token Monitor can prepare report drafts for GitHub Issues or email. Drafts are opened for your review first. Do not share raw debug dumps publicly if they contain private account data, chat titles, budgets, balances, email addresses, or access tokens.
 
