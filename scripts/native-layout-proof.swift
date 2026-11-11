@@ -92,7 +92,7 @@ private struct LayoutFixtureAccounts: AccountPersisting {
                 for _ in 0..<200 where model.savingPerformanceReport { try await Task.sleep(for: .milliseconds(50)) }
                 precondition(!model.savingPerformanceReport)
                 let report = try String(contentsOf: model.diagnosticsDirectoryURL.appendingPathComponent("performance-report.txt"), encoding: .utf8)
-                precondition(report.contains("Token Monitor Performance Report") && report.contains("1.0.54 (63)"))
+                precondition(report.contains("Token Monitor Performance Report") && report.contains("1.0.55 (64)"))
                 precondition(model.performanceReportStatus.contains("Saved locally"))
             }
             window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)

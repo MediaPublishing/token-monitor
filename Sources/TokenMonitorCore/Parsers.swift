@@ -21,24 +21,23 @@ public struct ClaudeUsageParser: UsageParsing {
         let lines = claudeCandidateLines(from: extract)
         let monthlyLimitLabels = ["Monthly spend limit", "Monthly limit", "Monatliches Ausgabenlimit", "Monatliches Limit"]
         let balanceLabels = ["Current balance", "Balance", "Aktueller Kontostand", "Aktuelles Guthaben"]
-        guard
-            let allModelsIndex = claudeLimitIndex(in: lines, labels: ["All models", "Alle Modelle", "This week", "Diese Woche"]),
-            let allModelsValue = firstClaudeLimitLine(after: allModelsIndex, in: lines, matching: isUsageUsedValue),
-            let allModelsReset = firstClaudeLimitLine(after: allModelsIndex, in: lines, matching: isResetLine)
-        else {
-            throw UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")
-        }
-
-        var metrics = [
-            UsageMetric(
+        var metrics: [UsageMetric] = []
+        if let allModelsIndex = firstIndex(in: lines, exactlyMatchingAny: ["All models", "Alle Modelle", "This week", "Diese Woche"]) {
+            // An absent weekly quota is valid; an incomplete visible quota must
+            // still retry instead of replacing a complete snapshot too early.
+            guard let allModelsValue = firstClaudeLimitLine(after: allModelsIndex, in: lines, matching: isUsageUsedValue),
+                  let allModelsReset = firstClaudeLimitLine(after: allModelsIndex, in: lines, matching: isResetLine) else {
+                throw UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")
+            }
+            metrics.append(UsageMetric(
                 key: "weekly-all-models",
                 title: "All models",
                 valueText: remainingProgressText(fromUsedText: allModelsValue),
                 subtitle: allModelsReset,
                 progress: remainingProgress(fromUsedText: allModelsValue),
                 style: .progress
-            )
-        ]
+            ))
+        }
 
         // Ultra may have no session quota. Only a real section with its own
         // percentage is a session metric, never explanatory text or a weekly value.
@@ -50,13 +49,17 @@ public struct ClaudeUsageParser: UsageParsing {
                 progress: remainingProgress(fromUsedText: value), style: .progress), at: 0)
         }
 
+        guard !metrics.isEmpty else {
+            throw UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")
+        }
+
         if let sonnetMetric = optionalClaudeUsageMetric(
             key: "weekly-sonnet",
             title: "Sonnet only",
             lines: lines,
             labels: ["Sonnet only", "Nur Sonnet", "Sonnet"]
         ) {
-            metrics.insert(sonnetMetric, at: 2)
+            metrics.append(sonnetMetric)
         }
 
         if let claudeDesignMetric = optionalClaudeUsageMetric(
@@ -750,11 +753,6 @@ private func optionalClaudeUsageMetric(
         progress: remainingProgress(fromUsedText: value),
         style: .progress
     )
-}
-
-private func claudeLimitIndex(in lines: [String], labels: [String]) -> Int? {
-    firstIndex(in: lines, exactlyMatchingAny: labels)
-        ?? firstIndex(in: lines, containingAny: labels)
 }
 
 private func firstClaudeLimitLine(after index: Int, in lines: [String], matching predicate: (String) -> Bool) -> String? {
