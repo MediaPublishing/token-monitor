@@ -1,7 +1,9 @@
 # Claude session-only limits: diagnosis and fix
 
 Date: 2026-11-11
-Status: implemented and tested on `fix/claude-session-only-limits`; not released.
+Release target: 1.0.55 (64), on `fix/claude-session-only-limits`.
+Live-account confirmation remains outstanding; public release verification is
+recorded separately in the 1.0.55 rollout receipt.
 Base: `7d19141cad026a507b8561b6dd8838b3beee49af` (release 1.0.54 source).
 
 ## Evidence and limits
