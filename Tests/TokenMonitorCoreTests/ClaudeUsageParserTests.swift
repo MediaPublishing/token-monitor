@@ -3,6 +3,76 @@ import Testing
 @testable import TokenMonitorCore
 
 struct ClaudeUsageParserTests {
+    @Test(arguments: ["Current session\nResets at 10:00 AM\n12% used",
+                      "Aktuelle Sitzung\nWird zurückgesetzt um 10:00\n12% genutzt",
+                      "Sitzung\nStartet, wenn eine Nachricht gesendet wird\n0% verwendet"])
+    func sessionOnlyDoesNotRequireOrSynthesizeWeeklyLimit(_ body: String) throws {
+        let extract = ServicePageExtract(service: .claude, pageTitle: "Usage",
+            url: "https://claude.ai/new#settings/usage", bodyText: body, segments: [])
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metrics.map(\.key) == ["current-session"])
+        #expect(snapshot.metric(for: "current-session")?.subtitle != nil)
+        #expect(snapshot.statusMenuSessionScore != nil)
+        #expect(snapshot.statusMenuTotalScore == nil)
+        #expect(snapshot.observedStatusMenuTotalScore == nil)
+    }
+
+    @Test func sessionOnlyWithStructuredSegmentsKeepsItsOwnValue() throws {
+        let extract = ServicePageExtract(service: .claude, pageTitle: "Claude",
+            url: "https://claude.ai/new#settings/usage",
+            bodyText: "Current sessionResets at 10:00 AM12% used",
+            segments: ["Current session\nResets at 10:00 AM\n12% used"])
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metric(for: "current-session")?.valueText == "88% remaining")
+        #expect(snapshot.metric(for: "current-session")?.subtitle == "Resets at 10:00 AM")
+        #expect(snapshot.metric(for: "weekly-all-models") == nil)
+    }
+
+    @Test(arguments: ["This week’s usage by product\nClaude Code\n100%\nChats\n0%",
+                      "This week has no weekly limit",
+                      "All models share the current session limit"])
+    func weeklyExplanatoryTextIsNotAWeeklyLimitHeading(_ explanation: String) throws {
+        let extract = ServicePageExtract(service: .claude, pageTitle: "Usage",
+            url: "https://claude.ai/new#settings/usage",
+            bodyText: "Current session\nResets at 10:00 AM\n12% used\n\(explanation)", segments: [])
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metrics.map(\.key) == ["current-session"])
+        #expect(snapshot.metric(for: "current-session")?.valueText == "88% remaining")
+    }
+
+    @Test(arguments: ["Current session\nThis week\nResets Fri 4:00 AM",
+                      "Current session\nFable\nResets Fri 4:00 AM\n12% used",
+                      "Fable\nResets Fri 4:00 AM\n12% used",
+                      "Usage credits\n$1 spent\nResets Fri 4:00 AM\n12% used"])
+    func rejectsClaudePageWithoutAnyObservedCoreLimit(_ body: String) {
+        let extract = ServicePageExtract(service: .claude, pageTitle: "Usage",
+            url: "https://claude.ai/settings/usage", bodyText: body, segments: [])
+        #expect(throws: UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")) {
+            try ClaudeUsageParser().parse(extract: extract, now: .now)
+        }
+    }
+
+    @Test(arguments: ["Resets Fri 4:00 AM", "20% used"])
+    func sessionDoesNotHideIncompleteWeeklySection(_ weeklyContent: String) {
+        let extract = ServicePageExtract(service: .claude, pageTitle: "Usage",
+            url: "https://claude.ai/settings/usage",
+            bodyText: "Current session\nResets at 10:00 AM\n12% used\nThis week\n\(weeklyContent)", segments: [])
+        #expect(throws: UsageParseError.unsupportedLayout("Claude usage layout could not be parsed")) {
+            try ClaudeUsageParser().parse(extract: extract, now: .now)
+        }
+    }
+
+    @Test(arguments: ["Current session\nResets at 10:00 AM\n12% used", "This week\nResets Fri 4:00 AM\n20% used"])
+    func singleCoreLimitCanIncludeSonnetWithoutRequiringTwoCoreMetrics(_ core: String) throws {
+        let extract = ServicePageExtract(service: .claude, pageTitle: "Usage",
+            url: "https://claude.ai/settings/usage",
+            bodyText: core + "\nSonnet only\nResets Fri 4:00 AM\n7% used", segments: [])
+        let snapshot = try ClaudeUsageParser().parse(extract: extract, now: .now)
+        #expect(snapshot.metrics.count == 2)
+        #expect(snapshot.metrics.last?.key == "weekly-sonnet")
+        #expect(snapshot.metrics.last?.valueText == "93% remaining")
+    }
+
     @Test(arguments: ["Ultra\nThis week\nResets Fri 4:00 AM\n89% used",
                       "Ultra\nNo current session limit\nThis week\nResets Fri 4:00 AM\n89% used",
                       "Ultra\nAktuelle Sitzung\nGilt automatisch für Sitzungen\nAlle Modelle\nWird zurückgesetzt Fr 04:00\n89% verwendet"])
