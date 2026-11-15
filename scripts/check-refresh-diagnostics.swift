@@ -26,6 +26,15 @@ struct RefreshDiagnosticsProof {
         precondition(facts.limits.contains { $0.limit == .session && !$0.heading })
         print("PASS: bounded technical recognition facts remain useful without raw text")
 
+        let api = try JSONDecoder().decode(ClaudeUsageResponse.self, from: Data(#"{"outcome":"available","stage":"usage","httpStatus":200,"windows":[{"scope":"session","used":37.5,"resetsAt":"2026-11-20T05:00:00Z"}],"account":"PRIVATE_API_ACCOUNT"}"#.utf8))
+        let apiFacts = RefreshPageDiagnostics(extract: ServicePageExtract(service: .claude, pageTitle: "",
+            url: "https://claude.ai/new#settings/usage", bodyText: "", segments: []), claudeUsage: api)
+        precondition(apiFacts.page == .usage)
+        let encodedAPIFacts = String(decoding: try JSONEncoder().encode(apiFacts), as: UTF8.self)
+        precondition(apiFacts.claudeAPIOutcome == .available && apiFacts.claudeAPIHTTPStatus == 200)
+        precondition(!["37.5", "2026-11-20", "PRIVATE_API_ACCOUNT", "windows", "https://", "resetsAt"].contains(where: encodedAPIFacts.contains))
+        print("PASS: structured usage diagnostics omit quota values, dates, identifiers and raw API bodies")
+
         let legacyDirectory = directory.appendingPathComponent("legacy")
         let legacyStore = DiagnosticsStore(baseDirectory: legacyDirectory)
         let legacyEncoder = JSONEncoder()

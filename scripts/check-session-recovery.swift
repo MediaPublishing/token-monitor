@@ -8,6 +8,10 @@ import WebKit
     var loadCount = 0
     var holdJavaScript = false
     var extractedWhileLoading = false
+    var apiPayload: String?
+    var apiReadCount = 0
+    var holdAPI = false
+    var apiCompletions: [CheckedContinuation<String, Error>] = []
     var completions: [@MainActor @Sendable (Any?, Error?) -> Void] = []
 
     init(configuration: WKWebViewConfiguration, url: URL) {
@@ -28,6 +32,7 @@ import WebKit
         if holdJavaScript, let completionHandler { completions.append(completionHandler) }
         else { super.evaluateJavaScript(javaScriptString, completionHandler: completionHandler) }
     }
+
 }
 
 @MainActor final class RecoveryProof: NSObject, NSApplicationDelegate {
@@ -250,6 +255,105 @@ import WebKit
         try await Task.sleep(for: .seconds(2))
         check(try await pulseCount() == completedLoginWork, "finishing authentication handoff unloads the hidden document")
         check(await store.httpCookieStore.allCookies().contains { $0.name == "synthetic-session" }, "closing and reopening login retains the same session cookie")
+
+        check(fixtures.views.allSatisfy { $0.apiReadCount == 0 }, "successful DOM reads never request the structured fallback")
+        func apiController(_ payload: String) -> (ServiceSessionController, Fixtures, WKWebsiteDataStore) {
+            let isolated = WKWebsiteDataStore.nonPersistent()
+            let apiFixtures = Fixtures()
+            let controller = ServiceSessionController(service: .claude, diagnosticsStore: diagnostics,
+                dataStore: isolated, isolatedAccount: true, accountID: UUID(),
+                backgroundWebViewFactory: { configuration in
+                    let view = FixtureWebView(configuration: configuration, url: URL(string: "/unreadable", relativeTo: self.root)!)
+                    view.apiPayload = payload
+                    apiFixtures.views.append(view)
+                    return view
+                }, claudeUsageReader: { view in
+                    let fixture = view as! FixtureWebView
+                    fixture.apiReadCount += 1
+                    if fixture.holdAPI {
+                        return try await withCheckedThrowingContinuation { fixture.apiCompletions.append($0) }
+                    }
+                    return fixture.apiPayload!
+                })
+            return (controller, apiFixtures, isolated)
+        }
+        let (firstAPI, firstViews, firstStore) = apiController(#"{"outcome":"available","stage":"usage","httpStatus":200,"windows":[{"scope":"session","used":12}]}"#)
+        let (secondAPI, secondViews, secondStore) = apiController(#"{"outcome":"available","stage":"usage","httpStatus":200,"windows":[{"scope":"weekly","used":77}]}"#)
+        let (noQuota, noQuotaViews, _) = apiController(#"{"outcome":"notReported","stage":"usage","httpStatus":200,"confirmedEmpty":true,"windows":[]}"#)
+        async let firstResult = firstAPI.refresh()
+        async let secondResult = secondAPI.refresh()
+        async let noQuotaResult = noQuota.refresh()
+        let nativeBridge = ServiceSessionController(service: .claude, diagnosticsStore: diagnostics,
+            dataStore: .nonPersistent(), isolatedAccount: true, accountID: UUID(),
+            backgroundWebViewFactory: { configuration in
+                FixtureWebView(configuration: configuration, url: URL(string: "/unreadable", relativeTo: self.root)!)
+            })
+        let nativeBridgeResult = Task { try await nativeBridge.refresh() }
+        let (firstSnapshot, secondSnapshot, emptySnapshot) = try await (firstResult, secondResult, noQuotaResult)
+        check(firstSnapshot.statusMenuSessionScore == 0.88 && firstSnapshot.statusMenuTotalScore == nil,
+            "real controller recovers session-only capacity after DOM failure")
+        check(abs((secondSnapshot.statusMenuTotalScore ?? -1) - 0.23) < 0.0001 && secondSnapshot.statusMenuSessionScore == nil,
+            "second account recovers its own weekly capacity without mixing session values")
+        check(firstStore !== secondStore && firstViews.views[0].configuration.websiteDataStore === firstStore
+            && secondViews.views[0].configuration.websiteDataStore === secondStore, "structured recovery uses each account's original isolated store")
+        check(emptySnapshot.quotaAvailability == .notReported && emptySnapshot.metrics.isEmpty
+            && emptySnapshot.capacityScore == nil, "confirmed no-quota response succeeds without stale or invented bars")
+        check([firstViews, secondViews, noQuotaViews].allSatisfy { $0.views[0].apiReadCount == 1 }, "at most one API attempt per failed DOM refresh")
+        do { _ = try await nativeBridgeResult.value; check(false, "actual isolated-world JavaScript rejects the non-provider fixture origin") }
+        catch let error as UsageParseError {
+            check(error == .unsupportedLayout("Claude usage page did not reach a trusted origin"),
+                "actual isolated-world JavaScript executes and rejects the non-provider fixture origin")
+        }
+
+        let (cancelAPI, cancelViews, _) = apiController(#"{"outcome":"available","stage":"usage","httpStatus":200,"windows":[{"scope":"session","used":99}]}"#)
+        let canceledAPIRequest = Task { try await cancelAPI.refresh() }
+        while cancelViews.views.isEmpty { try await Task.sleep(for: .milliseconds(20)) }
+        let apiView = cancelViews.views[0]
+        apiView.holdAPI = true
+        for _ in 0..<1500 {
+            if !apiView.apiCompletions.isEmpty { break }
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        check(apiView.apiCompletions.count == 1, "a pending structured API evaluation is reproduced")
+        cancelAPI.cancelRefresh()
+        do { _ = try await canceledAPIRequest.value; check(false, "API cancellation returns cancellation") }
+        catch { check(error is CancellationError, "API cancellation returns cancellation") }
+        apiView.fixtureURL = URL(string: "/usage?used=0", relativeTo: root)!
+        let afterCancel = Task { try await cancelAPI.refresh() }
+        apiView.apiCompletions.forEach { $0.resume(returning: apiView.apiPayload!) }
+        apiView.apiCompletions.removeAll()
+        check(try await afterCancel.value.statusMenuTotalScore == 1, "late API completion cannot overwrite a later DOM refresh")
+
+        let jsView = FixtureWebView(configuration: {
+            let configuration = WKWebViewConfiguration()
+            configuration.websiteDataStore = WKWebsiteDataStore.nonPersistent()
+            return configuration
+        }(), url: URL(string: "/usage", relativeTo: root)!)
+        _ = jsView.load(URLRequest(url: root))
+        try await Task.sleep(for: .milliseconds(500))
+        let mockTransport = """
+        const location = {origin: 'https://claude.ai'};
+        const fetch = async (url) => new Response(JSON.stringify(url.endsWith('/usage')
+          ? {five_hour:{utilization:31},seven_day:null,private:'PRIVATE_NATIVE_CANARY'}
+          : [{uuid:'00000000-0000-0000-0000-000000000001',capabilities:['chat'],name:'PRIVATE_ORG'}]),
+          {status:200,headers:{'content-type':'application/json'}});
+        """
+        let projected: String = try await withCheckedThrowingContinuation { continuation in
+            jsView.callAsyncJavaScript(mockTransport + ClaudeUsageAPI.script, arguments: [:], in: nil, in: .defaultClient) { result in
+                switch result {
+                case let .success(value):
+                    if let value = value as? String { continuation.resume(returning: value) }
+                    else { continuation.resume(throwing: SessionControllerError.invalidPayload) }
+                case let .failure(error): continuation.resume(throwing: error)
+                }
+            }
+        }
+        let nativeResponse = try JSONDecoder().decode(ClaudeUsageResponse.self, from: Data(projected.utf8))
+        let nativeSnapshot = try nativeResponse.snapshot(now: .now)
+        check(nativeSnapshot.statusMenuSessionScore == 0.69 && nativeSnapshot.statusMenuTotalScore == nil,
+            "actual WebKit executes the structured JSON projection with synthetic transport")
+        check(!projected.contains("PRIVATE") && !projected.contains("00000000-"),
+            "actual WebKit projection never returns raw organization or response fields")
     }
 }
 

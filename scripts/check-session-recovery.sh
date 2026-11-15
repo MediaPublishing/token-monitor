@@ -11,6 +11,7 @@ swiftc -swift-version 6 -sdk "$SDK" -emit-library -emit-module -module-name Toke
   Sources/TokenMonitorCore/*.swift -emit-module-path "$CORE/TokenMonitorCore.swiftmodule" -o "$CORE/libTokenMonitorCore.dylib"
 swiftc -swift-version 6 -sdk "$SDK" -parse-as-library -I "$CORE" -L "$CORE" -lTokenMonitorCore \
   -Xlinker -rpath -Xlinker "$CORE" Sources/TokenMonitorApp/DiagnosticsStore.swift \
+  Sources/TokenMonitorApp/RefreshDiagnosticsPrivacy.swift Sources/TokenMonitorApp/ClaudeUsageAPI.swift \
   Sources/TokenMonitorApp/ServiceLoginWindowController.swift Sources/TokenMonitorApp/ServiceSessionController.swift \
   scripts/check-session-recovery.swift -o "$APP/Contents/MacOS/SessionRecoveryProof"
 cp Sources/TokenMonitorApp/Resources/Info.plist "$APP/Contents/Info.plist"

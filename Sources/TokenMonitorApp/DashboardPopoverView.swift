@@ -77,6 +77,16 @@ struct ServiceSectionView: View {
                         model.openLogin(accountID: status.accountID)
                     }
                 }
+            } else if status.snapshot?.quotaAvailability == .notReported {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("No usage limits reported")
+                        .font(.subheadline.weight(.medium))
+                    Text("Claude returned no quota values for this account. You can refresh again later.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 4)
             } else {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("No snapshot available yet")

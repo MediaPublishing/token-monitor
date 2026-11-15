@@ -36,6 +36,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
     private let diagnosticsStore: DiagnosticsStore
     private let refreshTimeout: Duration
     private let backgroundWebViewFactory: (@MainActor (WKWebViewConfiguration) -> WKWebView)?
+    private let claudeUsageReader: (@MainActor (WKWebView) async throws -> String)?
     private lazy var browserController: ServiceLoginWindowController = makeBrowserController()
     private lazy var backgroundWebView: WKWebView = makeBackgroundWebView()
 
@@ -60,13 +61,15 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
          dataStore: WKWebsiteDataStore = .default(), isolatedAccount: Bool = false,
          accountID: UUID? = nil,
          refreshTimeout: Duration = .seconds(75),
-         backgroundWebViewFactory: (@MainActor (WKWebViewConfiguration) -> WKWebView)? = nil) {
+         backgroundWebViewFactory: (@MainActor (WKWebViewConfiguration) -> WKWebView)? = nil,
+         claudeUsageReader: (@MainActor (WKWebView) async throws -> String)? = nil) {
         self.service = service
         self.accountID = accountID
         self.diagnosticsStore = diagnosticsStore
         self.isolatedAccount = isolatedAccount
         self.refreshTimeout = refreshTimeout
         self.backgroundWebViewFactory = backgroundWebViewFactory
+        self.claudeUsageReader = claudeUsageReader
         switch service {
         case .claude:
             parser = ClaudeUsageParser()
@@ -391,6 +394,31 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                     return
                 case .unsupportedLayout:
                     if index == delays.count - 1 {
+                        if service == .claude, let latestExtract {
+                            let response: ClaudeUsageResponse?
+                            do {
+                                let payload: String
+                                if let claudeUsageReader { payload = try await claudeUsageReader(backgroundWebView) }
+                                else { payload = try await backgroundWebView.tm_evaluateJavaScript(ClaudeUsageAPI.script, asynchronous: true) }
+                                response = try JSONDecoder().decode(ClaudeUsageResponse.self, from: Data(payload.utf8))
+                            } catch is CancellationError { return }
+                            catch { response = nil }
+                            guard !Task.isCancelled, loadToken == currentLoadToken, pendingContinuation != nil else { return }
+                            if let response {
+                                if let snapshot = try? response.snapshot(now: Date()) {
+                                    writeDebugRecord(from: latestExtract, outcome: .success, message: nil, claudeUsage: response)
+                                    finishRefresh(with: .success(snapshot))
+                                    return
+                                }
+                                let unauthorized = response.outcome == .unauthorized
+                                writeDebugRecord(from: latestExtract, outcome: unauthorized ? .authRequired : .parseFailure,
+                                    message: response.failureMessage, claudeUsage: response)
+                                finishRefresh(with: .failure(unauthorized
+                                    ? UsageParseError.authRequired(response.failureMessage)
+                                    : UsageParseError.unsupportedLayout(response.failureMessage)))
+                                return
+                            }
+                        }
                         if let latestExtract {
                             writeDebugRecord(from: latestExtract, outcome: .parseFailure, message: String(describing: parseError))
                         }
@@ -574,7 +602,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
         }
     }
 
-    private func writeDebugRecord(from extract: ServicePageExtract, outcome: RefreshDebugRecord.Outcome, message: String?) {
+    private func writeDebugRecord(from extract: ServicePageExtract, outcome: RefreshDebugRecord.Outcome, message: String?, claudeUsage: ClaudeUsageResponse? = nil) {
         guard diagnosticsStore.isEnabled else { return }
         diagnosticsStore.record(
             RefreshDebugRecord(
@@ -583,7 +611,7 @@ final class ServiceSessionController: NSObject, WKNavigationDelegate, WKUIDelega
                 outcome: outcome,
                 pageTitle: "", url: "", bodyPreview: "", segments: [], message: nil,
                 accountID: accountID,
-                pageDiagnostics: RefreshPageDiagnostics(extract: extract)
+                pageDiagnostics: RefreshPageDiagnostics(extract: extract, claudeUsage: claudeUsage)
             )
         )
     }
@@ -706,7 +734,7 @@ private extension WKHTTPCookieStore {
 
 @MainActor
 private extension WKWebView {
-    func tm_evaluateJavaScript(_ script: String) async throws -> String {
+    func tm_evaluateJavaScript(_ script: String, asynchronous: Bool = false) async throws -> String {
         let result = PageJavaScriptResult()
         return try await withTaskCancellationHandler {
             try Task.checkCancellation()
@@ -716,11 +744,19 @@ private extension WKWebView {
                     result.finish(.failure(CancellationError()))
                     return
                 }
-                evaluateJavaScript(script) { value, error in
+                let complete: @MainActor (Any?, Error?) -> Void = { value, error in
                     if let error { result.finish(.failure(error)) }
                     else if let value = value as? String { result.finish(.success(value)) }
                     else { result.finish(.failure(SessionControllerError.invalidPayload)) }
                 }
+                if asynchronous {
+                    callAsyncJavaScript(script, arguments: [:], in: nil, in: .defaultClient) { outcome in
+                        switch outcome {
+                        case let .success(value): complete(value, nil)
+                        case let .failure(error): complete(nil, error)
+                        }
+                    }
+                } else { evaluateJavaScript(script, completionHandler: complete) }
             }
         } onCancel: {
             Task { @MainActor in result.finish(.failure(CancellationError())) }

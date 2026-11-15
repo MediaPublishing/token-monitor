@@ -49,6 +49,8 @@ private struct LayoutFixtureAccounts: AccountPersisting {
         let scenarios: [(String, Int, PopoverScreen, Bool, Bool, CGFloat, Bool, MenuBarAccountArrangement)] = [
             ("capacity-two-light", 2, .dashboard, false, false, 900, false, .compact),
             ("capacity-three-light", 3, .dashboard, false, false, 900, false, .compact),
+            ("capacity-no-limits-light", 2, .dashboard, false, false, 900, false, .compact),
+            ("capacity-no-limits-dark", 2, .dashboard, false, true, 900, false, .compact),
             ("capacity-details-light", 3, .dashboard, true, false, 900, false, .compact),
             ("analysis-closed-light", 2, .analytics, false, false, 900, false, .compact),
             ("analysis-open-light", 2, .analytics, false, false, 900, true, .compact),
@@ -68,10 +70,18 @@ private struct LayoutFixtureAccounts: AccountPersisting {
             UserDefaults.standard.set(name == "settings-debug-light", forKey: "debugModeEnabled")
             for id in analytics.expandedGroupIDs { analytics.setExpanded(id, false) }
             if expand, let first = analytics.groups.first { analytics.setExpanded(first.id, true) }
+            var scenarioSnapshots = snapshots
+            if name.hasPrefix("capacity-no-limits") {
+                scenarioSnapshots[.claude] = ServiceSnapshot(service: .claude, capturedAt: .now,
+                    pageTitle: "Usage", url: "https://claude.ai/settings/usage", metrics: [], quotaAvailability: .notReported)
+            }
             let store = FileSnapshotStore(directoryURL: output.appendingPathComponent("fixture-state/" + name))
-            try store.saveSnapshots(snapshots)
+            try store.saveSnapshots(scenarioSnapshots)
             let model = AppModel(snapshotStore: store,
-                                 accountStore: LayoutFixtureAccounts(count: count, snapshots: snapshots), analytics: analytics)
+                                 accountStore: LayoutFixtureAccounts(count: count, snapshots: scenarioSnapshots), analytics: analytics)
+            if name.hasPrefix("capacity-no-limits") {
+                precondition(!model.statusMenuAccounts.contains { $0.service == .claude })
+            }
             model.setStatusMenuAccountArrangement(arrangement)
             model.popoverMaximumHeight = maximum
             switch screen {
@@ -92,7 +102,7 @@ private struct LayoutFixtureAccounts: AccountPersisting {
                 for _ in 0..<200 where model.savingPerformanceReport { try await Task.sleep(for: .milliseconds(50)) }
                 precondition(!model.savingPerformanceReport)
                 let report = try String(contentsOf: model.diagnosticsDirectoryURL.appendingPathComponent("performance-report.txt"), encoding: .utf8)
-                precondition(report.contains("Token Monitor Performance Report") && report.contains("1.0.55 (64)"))
+                precondition(report.contains("Token Monitor Performance Report") && report.contains("1.0.56 (65)"))
                 precondition(model.performanceReportStatus.contains("Saved locally"))
             }
             window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)

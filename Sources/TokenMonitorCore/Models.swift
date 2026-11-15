@@ -237,20 +237,23 @@ public struct UsageMetric: Codable, Equatable, Identifiable, Sendable {
 }
 
 public struct ServiceSnapshot: Codable, Equatable, Sendable {
+    public enum QuotaAvailability: String, Codable, Sendable { case notReported }
     public let service: ServiceKind
     public let capturedAt: Date
     public let pageTitle: String
     public let url: String
     public let metrics: [UsageMetric]
     public var bankedResets: BankedResetInventory?
+    public var quotaAvailability: QuotaAvailability?
 
-    public init(service: ServiceKind, capturedAt: Date, pageTitle: String, url: String, metrics: [UsageMetric], bankedResets: BankedResetInventory? = nil) {
+    public init(service: ServiceKind, capturedAt: Date, pageTitle: String, url: String, metrics: [UsageMetric], bankedResets: BankedResetInventory? = nil, quotaAvailability: QuotaAvailability? = nil) {
         self.service = service
         self.capturedAt = capturedAt
         self.pageTitle = pageTitle
         self.url = url
         self.metrics = metrics
         self.bankedResets = bankedResets
+        self.quotaAvailability = quotaAvailability
     }
 
     public func metric(for key: String) -> UsageMetric? {

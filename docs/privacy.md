@@ -1,6 +1,6 @@
 # Token Monitor Privacy
 
-Last reviewed: 2026-10-12
+Last reviewed: 2026-11-14
 
 Token Monitor is designed as a local macOS utility. It does not require a Token Monitor account and does not send usage data to Token Monitor server infrastructure.
 
@@ -34,6 +34,15 @@ When you sign in to Claude, ChatGPT, or Codex through Token Monitor, those pages
 
 Token Monitor is not affiliated with Anthropic, OpenAI, or Apple.
 
+From 1.0.56, if Claude's usage page cannot be parsed, the same isolated account
+WebKit session may issue up to two read-only same-origin usage requests, bounded
+by a single deadline and response-size limit. The browser supplies its existing
+session normally; Token Monitor does not import or extract authentication cookies
+or tokens for this fallback. Raw organization responses stay in the page; only
+whitelisted quota values and fixed outcomes pass to the app. Workspace identifiers
+are not retained. Ambiguous workspaces are not selected arbitrarily. There is no
+paid API key, inference call, provider write or external Token Monitor server.
+
 ## Debug Reports
 
 Debug mode is off by default.
@@ -51,6 +60,9 @@ paths are not copied into the report.
 
 `Save Debug Report` creates a private local file separately from the CPU-focused
 `Save Performance Report`. Email/GitHub drafts use the same controlled renderer.
+From 1.0.56, structured Claude fallback diagnostics add only a fixed outcome,
+request stage and HTTP status code. They do not include API bodies, workspace
+identifiers, account/plan names, quota percentages or reset dates.
 Older JSON records are filtered on reading and again on export. Previously saved
 raw JSON or text reports are **not** silently deleted or rewritten; old files should
 not be shared. Disabling debugging stops new collection but does not remove old files.
