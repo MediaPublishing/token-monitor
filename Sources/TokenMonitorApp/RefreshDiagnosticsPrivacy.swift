@@ -21,8 +21,14 @@ struct RefreshPageDiagnostics: Codable, Equatable, Sendable {
     let loginMarker: Bool
     let challengeMarker: Bool
     let limits: [Presence]
+    let claudeAPIOutcome: ClaudeUsageResponse.Outcome?
+    let claudeAPIStage: ClaudeUsageResponse.Stage?
+    let claudeAPIHTTPStatus: Int?
 
-    init(extract: ServicePageExtract) {
+    init(extract: ServicePageExtract, claudeUsage: ClaudeUsageResponse? = nil) {
+        claudeAPIOutcome = claudeUsage?.outcome
+        claudeAPIStage = claudeUsage?.stage
+        claudeAPIHTTPStatus = claudeUsage?.httpStatus.flatMap { (100...599).contains($0) ? $0 : nil }
         if extract.url == "about:blank" || extract.url.isEmpty {
             page = .blank
         } else if let url = URL(string: extract.url), let host = url.host?.lowercased(),
@@ -36,7 +42,9 @@ struct RefreshPageDiagnostics: Codable, Equatable, Sendable {
             let path = url.path.lowercased()
             if !hosts.contains(host) { page = .external }
             else if path.contains("/login") || path.contains("/auth") { page = .login }
-            else if path.hasSuffix("/settings/usage") || (extract.service == .openCodeGo && path.hasSuffix("/go")) { page = .usage }
+            else if path.hasSuffix("/settings/usage")
+                || (extract.service == .claude && ClaudeUsageNavigation.isUsageURL(extract.url))
+                || (extract.service == .openCodeGo && path.hasSuffix("/go")) { page = .usage }
             else { page = .otherProviderPage }
         } else { page = .invalid }
 
@@ -85,6 +93,7 @@ struct RefreshPageDiagnostics: Codable, Equatable, Sendable {
         ["- Page category: \(page.rawValue)", "- Readable text: \(hasReadableText)",
          "- Login marker: \(loginMarker)", "- Challenge marker: \(challengeMarker)"]
         + limits.map { "- \($0.limit.rawValue): heading=\($0.heading), percentage=\($0.percentage), reset=\($0.reset)" }
+        + (claudeAPIOutcome.map { ["- Claude API: \($0.rawValue), stage=\(claudeAPIStage?.rawValue ?? "unknown"), HTTP=\(claudeAPIHTTPStatus.map(String.init) ?? "none")"] } ?? [])
     }
 }
 

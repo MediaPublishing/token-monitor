@@ -28,6 +28,10 @@ const server = http.createServer((request, response) => {
     new Worker(URL.createObjectURL(new Blob([source], {type: 'text/javascript'})));
     </script>` : '';
   response.setHeader('Content-Type', 'text/html; charset=utf-8');
+  if (url.pathname === '/unreadable') {
+    response.end('<!doctype html><title>Synthetic Claude</title><main>Fixture page without recognized quota sections</main>');
+    return;
+  }
   if (url.pathname === '/redirect-usage') {
     response.end('<!doctype html><script>location.replace("/usage?used=0")</script>');
     return;

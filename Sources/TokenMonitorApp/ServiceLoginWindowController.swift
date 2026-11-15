@@ -381,6 +381,7 @@ final class ServiceLoginWindowController: NSWindowController, NSWindowDelegate, 
     }
 
     private func isAuthenticatedUsagePageURL(_ currentURL: String) -> Bool {
+        if service == .claude { return ClaudeUsageNavigation.isUsageURL(currentURL) }
         guard let url = URL(string: currentURL) else {
             return false
         }
